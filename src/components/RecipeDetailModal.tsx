@@ -7,7 +7,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar, Image as ImageIcon } from "lucide-react";
 
 interface Recipe {
   id: string;
@@ -30,6 +31,11 @@ interface Recipe {
   cagr: number | null;
   annualized_return: number | null;
   best_for: string | null;
+  screenshots?: Array<{
+    id: string;
+    image_url: string;
+    display_order: number;
+  }>;
 }
 
 interface RecipeDetailModalProps {
@@ -70,6 +76,40 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange }: RecipeDetailMo
         </DialogHeader>
 
         <div className="space-y-6 pt-4">
+          {/* Screenshots */}
+          {recipe.screenshots && recipe.screenshots.length > 0 && (
+            <>
+              <div>
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5 text-primary" />
+                  Screenshots
+                </h3>
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    {recipe.screenshots.map((screenshot, index) => (
+                      <CarouselItem key={screenshot.id}>
+                        <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                          <img
+                            src={screenshot.image_url}
+                            alt={`${recipe.name} screenshot ${index + 1}`}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  {recipe.screenshots.length > 1 && (
+                    <>
+                      <CarouselPrevious />
+                      <CarouselNext />
+                    </>
+                  )}
+                </Carousel>
+              </div>
+              <Separator />
+            </>
+          )}
+
           {/* Goal */}
           <div>
             <h3 className="text-sm font-semibold mb-2 text-primary">Goal</h3>

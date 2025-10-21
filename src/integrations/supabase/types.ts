@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      recipe_screenshots: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          recipe_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          recipe_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          recipe_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_screenshots_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       recipes: {
         Row: {
           annualized_return: number | null

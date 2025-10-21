@@ -32,6 +32,11 @@ interface Recipe {
   cagr: number | null;
   annualized_return: number | null;
   best_for: string | null;
+  screenshots?: Array<{
+    id: string;
+    image_url: string;
+    display_order: number;
+  }>;
 }
 
 type SortOption = 'cagr-desc' | 'cagr-asc' | 'profit-desc' | 'profit-asc' | 'asset' | 'name';
@@ -62,11 +67,21 @@ export default function RecipeBrowser() {
       setLoading(true);
       const { data, error } = await supabase
         .from('recipes')
-        .select('*')
+        .select(`
+          *,
+          screenshots:recipe_screenshots(*)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRecipes(data || []);
+      
+      // Transform the data to include screenshots in the expected format
+      const transformedData = (data || []).map(recipe => ({
+        ...recipe,
+        screenshots: recipe.screenshots?.sort((a: any, b: any) => a.display_order - b.display_order) || []
+      }));
+      
+      setRecipes(transformedData);
     } catch (error: any) {
       toast({
         variant: "destructive",

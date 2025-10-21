@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, DollarSign, Clock, Target } from "lucide-react";
+import { TrendingUp, DollarSign, Clock, Target, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Recipe {
@@ -19,6 +19,11 @@ interface Recipe {
   annualized_return: number | null;
   net_profit: string | null;
   cash_profit: number | null;
+  screenshots?: Array<{
+    id: string;
+    image_url: string;
+    display_order: number;
+  }>;
 }
 
 interface RecipeCardProps {
@@ -52,12 +57,33 @@ const getAssetColor = (asset: string) => {
 
 export const RecipeCard = ({ recipe, onClick }: RecipeCardProps) => {
   const returnValue = recipe.cagr || recipe.annualized_return;
+  const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0 
+    ? recipe.screenshots[0].image_url 
+    : null;
   
   return (
     <Card 
       className="group cursor-pointer transition-all duration-300 hover:shadow-card-hover hover:scale-[1.02] bg-gradient-card border-border/50"
       onClick={onClick}
     >
+      {/* Thumbnail */}
+      <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
+        {thumbnailUrl ? (
+          <img
+            src={thumbnailUrl}
+            alt={`${recipe.name} thumbnail`}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No screenshot</p>
+            </div>
+          </div>
+        )}
+      </div>
+
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
