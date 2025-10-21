@@ -46,6 +46,17 @@ export default function Auth() {
       return;
     }
 
+    // Validate email domain
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@thearchpublic\.com$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        variant: "destructive",
+        title: "Access Restricted",
+        description: "Only @thearchpublic.com email addresses are allowed",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -105,8 +116,8 @@ export default function Auth() {
             <CardTitle>{isSignUp ? 'Create Account' : 'Sign In'}</CardTitle>
             <CardDescription>
               {isSignUp 
-                ? 'Create an admin account to manage recipes' 
-                : 'Sign in to access the admin panel'}
+                ? 'Create an admin account to manage recipes (requires @thearchpublic.com email)' 
+                : 'Sign in to access the admin panel (requires @thearchpublic.com email)'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -116,7 +127,7 @@ export default function Auth() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@archpublic.com"
+                  placeholder="admin@thearchpublic.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
