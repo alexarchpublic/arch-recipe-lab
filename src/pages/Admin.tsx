@@ -33,7 +33,7 @@ export default function Admin() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     toast({ title: "Signed out successfully" });
-    navigate('/');
+    navigate('/auth');
   };
 
   return (
