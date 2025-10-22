@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar, Image as ImageIcon } from "lucide-react";
+import { useState } from "react";
 
 interface Recipe {
   id: string;
@@ -58,6 +59,8 @@ const getFocusColor = (focus: string) => {
 };
 
 export const RecipeDetailModal = ({ recipe, open, onOpenChange }: RecipeDetailModalProps) => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
   if (!recipe) return null;
 
   const returnValue = recipe.cagr || recipe.annualized_return;
@@ -82,29 +85,52 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange }: RecipeDetailMo
               <div>
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <ImageIcon className="h-5 w-5 text-primary" />
-                  Screenshots
+                  Screenshots ({recipe.screenshots.length})
                 </h3>
-                <Carousel className="w-full">
-                  <CarouselContent>
-                    {recipe.screenshots.map((screenshot, index) => (
-                      <CarouselItem key={screenshot.id}>
-                        <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                          <img
-                            src={screenshot.image_url}
-                            alt={`${recipe.name} screenshot ${index + 1}`}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
+                <div className="relative">
+                  <Carousel 
+                    className="w-full" 
+                    onSlideChange={(index) => setCurrentSlide(index)}
+                  >
+                    <CarouselContent>
+                      {recipe.screenshots.map((screenshot, index) => (
+                        <CarouselItem key={screenshot.id}>
+                          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                            <img
+                              src={screenshot.image_url}
+                              alt={`${recipe.name} screenshot ${index + 1}`}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {recipe.screenshots.length > 1 && (
+                      <>
+                        <CarouselPrevious className="left-4 z-10" />
+                        <CarouselNext className="right-4 z-10" />
+                      </>
+                    )}
+                  </Carousel>
+                  
+                  {/* Dots indicator */}
                   {recipe.screenshots.length > 1 && (
-                    <>
-                      <CarouselPrevious />
-                      <CarouselNext />
-                    </>
+                    <div className="flex justify-center mt-4 gap-2">
+                      {recipe.screenshots.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentSlide(index)}
+                          className={`w-2 h-2 rounded-full transition-colors ${
+                            index === currentSlide 
+                              ? 'bg-primary' 
+                              : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                          }`}
+                          aria-label={`Go to screenshot ${index + 1}`}
+                        />
+                      ))}
+                    </div>
                   )}
-                </Carousel>
+                </div>
               </div>
               <Separator />
             </>

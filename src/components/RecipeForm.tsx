@@ -48,7 +48,6 @@ const recipeSchema = z.object({
   asset_accumulated: z.string().optional(),
   net_profit: z.string().optional(),
   cagr: z.number().optional(),
-  annualized_return: z.number().optional(),
   best_for: z.string().optional(),
 });
 
@@ -478,17 +477,6 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                     step="0.01"
                     {...register("cagr", { valueAsNumber: true })}
                     placeholder="e.g., 45.29"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="annualized_return">Annualized Return (%)</Label>
-                  <Input
-                    id="annualized_return"
-                    type="number"
-                    step="0.01"
-                    {...register("annualized_return", { valueAsNumber: true })}
-                    placeholder="e.g., 47.52"
                   />
                 </div>
               </div>
