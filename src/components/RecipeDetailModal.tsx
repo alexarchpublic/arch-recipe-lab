@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar, Image as ImageIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface Recipe {
   id: string;
@@ -60,6 +60,7 @@ const getFocusColor = (focus: string) => {
 
 export const RecipeDetailModal = ({ recipe, open, onOpenChange }: RecipeDetailModalProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const carouselRef = useRef<any>(null);
   
   if (!recipe) return null;
 
@@ -89,17 +90,28 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange }: RecipeDetailMo
                 </h3>
                 <div className="relative">
                   <Carousel 
+                    ref={carouselRef}
                     className="w-full" 
+                    opts={{
+                      loop: true,
+                      align: "start",
+                    }}
                     onSlideChange={(index) => setCurrentSlide(index)}
                   >
                     <CarouselContent>
                       {recipe.screenshots.map((screenshot, index) => (
                         <CarouselItem key={screenshot.id}>
-                          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                          <div 
+                            className="aspect-video bg-muted rounded-lg overflow-hidden cursor-pointer"
+                            onClick={() => {
+                              // Open full-size image in new tab
+                              window.open(screenshot.image_url, '_blank');
+                            }}
+                          >
                             <img
                               src={screenshot.image_url}
                               alt={`${recipe.name} screenshot ${index + 1}`}
-                              className="w-full h-full object-contain"
+                              className="w-full h-full object-contain hover:opacity-90 transition-opacity"
                             />
                           </div>
                         </CarouselItem>
@@ -119,7 +131,10 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange }: RecipeDetailMo
                       {recipe.screenshots.map((_, index) => (
                         <button
                           key={index}
-                          onClick={() => setCurrentSlide(index)}
+                          onClick={() => {
+                            setCurrentSlide(index);
+                            carouselRef.current?.scrollTo(index);
+                          }}
                           className={`w-2 h-2 rounded-full transition-colors ${
                             index === currentSlide 
                               ? 'bg-primary' 

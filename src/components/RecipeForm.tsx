@@ -70,6 +70,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
   const [loading, setLoading] = useState(false);
   const [screenshots, setScreenshots] = useState<RecipeScreenshot[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const { toast } = useToast();
 
   const isEditMode = !!recipe;
@@ -152,6 +153,26 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
       setScreenshots(prev => [...prev, ...newScreenshots]);
     } finally {
       setUploadingImages(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleImageUpload(files);
     }
   };
 
@@ -497,16 +518,32 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
               <h3 className="text-lg font-semibold">Screenshots</h3>
               
               <div className="space-y-4">
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
+                    isDragOver 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-muted-foreground/25'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
                   <div className="text-center">
-                    <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <ImageIcon className={`mx-auto h-12 w-12 transition-colors ${
+                      isDragOver ? 'text-primary' : 'text-muted-foreground'
+                    }`} />
                     <div className="mt-4">
                       <Label htmlFor="image-upload" className="cursor-pointer">
-                        <span className="mt-2 block text-sm font-medium text-muted-foreground">
-                          Upload screenshots
+                        <span className={`mt-2 block text-sm font-medium transition-colors ${
+                          isDragOver ? 'text-primary' : 'text-muted-foreground'
+                        }`}>
+                          {isDragOver ? 'Drop images here' : 'Upload screenshots'}
                         </span>
                         <span className="mt-1 block text-xs text-muted-foreground">
                           PNG, JPG, WEBP up to 5MB each (max {MAX_IMAGES_PER_RECIPE} images)
+                        </span>
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          Or drag and drop images here
                         </span>
                       </Label>
                       <Input
