@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { TrendingUp, DollarSign, Clock, Target, Edit, Trash2, Eye, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { getRecipeScreenshots } from "@/lib/imageUpload";
 import { useToast } from "@/hooks/use-toast";
 
 interface Recipe {
@@ -27,6 +26,11 @@ interface Recipe {
   cash_profit: number | null;
   created_at: string;
   updated_at: string;
+  screenshots?: Array<{
+    id: string;
+    image_url: string;
+    display_order: number;
+  }>;
 }
 
 interface AdminRecipeCardProps {
@@ -61,29 +65,13 @@ const getAssetColor = (asset: string) => {
 };
 
 export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecipeCardProps) {
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-  const [loadingThumbnail, setLoadingThumbnail] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
-  // Load thumbnail on mount
-  useEffect(() => {
-    loadThumbnail();
-  }, [recipe.id]);
-
-  const loadThumbnail = async () => {
-    try {
-      setLoadingThumbnail(true);
-      const screenshots = await getRecipeScreenshots(recipe.id);
-      if (screenshots.length > 0) {
-        setThumbnailUrl(screenshots[0].image_url);
-      }
-    } catch (error) {
-      console.error('Failed to load thumbnail:', error);
-    } finally {
-      setLoadingThumbnail(false);
-    }
-  };
+  // Get thumbnail from screenshots prop
+  const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0 
+    ? recipe.screenshots[0].image_url 
+    : null;
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -119,11 +107,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
     <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-card border-border/50">
       {/* Thumbnail */}
       <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
-        {loadingThumbnail ? (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="animate-pulse bg-muted-foreground/20 rounded w-full h-full" />
-          </div>
-        ) : thumbnailUrl ? (
+        {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
             alt={`${recipe.name} thumbnail`}

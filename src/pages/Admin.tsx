@@ -29,6 +29,11 @@ interface Recipe {
   cash_profit: number | null;
   created_at: string;
   updated_at: string;
+  screenshots?: Array<{
+    id: string;
+    image_url: string;
+    display_order: number;
+  }>;
 }
 
 export default function Admin() {
@@ -69,11 +74,21 @@ export default function Admin() {
       setLoading(true);
       const { data, error } = await supabase
         .from('recipes')
-        .select('*')
+        .select(`
+          *,
+          screenshots:recipe_screenshots(*)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRecipes(data || []);
+      
+      // Transform the data to include screenshots in the expected format
+      const transformedData = (data || []).map(recipe => ({
+        ...recipe,
+        screenshots: recipe.screenshots?.sort((a: any, b: any) => a.display_order - b.display_order) || []
+      }));
+      
+      setRecipes(transformedData);
     } catch (error: any) {
       toast({
         variant: "destructive",
