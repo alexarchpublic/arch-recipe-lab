@@ -76,7 +76,7 @@ export default function Admin() {
         .from('recipes')
         .select(`
           *,
-          screenshots:recipe_screenshots(*)
+          recipe_screenshots(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -85,7 +85,7 @@ export default function Admin() {
       // Transform the data to include screenshots in the expected format
       const transformedData = (data || []).map(recipe => ({
         ...recipe,
-        screenshots: recipe.screenshots?.sort((a: any, b: any) => a.display_order - b.display_order) || []
+        screenshots: recipe.recipe_screenshots?.sort((a: any, b: any) => a.display_order - b.display_order) || []
       }));
       
       setRecipes(transformedData);
