@@ -49,6 +49,8 @@ export type Database = {
       recipes: {
         Row: {
           annualized_return: number | null
+          algorithm: string
+          algorithm_inputs: Json
           asset: string
           asset_accumulated: string | null
           backtesting_period: string
@@ -73,6 +75,8 @@ export type Database = {
         }
         Insert: {
           annualized_return?: number | null
+          algorithm: string
+          algorithm_inputs?: Json
           asset: string
           asset_accumulated?: string | null
           backtesting_period: string
@@ -97,6 +101,8 @@ export type Database = {
         }
         Update: {
           annualized_return?: number | null
+          algorithm?: string
+          algorithm_inputs?: Json
           asset?: string
           asset_accumulated?: string | null
           backtesting_period?: string

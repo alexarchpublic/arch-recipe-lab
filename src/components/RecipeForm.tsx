@@ -49,6 +49,9 @@ const recipeSchema = z.object({
   net_profit: z.string().optional(),
   cagr: z.number().optional(),
   best_for: z.string().optional(),
+  // New algorithm fields
+  algorithm: z.enum(["Intelligence Algorithm","Arbitrage Algorithm","Oracle Protocol"]).default("Oracle Protocol"),
+  algorithm_inputs: z.any().optional(),
 });
 
 type RecipeFormData = z.infer<typeof recipeSchema>;
@@ -87,9 +90,13 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
     defaultValues: {
       sell_above_cost_basis: true,
       exit_to_entry_proportion: 0,
+      algorithm: recipe?.algorithm || "Oracle Protocol",
+      algorithm_inputs: recipe?.algorithm_inputs || {},
       ...recipe
     }
   });
+  const selectedAlgorithm = watch("algorithm");
+
 
   // Load existing screenshots for edit mode
   useEffect(() => {
@@ -363,6 +370,586 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                   <p className="text-sm text-destructive">{errors.goal.message}</p>
                 )}
               </div>
+            </div>
+
+            {/* Algorithm */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Algorithm</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="algorithm">Algorithm *</Label>
+                  <Select
+                    onValueChange={(value) => setValue("algorithm", value as any)}
+                    defaultValue={recipe?.algorithm || "Oracle Protocol"}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select algorithm" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Intelligence Algorithm">Intelligence Algorithm</SelectItem>
+                      <SelectItem value="Arbitrage Algorithm">Arbitrage Algorithm</SelectItem>
+                      <SelectItem value="Oracle Protocol">Oracle Protocol</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Intelligence Algorithm Inputs */}
+              {selectedAlgorithm === 'Intelligence Algorithm' && (
+                <div className="space-y-4 border rounded-md p-4">
+                  <h4 className="font-medium">Intelligence Algorithm Inputs</h4>
+
+                  <div className="space-y-2">
+                    <Label>Repeat Purchase Method</Label>
+                    <Select
+                      onValueChange={(value) => setValue('algorithm_inputs.repeatPurchaseMethod' as any, value)}
+                      defaultValue={(recipe?.algorithm_inputs?.repeatPurchaseMethod as string) || 'Every Bar'}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Every Bar">Every Bar</SelectItem>
+                        <SelectItem value="Daily">Daily</SelectItem>
+                        <SelectItem value="Weekly">Weekly</SelectItem>
+                        <SelectItem value="Monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="space-y-2">
+                      <Label>Start Year</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.start?.year}
+                        {...register('algorithm_inputs.start.year' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Month</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.start?.month}
+                        {...register('algorithm_inputs.start.month' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Day</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.start?.day}
+                        {...register('algorithm_inputs.start.day' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Hour (24h)</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.start?.hour}
+                        {...register('algorithm_inputs.start.hour' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Minute</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.start?.minute}
+                        {...register('algorithm_inputs.start.minute' as any, { valueAsNumber: true })} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>End Year</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.end?.year}
+                        {...register('algorithm_inputs.end.year' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>End Month</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.end?.month}
+                        {...register('algorithm_inputs.end.month' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>End Day</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.end?.day}
+                        {...register('algorithm_inputs.end.day' as any, { valueAsNumber: true })} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Number of Bars (Start X Bars Back)</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.startBarsBack?.bars}
+                        {...register('algorithm_inputs.startBarsBack.bars' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="flex items-center space-x-2 mt-6">
+                      <Checkbox
+                        id="exitFullOnLast"
+                        defaultChecked={!!recipe?.algorithm_inputs?.backtest?.exitFullOnLastBar}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.backtest.exitFullOnLastBar' as any, !!checked)}
+                      />
+                      <Label htmlFor="exitFullOnLast">Exit Full Position on Last Historical Bar</Label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="intelligenceEnabled"
+                        defaultChecked={!!recipe?.algorithm_inputs?.activate?.enabled}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.activate.enabled' as any, !!checked)}
+                      />
+                      <Label htmlFor="intelligenceEnabled">Activate Intelligence</Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Intelligence Factor</Label>
+                      <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.activate?.factor}
+                        {...register('algorithm_inputs.activate.factor' as any, { valueAsNumber: true })} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Arbitrage Algorithm Inputs */}
+              {selectedAlgorithm === 'Arbitrage Algorithm' && (
+                <div className="space-y-4 border rounded-md p-4">
+                  <h4 className="font-medium">Arbitrage Algorithm Inputs</h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="arbLongEnabled"
+                        defaultChecked={!!recipe?.algorithm_inputs?.longThreshold?.enabled}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.longThreshold.enabled' as any, !!checked)}
+                      />
+                      <Label htmlFor="arbLongEnabled">Enable Long Threshold</Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Long Threshold (%)</Label>
+                      <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.longThreshold?.percent}
+                        {...register('algorithm_inputs.longThreshold.percent' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="arbExitEnabled"
+                        defaultChecked={!!recipe?.algorithm_inputs?.exitThreshold?.enabled}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.exitThreshold.enabled' as any, !!checked)}
+                      />
+                      <Label htmlFor="arbExitEnabled">Enable Exit Threshold</Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Exit Threshold (%)</Label>
+                      <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.exitThreshold?.percent}
+                        {...register('algorithm_inputs.exitThreshold.percent' as any, { valueAsNumber: true })} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Cost Basis</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="arbOnlySellAbove"
+                          defaultChecked={!!recipe?.algorithm_inputs?.costBasis?.onlySellAbove}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.costBasis.onlySellAbove' as any, !!checked)}
+                        />
+                        <Label htmlFor="arbOnlySellAbove">Only Sell Above Cost Basis</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="arbShowOnChart"
+                          defaultChecked={!!recipe?.algorithm_inputs?.costBasis?.showOnChart}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.costBasis.showOnChart' as any, !!checked)}
+                        />
+                        <Label htmlFor="arbShowOnChart">Show on chart</Label>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Average Price Mode</Label>
+                        <Select
+                          onValueChange={(value) => setValue('algorithm_inputs.costBasis.avgPriceMode' as any, value)}
+                          defaultValue={(recipe?.algorithm_inputs?.costBasis?.avgPriceMode as string) || 'Auto'}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select mode" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Auto">Auto</SelectItem>
+                            <SelectItem value="Manual">Manual</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Total Cost Basis (not avg)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.costBasis?.totalCostBasis}
+                          {...register('algorithm_inputs.costBasis.totalCostBasis' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Total Quantity</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.costBasis?.totalQty}
+                          {...register('algorithm_inputs.costBasis.totalQty' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="arbTradeInitial"
+                          defaultChecked={!!recipe?.algorithm_inputs?.costBasis?.tradeInitialPosition}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.costBasis.tradeInitialPosition' as any, !!checked)}
+                        />
+                        <Label htmlFor="arbTradeInitial">Trade Initial Position</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Entry Trade Size ($)</Label>
+                      <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.tradeSize?.entry}
+                        {...register('algorithm_inputs.tradeSize.entry' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Exit Trade Size ($)</Label>
+                      <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.tradeSize?.exit}
+                        {...register('algorithm_inputs.tradeSize.exit' as any, { valueAsNumber: true })} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="space-y-2">
+                      <Label>Start Year</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.year}
+                        {...register('algorithm_inputs.dates.start.year' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Month</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.month}
+                        {...register('algorithm_inputs.dates.start.month' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Day</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.day}
+                        {...register('algorithm_inputs.dates.start.day' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Hour (24h)</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.hour}
+                        {...register('algorithm_inputs.dates.start.hour' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Minute</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.minute}
+                        {...register('algorithm_inputs.dates.start.minute' as any, { valueAsNumber: true })} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>End Year</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.end?.year}
+                        {...register('algorithm_inputs.dates.end.year' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>End Month</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.end?.month}
+                        {...register('algorithm_inputs.dates.end.month' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>End Day</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.end?.day}
+                        {...register('algorithm_inputs.dates.end.day' as any, { valueAsNumber: true })} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Number of Bars (Start X Bars Back)</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.startBarsBack?.bars}
+                        {...register('algorithm_inputs.startBarsBack.bars' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="flex items-center space-x-2 mt-6">
+                      <Checkbox
+                        id="arbExitLast"
+                        defaultChecked={!!recipe?.algorithm_inputs?.backtest?.exitFullOnLastBar}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.backtest.exitFullOnLastBar' as any, !!checked)}
+                      />
+                      <Label htmlFor="arbExitLast">Exit Full Position on Last Historical Bar</Label>
+                    </div>
+                    <div className="flex items-center space-x-2 mt-6">
+                      <Checkbox
+                        id="arbLimitToCap"
+                        defaultChecked={!!recipe?.algorithm_inputs?.backtest?.limitToCapital}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.backtest.limitToCapital' as any, !!checked)}
+                      />
+                      <Label htmlFor="arbLimitToCap">Limit to Available Capital</Label>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="arbShowStatus"
+                      defaultChecked={!!recipe?.algorithm_inputs?.inputsUI?.showInStatusLine}
+                      onCheckedChange={(checked) => setValue('algorithm_inputs.inputsUI.showInStatusLine' as any, !!checked)}
+                    />
+                    <Label htmlFor="arbShowStatus">Inputs in status line</Label>
+                  </div>
+                </div>
+              )}
+
+              {/* Oracle Protocol Inputs */}
+              {selectedAlgorithm === 'Oracle Protocol' && (
+                <div className="space-y-4 border rounded-md p-4">
+                  <h4 className="font-medium">Oracle Protocol Inputs</h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="orcLongEnabled"
+                        defaultChecked={!!recipe?.algorithm_inputs?.longThreshold?.enabled}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.longThreshold.enabled' as any, !!checked)}
+                      />
+                      <Label htmlFor="orcLongEnabled">Enable Long Threshold</Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Long Threshold (%)</Label>
+                      <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.longThreshold?.percent}
+                        {...register('algorithm_inputs.longThreshold.percent' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="orcExitEnabled"
+                        defaultChecked={!!recipe?.algorithm_inputs?.exitThreshold?.enabled}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.exitThreshold.enabled' as any, !!checked)}
+                      />
+                      <Label htmlFor="orcExitEnabled">Enable Exit Threshold</Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Exit Threshold (%)</Label>
+                      <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.exitThreshold?.percent}
+                        {...register('algorithm_inputs.exitThreshold.percent' as any, { valueAsNumber: true })} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Cost Basis</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="orcOnlySellAbove"
+                          defaultChecked={!!recipe?.algorithm_inputs?.costBasis?.onlySellAbove}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.costBasis.onlySellAbove' as any, !!checked)}
+                        />
+                        <Label htmlFor="orcOnlySellAbove">Only Sell Above Cost Basis</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="orcShowOnChart"
+                          defaultChecked={!!recipe?.algorithm_inputs?.costBasis?.showOnChart}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.costBasis.showOnChart' as any, !!checked)}
+                        />
+                        <Label htmlFor="orcShowOnChart">Show on chart</Label>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Sell Profit Threshold (%)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.costBasis?.sellProfitThreshold}
+                          {...register('algorithm_inputs.costBasis.sellProfitThreshold' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="orcBuyBelowOnly"
+                          defaultChecked={!!recipe?.algorithm_inputs?.costBasis?.buyBelowOnly}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.costBasis.buyBelowOnly' as any, !!checked)}
+                        />
+                        <Label htmlFor="orcBuyBelowOnly">Buy Below Cost Basis Only</Label>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Average Price Mode</Label>
+                        <Select
+                          onValueChange={(value) => setValue('algorithm_inputs.costBasis.avgPriceMode' as any, value)}
+                          defaultValue={(recipe?.algorithm_inputs?.costBasis?.avgPriceMode as string) || 'Auto'}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select mode" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Auto">Auto</SelectItem>
+                            <SelectItem value="Manual">Manual</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Total Cost Basis (not avg)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.costBasis?.totalCostBasis}
+                          {...register('algorithm_inputs.costBasis.totalCostBasis' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Total Quantity</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.costBasis?.totalQty}
+                          {...register('algorithm_inputs.costBasis.totalQty' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="orcTradeInitial"
+                          defaultChecked={!!recipe?.algorithm_inputs?.costBasis?.tradeInitialPosition}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.costBasis.tradeInitialPosition' as any, !!checked)}
+                        />
+                        <Label htmlFor="orcTradeInitial">Trade Initial Position</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Trade Size</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Primary Trade Size Type</Label>
+                        <Select
+                          onValueChange={(value) => setValue('algorithm_inputs.tradeSize.primaryType' as any, value)}
+                          defaultValue={(recipe?.algorithm_inputs?.tradeSize?.primaryType as string) || 'Fixed'}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Fixed">Fixed</SelectItem>
+                            <SelectItem value="Percent">Percent</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Entry Trade Size (Percentage)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.tradeSize?.entryPercent}
+                          {...register('algorithm_inputs.tradeSize.entryPercent' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Exit Trade Size (Percentage)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.tradeSize?.exitPercent}
+                          {...register('algorithm_inputs.tradeSize.exitPercent' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="orcUseFixedMin"
+                        defaultChecked={!!recipe?.algorithm_inputs?.tradeSize?.useFixedAsMin}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.tradeSize.useFixedAsMin' as any, !!checked)}
+                      />
+                      <Label htmlFor="orcUseFixedMin">Use Fixed Trade Size as Minimum Limit (Percentage)</Label>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Entry Trade Size (Fixed)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.tradeSize?.entryFixed}
+                          {...register('algorithm_inputs.tradeSize.entryFixed' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Exit Trade Size (Fixed)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.tradeSize?.exitFixed}
+                          {...register('algorithm_inputs.tradeSize.exitFixed' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="space-y-2">
+                      <Label>Start Year</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.year}
+                        {...register('algorithm_inputs.dates.start.year' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Month</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.month}
+                        {...register('algorithm_inputs.dates.start.month' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Day</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.day}
+                        {...register('algorithm_inputs.dates.start.day' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Hour (24h)</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.hour}
+                        {...register('algorithm_inputs.dates.start.hour' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Start Minute</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.minute}
+                        {...register('algorithm_inputs.dates.start.minute' as any, { valueAsNumber: true })} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>End Year</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.end?.year}
+                        {...register('algorithm_inputs.dates.end.year' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>End Month</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.end?.month}
+                        {...register('algorithm_inputs.dates.end.month' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>End Day</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.end?.day}
+                        {...register('algorithm_inputs.dates.end.day' as any, { valueAsNumber: true })} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Number of Bars (Start X Bars Back)</Label>
+                      <Input type="number" defaultValue={recipe?.algorithm_inputs?.startBarsBack?.bars}
+                        {...register('algorithm_inputs.startBarsBack.bars' as any, { valueAsNumber: true })} />
+                    </div>
+                    <div className="flex items-center space-x-2 mt-6">
+                      <Checkbox
+                        id="orcExitLast"
+                        defaultChecked={!!recipe?.algorithm_inputs?.backtest?.exitFullOnLastBar}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.backtest.exitFullOnLastBar' as any, !!checked)}
+                      />
+                      <Label htmlFor="orcExitLast">Exit Full Position on Last Historical Bar</Label>
+                    </div>
+                    <div className="flex items-center space-x-2 mt-6">
+                      <Checkbox
+                        id="orcLimitToCap"
+                        defaultChecked={!!recipe?.algorithm_inputs?.backtest?.limitToCapital}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.backtest.limitToCapital' as any, !!checked)}
+                      />
+                      <Label htmlFor="orcLimitToCap">Limit to Available Capital</Label>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="orcShowStatus"
+                      defaultChecked={!!recipe?.algorithm_inputs?.inputsUI?.showInStatusLine}
+                      onCheckedChange={(checked) => setValue('algorithm_inputs.inputsUI.showInStatusLine' as any, !!checked)}
+                    />
+                    <Label htmlFor="orcShowStatus">Inputs in status line</Label>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Properties</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Initial Capital</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.properties?.initialCapital}
+                          {...register('algorithm_inputs.properties.initialCapital' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Order Size</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.properties?.orderSize?.value}
+                          {...register('algorithm_inputs.properties.orderSize.value' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Order Size Type</Label>
+                        <Select
+                          onValueChange={(value) => setValue('algorithm_inputs.properties.orderSize.type' as any, value)}
+                          defaultValue={(recipe?.algorithm_inputs?.properties?.orderSize?.type as string) || '% of Equity'}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Quantity">Quantity</SelectItem>
+                            <SelectItem value="Currency">Currency</SelectItem>
+                            <SelectItem value="% of Equity">% of Equity</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Pyramiding (orders)</Label>
+                        <Input type="number" step="1" defaultValue={recipe?.algorithm_inputs?.properties?.pyramiding}
+                          {...register('algorithm_inputs.properties.pyramiding' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Trading Parameters */}

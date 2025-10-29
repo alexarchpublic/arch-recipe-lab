@@ -14,6 +14,7 @@ interface Recipe {
   asset: string;
   time_horizon: string;
   strategy_type: string;
+  algorithm?: string;
   focus: string;
   goal: string;
   entry_trade: string;
@@ -190,9 +191,15 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
       
       <CardFooter className="pt-0">
         <div className="flex justify-between items-center w-full">
-          <p className="text-xs text-muted-foreground">
-            {recipe.strategy_type}
-          </p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>{recipe.strategy_type}</span>
+            {recipe.algorithm && (
+              <span className="before:content-['•'] before:mx-2 text-muted-foreground/80" />
+            )}
+            {recipe.algorithm && (
+              <span>{recipe.algorithm}</span>
+            )}
+          </div>
           
           {/* Action Buttons */}
           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
