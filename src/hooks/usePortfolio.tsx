@@ -196,10 +196,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   }, [rows]);
 
   const rows: ScaledRecipeMetrics[] = useMemo(() => {
-    return Object.values(positions).map(pos => {
-      const r = recipes[pos.recipeId];
-      return computeScaledMetricsForRecipe(initialCapital, pos, r);
-    });
+    return Object.values(positions)
+      .map(pos => {
+        const r = recipes[pos.recipeId];
+        return r ? computeScaledMetricsForRecipe(initialCapital, pos, r) : null;
+      })
+      .filter((x): x is ScaledRecipeMetrics => !!x);
   }, [positions, recipes, initialCapital]);
 
   const aggregates = useMemo(() => computePortfolioAggregates(rows), [rows]);
