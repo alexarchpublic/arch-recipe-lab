@@ -68,8 +68,47 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   const carouselRef = useRef<any>(null);
   
   if (!recipe) return null;
+  // Helpers
+  const parseCurrencyFromString = (text?: string | null): number | null => {
+    if (!text) return null;
+    const match = String(text).replace(/[^0-9.,-]/g, "").replace(/,/g, "");
+    const num = parseFloat(match);
+    return Number.isFinite(num) ? num : null;
+  };
 
-  const returnValue = recipe.cagr || recipe.annualized_return;
+  const getStartEndDates = (): { start?: Date; end?: Date } => {
+    const ai = recipe.algorithm_inputs as any;
+    if (!ai) return {};
+    // Intelligence: start/end at root
+    if (recipe.algorithm === 'Intelligence Algorithm') {
+      const s = ai.start, e = ai.end;
+      const start = s && s.year && s.month && s.day ? new Date(s.year, (s.month - 1) || 0, s.day, s.hour || 0, s.minute || 0) : undefined;
+      const end = e && e.year && e.month && e.day ? new Date(e.year, (e.month - 1) || 0, e.day) : undefined;
+      return { start, end };
+    }
+    // Arbitrage/Oracle: dates.start/end
+    const ds = ai.dates?.start, de = ai.dates?.end;
+    const start = ds && ds.year && ds.month && ds.day ? new Date(ds.year, (ds.month - 1) || 0, ds.day, ds.hour || 0, ds.minute || 0) : undefined;
+    const end = de && de.year && de.month && de.day ? new Date(de.year, (de.month - 1) || 0, de.day) : undefined;
+    return { start, end };
+  };
+
+  const computeCagr = (): number | null => {
+    const startEnd = getStartEndDates();
+    const start = startEnd.start;
+    const end = startEnd.end;
+    const begin = (initialCapital ?? recipe.initial_capital) ?? null;
+    const netProfit = parseCurrencyFromString(recipe.net_profit);
+    if (!begin || !netProfit || !start || !end) return null;
+    const years = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    if (years <= 0) return null;
+    const endingValue = begin + netProfit;
+    if (begin <= 0 || endingValue <= 0) return null;
+    const cagr = Math.pow(endingValue / begin, 1 / years) - 1;
+    return Number.isFinite(cagr) ? cagr * 100 : null;
+  };
+
+  const computedCagr = computeCagr();
   const scaledEntryTrade = recipe.entry_trade ? (scaleRecipeFreeText(recipe.entry_trade, scale) as string) : '';
   const scaledExitTrade = recipe.exit_trade ? (scaleRecipeFreeText(recipe.exit_trade, scale) as string) : '';
   const scaledInitialCapital = (initialCapital ?? recipe.initial_capital) ?? null;
@@ -176,7 +215,8 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
 
           <Separator />
 
-          {/* Parameters - Algorithm specific */}
+          {/* Parameters - Algorithm specific */
+          }
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
@@ -193,90 +233,145 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
               {/* Intelligence Algorithm */}
               {recipe.algorithm === 'Intelligence Algorithm' && (
                 <>
+                  <div className="text-sm font-semibold mt-2">Inputs</div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Repeat Purchase Method:</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.repeatPurchaseMethod}</span>
+                    {recipe.algorithm_inputs?.repeatPurchaseMethod && (
+                      <span className="text-sm">{recipe.algorithm_inputs?.repeatPurchaseMethod}</span>
+                    )}
                   </div>
-                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Start Date/Time:</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.start?.year}-{recipe.algorithm_inputs?.start?.month}-{recipe.algorithm_inputs?.start?.day} {recipe.algorithm_inputs?.start?.hour}:{String(recipe.algorithm_inputs?.start?.minute ?? '').padStart(2,'0')}</span>
-                  </div>
-                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">End Date:</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.end?.year}-{recipe.algorithm_inputs?.end?.month}-{recipe.algorithm_inputs?.end?.day}</span>
-                  </div>
-                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Start X Bars Back:</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.startBarsBack?.bars}</span>
-                  </div>
-                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Exit Full on Last Bar:</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.backtest?.exitFullOnLastBar ? 'Yes' : 'No'}</span>
-                  </div>
-                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Activate Intelligence:</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.activate?.enabled ? `Yes (Factor ${recipe.algorithm_inputs?.activate?.factor})` : 'No'}</span>
-                  </div>
+                  {recipe.algorithm_inputs?.start && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Start Date/Time:</span>
+                      <span className="text-sm">{recipe.algorithm_inputs?.start?.year}-{recipe.algorithm_inputs?.start?.month}-{recipe.algorithm_inputs?.start?.day}{(recipe.algorithm_inputs?.start?.hour ?? null) !== null ? ` ${recipe.algorithm_inputs?.start?.hour}:${String(recipe.algorithm_inputs?.start?.minute ?? 0).padStart(2,'0')}` : ''}</span>
+                    </div>
+                  )}
+                  {recipe.algorithm_inputs?.end && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">End Date:</span>
+                      <span className="text-sm">{recipe.algorithm_inputs?.end?.year}-{recipe.algorithm_inputs?.end?.month}-{recipe.algorithm_inputs?.end?.day}</span>
+                    </div>
+                  )}
+                  {typeof recipe.algorithm_inputs?.startBarsBack?.bars === 'number' && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Start X Bars Back:</span>
+                      <span className="text-sm">{recipe.algorithm_inputs?.startBarsBack?.bars}</span>
+                    </div>
+                  )}
+                  {recipe.algorithm_inputs?.backtest?.exitFullOnLastBar && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Exit Full on Last Bar:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
+                  {recipe.algorithm_inputs?.activate?.enabled && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Activate Intelligence:</span>
+                      <span className="text-sm">Yes{typeof recipe.algorithm_inputs?.activate?.factor === 'number' ? ` (Factor ${recipe.algorithm_inputs?.activate?.factor})` : ''}</span>
+                    </div>
+                  )}
                 </>
               )}
 
               {/* Arbitrage Algorithm */}
               {recipe.algorithm === 'Arbitrage Algorithm' && (
                 <>
+                  <div className="text-sm font-semibold mt-2">Inputs</div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.longThreshold?.percent}</span>
+                    {typeof recipe.algorithm_inputs?.longThreshold?.percent === 'number' && (
+                      <span className="text-sm">{recipe.algorithm_inputs?.longThreshold?.percent}</span>
+                    )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Exit Threshold (%):</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.exitThreshold?.percent}</span>
+                    {typeof recipe.algorithm_inputs?.exitThreshold?.percent === 'number' && (
+                      <span className="text-sm">{recipe.algorithm_inputs?.exitThreshold?.percent}</span>
+                    )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Entry Trade Size ($):</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entry}</span>
+                    {typeof recipe.algorithm_inputs?.tradeSize?.entry === 'number' && (
+                      <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entry}</span>
+                    )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Exit Trade Size ($):</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.exit}</span>
+                    {typeof recipe.algorithm_inputs?.tradeSize?.exit === 'number' && (
+                      <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.exit}</span>
+                    )}
                   </div>
-                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Start/End:</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.dates?.start?.year}-{recipe.algorithm_inputs?.dates?.start?.month}-{recipe.algorithm_inputs?.dates?.start?.day} → {recipe.algorithm_inputs?.dates?.end?.year}-{recipe.algorithm_inputs?.dates?.end?.month}-{recipe.algorithm_inputs?.dates?.end?.day}</span>
-                  </div>
+                  {(recipe.algorithm_inputs?.dates?.start && recipe.algorithm_inputs?.dates?.end) && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Start/End:</span>
+                      <span className="text-sm">{recipe.algorithm_inputs?.dates?.start?.year}-{recipe.algorithm_inputs?.dates?.start?.month}-{recipe.algorithm_inputs?.dates?.start?.day} → {recipe.algorithm_inputs?.dates?.end?.year}-{recipe.algorithm_inputs?.dates?.end?.month}-{recipe.algorithm_inputs?.dates?.end?.day}</span>
+                    </div>
+                  )}
                 </>
               )}
 
               {/* Oracle Protocol */}
               {recipe.algorithm === 'Oracle Protocol' && (
                 <>
+                  <div className="text-sm font-semibold mt-2">Inputs</div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.longThreshold?.percent}</span>
+                    {typeof recipe.algorithm_inputs?.longThreshold?.percent === 'number' && (
+                      <span className="text-sm">{recipe.algorithm_inputs?.longThreshold?.percent}</span>
+                    )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Exit Threshold (%):</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.exitThreshold?.percent}</span>
+                    {typeof recipe.algorithm_inputs?.exitThreshold?.percent === 'number' && (
+                      <span className="text-sm">{recipe.algorithm_inputs?.exitThreshold?.percent}</span>
+                    )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Primary Trade Size Type:</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.primaryType}</span>
+                    {recipe.algorithm_inputs?.tradeSize?.primaryType && (
+                      <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.primaryType}</span>
+                    )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Entry/Exit %:</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entryPercent} / {recipe.algorithm_inputs?.tradeSize?.exitPercent}</span>
+                    {(typeof recipe.algorithm_inputs?.tradeSize?.entryPercent === 'number' || typeof recipe.algorithm_inputs?.tradeSize?.exitPercent === 'number') && (
+                      <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entryPercent} / {recipe.algorithm_inputs?.tradeSize?.exitPercent}</span>
+                    )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Entry/Exit Fixed:</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entryFixed} / {recipe.algorithm_inputs?.tradeSize?.exitFixed}</span>
+                    {(typeof recipe.algorithm_inputs?.tradeSize?.entryFixed === 'number' || typeof recipe.algorithm_inputs?.tradeSize?.exitFixed === 'number') && (
+                      <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entryFixed} / {recipe.algorithm_inputs?.tradeSize?.exitFixed}</span>
+                    )}
                   </div>
-                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Start/End:</span>
-                    <span className="text-sm">{recipe.algorithm_inputs?.dates?.start?.year}-{recipe.algorithm_inputs?.dates?.start?.month}-{recipe.algorithm_inputs?.dates?.start?.day} → {recipe.algorithm_inputs?.dates?.end?.year}-{recipe.algorithm_inputs?.dates?.end?.month}-{recipe.algorithm_inputs?.dates?.end?.day}</span>
-                  </div>
-                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Properties:</span>
-                    <span className="text-sm">Init Capital {recipe.algorithm_inputs?.properties?.initialCapital}, Order Size {recipe.algorithm_inputs?.properties?.orderSize?.value} ({recipe.algorithm_inputs?.properties?.orderSize?.type}), Pyramiding {recipe.algorithm_inputs?.properties?.pyramiding}</span>
-                  </div>
+                  {(recipe.algorithm_inputs?.dates?.start && recipe.algorithm_inputs?.dates?.end) && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Start/End:</span>
+                      <span className="text-sm">{recipe.algorithm_inputs?.dates?.start?.year}-{recipe.algorithm_inputs?.dates?.start?.month}-{recipe.algorithm_inputs?.dates?.start?.day} → {recipe.algorithm_inputs?.dates?.end?.year}-{recipe.algorithm_inputs?.dates?.end?.month}-{recipe.algorithm_inputs?.dates?.end?.day}</span>
+                    </div>
+                  )}
+                  {/* Properties subheader */}
+                  {(recipe.algorithm_inputs?.properties?.initialCapital || recipe.algorithm_inputs?.properties?.orderSize || typeof recipe.algorithm_inputs?.properties?.pyramiding === 'number') && (
+                    <div className="text-sm font-semibold mt-4">Properties</div>
+                  )}
+                  {typeof recipe.algorithm_inputs?.properties?.initialCapital === 'number' && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Initial Capital:</span>
+                      <span className="text-sm">{recipe.algorithm_inputs?.properties?.initialCapital}</span>
+                    </div>
+                  )}
+                  {recipe.algorithm_inputs?.properties?.orderSize && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Order Size:</span>
+                      <span className="text-sm">{recipe.algorithm_inputs?.properties?.orderSize?.value} ({recipe.algorithm_inputs?.properties?.orderSize?.type})</span>
+                    </div>
+                  )}
+                  {typeof recipe.algorithm_inputs?.properties?.pyramiding === 'number' && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Pyramiding:</span>
+                      <span className="text-sm">{recipe.algorithm_inputs?.properties?.pyramiding}</span>
+                    </div>
+                  )}
                 </>
               )}
             </div>
