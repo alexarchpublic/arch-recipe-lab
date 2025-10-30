@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { Heart, Trash2, RefreshCw } from "lucide-react";
+import { Plus, Trash2, RefreshCw } from "lucide-react";
 
 export function PortfolioDrawer() {
-  const { setOnFirstAdd } = usePortfolio();
+  const { setOnFirstAdd, positions } = usePortfolio() as any;
   const [open, setOpen] = useState(false);
+  const [flash, setFlash] = useState(false);
+  const prevCountRef = useRef<number>(0);
 
   // Open the drawer automatically the first time an item is added
   useEffect(() => {
@@ -17,14 +19,24 @@ export function PortfolioDrawer() {
     return () => setOnFirstAdd(null);
   }, [setOnFirstAdd]);
 
+  // Flash the trigger button briefly when a recipe is added
+  useEffect(() => {
+    const count = Object.keys(positions || {}).length;
+    if (count > prevCountRef.current) {
+      setFlash(true);
+      setTimeout(() => setFlash(false), 1500);
+    }
+    prevCountRef.current = count;
+  }, [positions]);
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
-          className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg"
+          className={"fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg transition-colors " + (flash ? "bg-green-600 hover:bg-green-600" : "")}
           variant="default"
         >
-          <Heart className="h-5 w-5" />
+          <Plus className="h-5 w-5" />
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-full sm:max-w-md">

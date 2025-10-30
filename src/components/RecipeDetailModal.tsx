@@ -144,7 +144,12 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl pr-8 flex items-center gap-2">{recipe.goal}{typeof recipe.display_number === 'number' && (<Badge variant="outline">#{recipe.display_number}</Badge>)}</DialogTitle>
+          <DialogTitle className="text-2xl pr-8 flex items-center gap-3">
+            <span className="font-bold">{recipe.goal}</span>
+            {typeof recipe.display_number === 'number' && (
+              <Badge className="text-base py-1 px-2">#{recipe.display_number}</Badge>
+            )}
+          </DialogTitle>
           <DialogDescription className="flex flex-wrap gap-2 pt-2">
             <Badge variant="outline">{recipe.asset}</Badge>
             <Badge className={getFocusColor(recipe.focus)}>{recipe.focus}</Badge>

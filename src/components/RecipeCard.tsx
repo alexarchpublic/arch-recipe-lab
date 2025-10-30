@@ -150,27 +150,8 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
             {recipe.goal}
           </CardTitle>
           {typeof recipe.display_number === 'number' && (
-            <Badge variant="outline" className="ml-2">#{recipe.display_number}</Badge>
+            <Badge variant="secondary" className="ml-2 font-semibold">#{recipe.display_number}</Badge>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleRecipe({
-                recipeId: recipe.id,
-                title: recipe.name,
-                assetSymbol: recipe.asset,
-                baseInitialCapital: undefined,
-                baseCashProfit: recipe.cash_profit ?? null,
-                assetAccumulatedText: null,
-              });
-            }}
-            className={inPortfolio ? "text-red-500" : ""}
-            aria-label={inPortfolio ? "Remove from portfolio" : "Add to portfolio"}
-          >
-            <Heart className={inPortfolio ? "h-4 w-4 fill-red-500" : "h-4 w-4"} />
-          </Button>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge className={getAssetColor(recipe.asset)}>
@@ -243,10 +224,38 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
       </CardContent>
       
       <CardFooter className="pt-0">
-        <p className="text-xs text-muted-foreground">
-          {recipe.strategy_type}
-        </p>
+        <AddToPortfolioButton recipe={recipe} />
       </CardFooter>
     </Card>
   );
 };
+
+function AddToPortfolioButton({ recipe }: { recipe: any }) {
+  const { isInPortfolio, toggleRecipe } = usePortfolio();
+  const [flash, setFlash] = useState(false);
+  const added = isInPortfolio(recipe.id);
+  return (
+    <Button
+      className={
+        "w-full transition-colors " +
+        (flash || added ? "bg-green-600 hover:bg-green-600 text-white" : "")
+      }
+      variant={added ? "secondary" : "outline"}
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleRecipe({
+          recipeId: recipe.id,
+          title: recipe.name,
+          assetSymbol: recipe.asset,
+          baseInitialCapital: undefined,
+          baseCashProfit: recipe.cash_profit ?? null,
+          assetAccumulatedText: null,
+        });
+        setFlash(true);
+        setTimeout(() => setFlash(false), 1500);
+      }}
+    >
+      {added ? "Added" : "Add To Portfolio"}
+    </Button>
+  );
+}
