@@ -17,6 +17,8 @@ interface Recipe {
   asset: string;
   time_horizon: string;
   strategy_type: string;
+  algorithm?: string;
+  algorithm_inputs?: any;
   focus: string;
   goal: string;
   entry_trade: string;

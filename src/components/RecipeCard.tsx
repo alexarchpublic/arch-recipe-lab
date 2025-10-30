@@ -12,6 +12,8 @@ interface Recipe {
   asset: string;
   time_horizon: string;
   strategy_type: string;
+  algorithm?: string;
+  algorithm_inputs?: any;
   focus: string;
   goal: string;
   entry_trade: string;
@@ -158,22 +160,16 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
               </div>
             </div>
           )}
-          
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="text-xs text-muted-foreground">Time Frame</p>
-              <p className="text-sm font-semibold">{recipe.time_frame}</p>
+
+          {recipe.algorithm && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 col-span-2">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Algorithm</p>
+                <p className="text-sm font-semibold">{recipe.algorithm}</p>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-            <Target className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="text-xs text-muted-foreground">Exit/Entry</p>
-              <p className="text-sm font-semibold">{recipe.exit_to_entry_proportion}%</p>
-            </div>
-          </div>
+          )}
         </div>
       </CardContent>
       

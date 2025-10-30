@@ -18,6 +18,8 @@ interface Recipe {
   asset: string;
   time_horizon: string;
   strategy_type: string;
+  algorithm?: string;
+  algorithm_inputs?: any;
   focus: string;
   goal: string;
   entry_trade: string;
@@ -68,8 +70,8 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   if (!recipe) return null;
 
   const returnValue = recipe.cagr || recipe.annualized_return;
-  const scaledEntryTrade = scaleRecipeFreeText(recipe.entry_trade, scale) as string;
-  const scaledExitTrade = scaleRecipeFreeText(recipe.exit_trade, scale) as string;
+  const scaledEntryTrade = recipe.entry_trade ? (scaleRecipeFreeText(recipe.entry_trade, scale) as string) : '';
+  const scaledExitTrade = recipe.exit_trade ? (scaleRecipeFreeText(recipe.exit_trade, scale) as string) : '';
   const scaledInitialCapital = (initialCapital ?? recipe.initial_capital) ?? null;
   const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
     ? Math.round((recipe.cash_profit as number) * (Number.isFinite(scale) ? scale : 1))
@@ -174,39 +176,109 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
 
           <Separator />
 
-          {/* Parameters */}
+          {/* Parameters - Algorithm specific */}
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
               Parameters
             </h3>
-              <div className="grid gap-3">
-              <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
-                <span className="text-sm font-medium text-muted-foreground">Entry Trade:</span>
-                  <span className="text-sm">{scaledEntryTrade}</span>
-              </div>
-              <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
-                <span className="text-sm font-medium text-muted-foreground">Exit Trade:</span>
-                  <span className="text-sm">{scaledExitTrade}</span>
-              </div>
-              {recipe.sell_above_cost_basis !== null && (
+            <div className="grid gap-3">
+              {recipe.algorithm && (
                 <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
-                  <span className="text-sm font-medium text-muted-foreground">Sell Above Cost Basis:</span>
-                  <span className="text-sm">{recipe.sell_above_cost_basis ? 'Yes' : 'No'}</span>
+                  <span className="text-sm font-medium text-muted-foreground">Algorithm:</span>
+                  <span className="text-sm">{recipe.algorithm}</span>
                 </div>
               )}
-              <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
-                <span className="text-sm font-medium text-muted-foreground">Exit/Entry Proportion:</span>
-                <span className="text-sm font-semibold text-primary">{recipe.exit_to_entry_proportion}%</span>
-              </div>
-              <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
-                <span className="text-sm font-medium text-muted-foreground">Time Frame:</span>
-                <span className="text-sm">{recipe.time_frame}</span>
-              </div>
-              <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
-                <span className="text-sm font-medium text-muted-foreground">Backtesting Period:</span>
-                <span className="text-sm">{recipe.backtesting_period}</span>
-              </div>
+
+              {/* Intelligence Algorithm */}
+              {recipe.algorithm === 'Intelligence Algorithm' && (
+                <>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Repeat Purchase Method:</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.repeatPurchaseMethod}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Start Date/Time:</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.start?.year}-{recipe.algorithm_inputs?.start?.month}-{recipe.algorithm_inputs?.start?.day} {recipe.algorithm_inputs?.start?.hour}:{String(recipe.algorithm_inputs?.start?.minute ?? '').padStart(2,'0')}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">End Date:</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.end?.year}-{recipe.algorithm_inputs?.end?.month}-{recipe.algorithm_inputs?.end?.day}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Start X Bars Back:</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.startBarsBack?.bars}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Exit Full on Last Bar:</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.backtest?.exitFullOnLastBar ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Activate Intelligence:</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.activate?.enabled ? `Yes (Factor ${recipe.algorithm_inputs?.activate?.factor})` : 'No'}</span>
+                  </div>
+                </>
+              )}
+
+              {/* Arbitrage Algorithm */}
+              {recipe.algorithm === 'Arbitrage Algorithm' && (
+                <>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.longThreshold?.percent}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Exit Threshold (%):</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.exitThreshold?.percent}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Entry Trade Size ($):</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entry}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Exit Trade Size ($):</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.exit}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Start/End:</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.dates?.start?.year}-{recipe.algorithm_inputs?.dates?.start?.month}-{recipe.algorithm_inputs?.dates?.start?.day} → {recipe.algorithm_inputs?.dates?.end?.year}-{recipe.algorithm_inputs?.dates?.end?.month}-{recipe.algorithm_inputs?.dates?.end?.day}</span>
+                  </div>
+                </>
+              )}
+
+              {/* Oracle Protocol */}
+              {recipe.algorithm === 'Oracle Protocol' && (
+                <>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.longThreshold?.percent}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Exit Threshold (%):</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.exitThreshold?.percent}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Primary Trade Size Type:</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.primaryType}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Entry/Exit %:</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entryPercent} / {recipe.algorithm_inputs?.tradeSize?.exitPercent}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Entry/Exit Fixed:</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entryFixed} / {recipe.algorithm_inputs?.tradeSize?.exitFixed}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Start/End:</span>
+                    <span className="text-sm">{recipe.algorithm_inputs?.dates?.start?.year}-{recipe.algorithm_inputs?.dates?.start?.month}-{recipe.algorithm_inputs?.dates?.start?.day} → {recipe.algorithm_inputs?.dates?.end?.year}-{recipe.algorithm_inputs?.dates?.end?.month}-{recipe.algorithm_inputs?.dates?.end?.day}</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Properties:</span>
+                    <span className="text-sm">Init Capital {recipe.algorithm_inputs?.properties?.initialCapital}, Order Size {recipe.algorithm_inputs?.properties?.orderSize?.value} ({recipe.algorithm_inputs?.properties?.orderSize?.type}), Pyramiding {recipe.algorithm_inputs?.properties?.pyramiding}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
