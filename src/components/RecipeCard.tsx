@@ -99,6 +99,16 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   };
 
   const returnValue = computeCagr() ?? recipe.cagr ?? recipe.annualized_return;
+  // Parse asset accumulated numeric qty and net profit dollars
+  const parseAssetQuantity = (text?: string | null): number | null => {
+    if (!text) return null;
+    const match = String(text).match(/\b([0-9]+(?:\.[0-9]+)?)\s*(?:[A-Z]{2,6})?\b/);
+    if (!match) return null;
+    const qty = parseFloat(match[1]);
+    return Number.isFinite(qty) ? qty : null;
+  };
+  const assetQty = parseAssetQuantity(recipe.asset_accumulated);
+  const netProfitNumber = parseCurrencyFromString(recipe.net_profit);
   const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0 
     ? recipe.screenshots[0].image_url 
     : null;
@@ -189,6 +199,26 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
                 <p className="text-sm font-semibold text-foreground">
                   ${scaledCashProfit.toLocaleString()}
                 </p>
+              </div>
+            </div>
+          )}
+
+          {assetQty !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Asset Accumulated</p>
+                <p className="text-sm font-semibold">{assetQty} {recipe.asset}</p>
+              </div>
+            </div>
+          )}
+
+          {netProfitNumber !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+              <DollarSign className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-xs text-muted-foreground">Net Profit</p>
+                <p className="text-sm font-semibold">${netProfitNumber.toLocaleString()}</p>
               </div>
             </div>
           )}

@@ -123,13 +123,17 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
     ? scaleRecipeFreeText(recipe.net_profit, scale)
     : null;
 
-  // Ensure Asset Accumulated includes crypto ticker
-  const ensureAssetTicker = (text: string | null, ticker: string): string | null => {
+  // Parse numeric asset quantity and format as "<qty> <ASSET>"
+  const parseAssetQuantity = (text?: string | null): number | null => {
     if (!text) return null;
-    const hasTicker = new RegExp(`\\b${ticker}\\b`, 'i').test(text);
-    return hasTicker ? text : `${text} ${ticker}`;
+    // Try to find a number followed by optional space and asset ticker, or number in parentheses
+    const qtyMatch = String(text).match(/\b([0-9]+(?:\.[0-9]+)?)\s*(?:[A-Z]{2,6})?\b/);
+    if (!qtyMatch) return null;
+    const qty = parseFloat(qtyMatch[1]);
+    return Number.isFinite(qty) ? qty : null;
   };
-  const assetAccumulatedDisplay = ensureAssetTicker(scaledAssetAccumulated as any, recipe.asset);
+  const assetQty = parseAssetQuantity(scaledAssetAccumulated as any);
+  const assetAccumulatedDisplay = assetQty !== null ? `${assetQty} ${recipe.asset}` : null;
 
   // Format Net Profit as dollars
   const netProfitNumber = parseCurrencyFromString(scaledNetProfitRaw as any);
@@ -222,8 +226,49 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
 
           {/* Goal section removed; goal is now the title */}
 
-          {/* Parameters - Algorithm specific */
-          }
+          {/* Results (moved above Parameters) */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Results
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {scaledInitialCapital !== null && (
+                <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+                  <p className="text-xs text-muted-foreground mb-1">Initial Capital</p>
+                  <p className="text-lg font-semibold">${Math.round(scaledInitialCapital).toLocaleString()}</p>
+                </div>
+              )}
+              {scaledCashProfit !== null && (
+                <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
+                  <p className="text-xs text-muted-foreground mb-1">Cash Profit</p>
+                  <p className="text-lg font-semibold text-accent">${scaledCashProfit.toLocaleString()}</p>
+                </div>
+              )}
+              {assetAccumulatedDisplay && (
+                <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+                  <p className="text-xs text-muted-foreground mb-1">Asset Accumulated</p>
+                  <p className="text-sm font-semibold">{assetAccumulatedDisplay}</p>
+                </div>
+              )}
+              {netProfitDisplay && (
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                  <p className="text-xs text-muted-foreground mb-1">Net Profit</p>
+                  <p className="text-sm font-semibold text-primary">{netProfitDisplay}</p>
+                </div>
+              )}
+              {returnValue !== null && (
+                <div className="p-4 rounded-lg bg-gradient-hero text-white border-0">
+                  <p className="text-xs opacity-90 mb-1">CAGR</p>
+                  <p className="text-2xl font-bold">{returnValue.toFixed(2)}%</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Parameters - Algorithm specific */}
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
