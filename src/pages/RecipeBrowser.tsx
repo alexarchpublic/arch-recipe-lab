@@ -49,7 +49,8 @@ export default function RecipeBrowser() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('cagr-desc');
-  const [initialCapital, setInitialCapital] = useState<number>(100000);
+  // Keep the raw input as a string so empty state doesn't coerce to 0
+  const [initialCapitalInput, setInitialCapitalInput] = useState<string>('100000');
   const [filters, setFilters] = useState<Filters>({
     assets: [],
     focuses: [],
@@ -61,11 +62,16 @@ export default function RecipeBrowser() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const initialCapitalNumber = useMemo(() => {
+    const n = parseFloat(initialCapitalInput);
+    return Number.isFinite(n) ? n : 0;
+  }, [initialCapitalInput]);
+
   const scale = useMemo(() => {
     const base = 100000;
-    if (!initialCapital || initialCapital <= 0) return 0;
-    return initialCapital / base;
-  }, [initialCapital]);
+    if (!initialCapitalNumber || initialCapitalNumber <= 0) return 0;
+    return initialCapitalNumber / base;
+  }, [initialCapitalNumber]);
 
   useEffect(() => {
     fetchRecipes();
@@ -312,8 +318,8 @@ export default function RecipeBrowser() {
                   <p className="text-sm font-semibold mb-2">Initial Capital</p>
                   <Input
                     type="number"
-                    value={initialCapital}
-                    onChange={(e) => setInitialCapital(Number(e.target.value))}
+                    value={initialCapitalInput}
+                    onChange={(e) => setInitialCapitalInput(e.target.value)}
                     min={0}
                   />
                   <p className="text-xs text-muted-foreground mt-2">
@@ -343,8 +349,8 @@ export default function RecipeBrowser() {
                 <p className="text-sm font-semibold mb-2">Initial Capital</p>
                 <Input
                   type="number"
-                  value={initialCapital}
-                  onChange={(e) => setInitialCapital(Number(e.target.value))}
+                  value={initialCapitalInput}
+                  onChange={(e) => setInitialCapitalInput(e.target.value)}
                   min={0}
                 />
                 <p className="text-xs text-muted-foreground mt-2">
@@ -401,7 +407,7 @@ export default function RecipeBrowser() {
         open={!!selectedRecipe}
         onOpenChange={(open) => !open && setSelectedRecipe(null)}
         scale={scale}
-        initialCapital={initialCapital}
+        initialCapital={initialCapitalNumber}
       />
     </div>
   );

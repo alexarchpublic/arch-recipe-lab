@@ -211,7 +211,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
               <Target className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Asset Accumulated</p>
-                <p className="text-sm font-semibold">{scaledAssetQty} {recipe.asset}</p>
+                <p className="text-sm font-semibold">{scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} {recipe.asset}</p>
               </div>
             </div>
           )}

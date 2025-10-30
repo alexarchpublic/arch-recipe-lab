@@ -133,7 +133,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
     return Number.isFinite(qty) ? qty : null;
   };
   const assetQty = parseAssetQuantity(scaledAssetAccumulated as any);
-  const assetAccumulatedDisplay = assetQty !== null ? `${assetQty} ${recipe.asset}` : null;
+  const assetAccumulatedDisplay = assetQty !== null ? `${assetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${recipe.asset}` : null;
 
   // Format Net Profit as dollars
   const netProfitNumber = parseCurrencyFromString(scaledNetProfitRaw as any);
