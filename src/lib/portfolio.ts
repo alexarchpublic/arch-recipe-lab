@@ -153,4 +153,26 @@ export function roundCurrency(value: number | null): number | null {
   return Math.round(value * 100) / 100;
 }
 
+// Optimization helpers
+export type OptimizeObjective = "cash" | "pnl" | "asset";
+
+export function perDollarYield(
+  row: ScaledRecipeMetrics,
+  objective: OptimizeObjective,
+  assetSymbol?: string
+): number {
+  if (row.capitalAllocated <= 0) return 0;
+  switch (objective) {
+    case "cash":
+      return row.cashRealized !== null ? row.cashRealized / row.capitalAllocated : 0;
+    case "pnl":
+      return row.pnl !== null ? row.pnl / row.capitalAllocated : 0;
+    case "asset":
+      if (!assetSymbol || row.assetSymbol !== assetSymbol) return 0;
+      return row.assetQuantity !== null ? row.assetQuantity / row.capitalAllocated : 0;
+    default:
+      return 0;
+  }
+}
+
 

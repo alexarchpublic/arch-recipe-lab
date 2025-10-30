@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { Plus, Trash2, RefreshCw } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function PortfolioDrawer() {
   const { setOnFirstAdd, positions } = usePortfolio() as any;
@@ -68,11 +69,22 @@ function DrawerInner() {
     setInitialCapital,
     setAllocation,
     removeRecipe,
-    normalize,
     clear,
+    optimizeAllocations,
   } = usePortfolio();
 
   const positionEntries = useMemo(() => Object.values(positions), [positions]);
+  const assetOptions = useMemo(() => {
+    const set = new Set<string>();
+    Object.values(recipes).forEach((r: any) => set.add(r.assetSymbol));
+    return Array.from(set);
+  }, [recipes]);
+
+  const [objective, setObjective] = useState<"cash" | "pnl" | "asset">("cash");
+  const [asset, setAsset] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (!asset && assetOptions.length > 0) setAsset(assetOptions[0]);
+  }, [asset, assetOptions]);
 
   return (
     <div className="flex h-full flex-col">
@@ -97,7 +109,54 @@ function DrawerInner() {
         </div>
       </div>
 
-      <div className="mt-4 space-y-3 overflow-auto">
+      <div className="mt-4 grid grid-cols-1 gap-3">
+        {/* Optimize Controls */}
+        <div className="rounded-md border p-3">
+          <div className="text-sm font-medium mb-2">Optimize Allocations</div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">Objective</div>
+              <Select value={objective} onValueChange={(v) => setObjective(v as any)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select objective" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash Profit</SelectItem>
+                  <SelectItem value="pnl">Net Profit (PnL)</SelectItem>
+                  <SelectItem value="asset">Asset Accumulation</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {objective === "asset" && (
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Asset</div>
+                <Select value={asset} onValueChange={setAsset}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select asset" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {assetOptions.map((sym) => (
+                      <SelectItem key={sym} value={sym}>
+                        {sym}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <div className="mt-2">
+            <Button
+              onClick={() => optimizeAllocations(objective, objective === "asset" ? asset : undefined)}
+              disabled={positionEntries.length === 0}
+            >
+              Optimize
+            </Button>
+          </div>
+        </div>
+
+        {/* Positions */}
+        <div className="space-y-3 overflow-auto">
         {positionEntries.length === 0 && (
           <div className="text-sm text-muted-foreground">No recipes added yet. Tap the heart on a recipe to add it.</div>
         )}
@@ -159,6 +218,7 @@ function DrawerInner() {
             </div>
           );
         })}
+        </div>
       </div>
 
       <div className="mt-4 space-y-2">
@@ -194,9 +254,6 @@ function DrawerInner() {
       </div>
 
       <div className="mt-auto flex items-center gap-2 pt-4">
-        <Button variant="secondary" className="gap-2" onClick={normalize}>
-          <RefreshCw className="h-4 w-4" /> Normalize 100%
-        </Button>
         <Button variant="destructive" className="gap-2" onClick={clear}>
           <Trash2 className="h-4 w-4" /> Clear
         </Button>

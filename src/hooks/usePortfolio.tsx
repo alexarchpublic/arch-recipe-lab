@@ -10,6 +10,8 @@ import {
   computeScaledMetricsForRecipe,
   normalizeAllocations,
   remainingAllocationPercent,
+  OptimizeObjective,
+  perDollarYield,
 } from "@/lib/portfolio";
 
 type RecipesMap = Record<string, PortfolioRecipeSummary>;
@@ -42,6 +44,9 @@ interface PortfolioContextValue {
 
   // UI hook: called on first add to prompt opening the drawer
   setOnFirstAdd: (cb: (() => void) | null) => void;
+
+  // optimization
+  optimizeAllocations: (objective: OptimizeObjective, assetSymbol?: string) => void;
 }
 
 const PortfolioContext = createContext<PortfolioContextValue | undefined>(undefined);
@@ -162,6 +167,34 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     firstAddCallbackRef.current = cb;
   }, []);
 
+  const optimizeAllocations = useCallback((objective: OptimizeObjective, assetSymbol?: string) => {
+    // Compute yields per row relative to current initialCapital (rows already scaled by allocations)
+    // To get per-dollar yield independent of current allocation, temporarily compute using 1% equivalent:
+    // But since yields are linear, we can divide current metrics by current capitalAllocated when > 0.
+    const candidates = rows
+      .map(r => ({ r, y: perDollarYield(r, objective, assetSymbol) }))
+      .filter(x => Number.isFinite(x.y));
+
+    if (candidates.length === 0) return;
+    // Sort by yield desc, tie-breaker by title then id for determinism
+    candidates.sort((a, b) => {
+      if (b.y !== a.y) return b.y - a.y;
+      if (a.r.title !== b.r.title) return a.r.title.localeCompare(b.r.title);
+      return a.r.recipeId.localeCompare(b.r.recipeId);
+    });
+
+    const best = candidates[0];
+    if (!best || best.y <= 0) return;
+
+    setState(prev => {
+      const newPositions: Record<string, PortfolioPosition> = {};
+      for (const key of Object.keys(prev.positions)) {
+        newPositions[key] = { recipeId: key, allocationPct: key === best.r.recipeId ? 100 : 0 };
+      }
+      return { ...prev, positions: newPositions };
+    });
+  }, [rows]);
+
   const rows: ScaledRecipeMetrics[] = useMemo(() => {
     return Object.values(positions).map(pos => {
       const r = recipes[pos.recipeId];
@@ -187,6 +220,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     normalize,
     clear,
     setOnFirstAdd,
+    optimizeAllocations,
   };
 
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;
