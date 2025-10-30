@@ -53,14 +53,14 @@ export type Database = {
           algorithm_inputs: Json
           asset: string
           asset_accumulated: string | null
-          backtesting_period: string
+          backtesting_period: string | null
           best_for: string | null
           cagr: number | null
           cash_profit: number | null
           created_at: string
-          entry_trade: string
-          exit_to_entry_proportion: number
-          exit_trade: string
+          entry_trade: string | null
+          exit_to_entry_proportion: number | null
+          exit_trade: string | null
           focus: string
           goal: string
           id: string
@@ -69,7 +69,7 @@ export type Database = {
           net_profit: string | null
           sell_above_cost_basis: boolean | null
           strategy_type: string
-          time_frame: string
+          time_frame: string | null
           time_horizon: string
           updated_at: string
         }
@@ -79,14 +79,14 @@ export type Database = {
           algorithm_inputs?: Json
           asset: string
           asset_accumulated?: string | null
-          backtesting_period: string
+          backtesting_period?: string | null
           best_for?: string | null
           cagr?: number | null
           cash_profit?: number | null
           created_at?: string
-          entry_trade: string
-          exit_to_entry_proportion: number
-          exit_trade: string
+          entry_trade?: string | null
+          exit_to_entry_proportion?: number | null
+          exit_trade?: string | null
           focus: string
           goal: string
           id?: string
@@ -95,7 +95,7 @@ export type Database = {
           net_profit?: string | null
           sell_above_cost_basis?: boolean | null
           strategy_type: string
-          time_frame: string
+          time_frame?: string | null
           time_horizon: string
           updated_at?: string
         }
@@ -105,14 +105,14 @@ export type Database = {
           algorithm_inputs?: Json
           asset?: string
           asset_accumulated?: string | null
-          backtesting_period?: string
+          backtesting_period?: string | null
           best_for?: string | null
           cagr?: number | null
           cash_profit?: number | null
           created_at?: string
-          entry_trade?: string
-          exit_to_entry_proportion?: number
-          exit_trade?: string
+          entry_trade?: string | null
+          exit_to_entry_proportion?: number | null
+          exit_trade?: string | null
           focus?: string
           goal?: string
           id?: string
@@ -121,7 +121,7 @@ export type Database = {
           net_profit?: string | null
           sell_above_cost_basis?: boolean | null
           strategy_type?: string
-          time_frame?: string
+          time_frame?: string | null
           time_horizon?: string
           updated_at?: string
         }

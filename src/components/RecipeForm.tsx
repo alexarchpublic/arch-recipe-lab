@@ -90,6 +90,11 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
     defaultValues: {
       sell_above_cost_basis: true,
       exit_to_entry_proportion: 0,
+      // Provide safe defaults so DB NOT NULL constraints are satisfied
+      entry_trade: recipe?.entry_trade || 'See parameters',
+      exit_trade: recipe?.exit_trade || 'See parameters',
+      time_frame: recipe?.time_frame || 'N/A',
+      backtesting_period: recipe?.backtesting_period || 'N/A',
       algorithm: recipe?.algorithm || "Oracle Protocol",
       algorithm_inputs: recipe?.algorithm_inputs || {},
       ...recipe
@@ -952,85 +957,9 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
               )}
             </div>
 
-            {/* Trading Parameters */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Trading Parameters</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="entry_trade">Entry Trade *</Label>
-                  <Textarea
-                    id="entry_trade"
-                    {...register("entry_trade")}
-                    placeholder="e.g., Purchase $8,000 when price drops 3%"
-                    rows={2}
-                  />
-                  {errors.entry_trade && (
-                    <p className="text-sm text-destructive">{errors.entry_trade.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="exit_trade">Exit Trade *</Label>
-                  <Textarea
-                    id="exit_trade"
-                    {...register("exit_trade")}
-                    placeholder="e.g., Sell $6,500 when price rises 3.5%"
-                    rows={2}
-                  />
-                  {errors.exit_trade && (
-                    <p className="text-sm text-destructive">{errors.exit_trade.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="exit_to_entry_proportion">Exit to Entry Proportion (%) *</Label>
-                  <Input
-                    id="exit_to_entry_proportion"
-                    type="number"
-                    step="0.01"
-                    {...register("exit_to_entry_proportion", { valueAsNumber: true })}
-                    placeholder="e.g., 81.25"
-                  />
-                  {errors.exit_to_entry_proportion && (
-                    <p className="text-sm text-destructive">{errors.exit_to_entry_proportion.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="time_frame">Time Frame *</Label>
-                  <Input
-                    id="time_frame"
-                    {...register("time_frame")}
-                    placeholder="e.g., Daily, 6 Hour, 1 Week"
-                  />
-                  {errors.time_frame && (
-                    <p className="text-sm text-destructive">{errors.time_frame.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="backtesting_period">Backtesting Period *</Label>
-                  <Input
-                    id="backtesting_period"
-                    {...register("backtesting_period")}
-                    placeholder="e.g., January 2025–June 2025"
-                  />
-                  {errors.backtesting_period && (
-                    <p className="text-sm text-destructive">{errors.backtesting_period.message}</p>
-                  )}
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="sell_above_cost_basis"
-                    checked={watch("sell_above_cost_basis")}
-                    onCheckedChange={(checked) => setValue("sell_above_cost_basis", !!checked)}
-                  />
-                  <Label htmlFor="sell_above_cost_basis">Sell Above Cost Basis</Label>
-                </div>
-              </div>
-            </div>
+            {/* Trading Parameters section intentionally removed. These fields are now
+               represented within algorithm-specific inputs. Safe defaults are
+               provided in form defaults to satisfy DB constraints. */}
 
             {/* Results */}
             <div className="space-y-4">
