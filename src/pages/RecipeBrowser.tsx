@@ -47,6 +47,7 @@ export default function RecipeBrowser() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('cagr-desc');
+  const [initialCapital, setInitialCapital] = useState<number>(100000);
   const [filters, setFilters] = useState<Filters>({
     assets: [],
     focuses: [],
@@ -57,6 +58,12 @@ export default function RecipeBrowser() {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const scale = useMemo(() => {
+    const base = 100000;
+    if (!initialCapital || initialCapital <= 0) return 0;
+    return initialCapital / base;
+  }, [initialCapital]);
 
   useEffect(() => {
     fetchRecipes();
@@ -314,11 +321,37 @@ export default function RecipeBrowser() {
                 availableTimeFrames={availableTimeFrames}
                 availableStrategyTypes={availableStrategyTypes}
               />
+              {/* Capital Controls */}
+              <div className="mt-6 p-4 rounded-lg border border-border bg-secondary/30">
+                <p className="text-sm font-semibold mb-2">Initial Capital</p>
+                <Input
+                  type="number"
+                  value={initialCapital}
+                  onChange={(e) => setInitialCapital(Number(e.target.value))}
+                  min={0}
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Recipes are authored at $100,000. Displayed values are scaled.
+                </p>
+              </div>
             </div>
           </aside>
 
           {/* Recipe Grid */}
           <main className="flex-1">
+            {/* Capital Controls (Mobile) */}
+            <div className="lg:hidden mb-4 p-4 rounded-lg border border-border bg-secondary/30">
+              <p className="text-sm font-semibold mb-2">Initial Capital</p>
+              <Input
+                type="number"
+                value={initialCapital}
+                onChange={(e) => setInitialCapital(Number(e.target.value))}
+                min={0}
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Recipes are authored at $100,000. Displayed values are scaled.
+              </p>
+            </div>
             {loading ? (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
@@ -339,6 +372,7 @@ export default function RecipeBrowser() {
                     <RecipeCard
                       key={recipe.id}
                       recipe={recipe}
+                      scale={scale}
                       onClick={() => setSelectedRecipe(recipe)}
                     />
                   ))}
@@ -354,6 +388,8 @@ export default function RecipeBrowser() {
         recipe={selectedRecipe}
         open={!!selectedRecipe}
         onOpenChange={(open) => !open && setSelectedRecipe(null)}
+        scale={scale}
+        initialCapital={initialCapital}
       />
     </div>
   );

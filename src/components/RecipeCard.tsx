@@ -28,6 +28,7 @@ interface Recipe {
 
 interface RecipeCardProps {
   recipe: Recipe;
+  scale?: number;
   onClick: () => void;
 }
 
@@ -55,10 +56,13 @@ const getAssetColor = (asset: string) => {
   return colors[asset] || 'bg-muted text-muted-foreground';
 };
 
-export const RecipeCard = ({ recipe, onClick }: RecipeCardProps) => {
+export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   const returnValue = recipe.cagr || recipe.annualized_return;
   const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0 
     ? recipe.screenshots[0].image_url 
+    : null;
+  const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
+    ? Math.round((recipe.cash_profit as number) * (Number.isFinite(scale) ? scale : 1))
     : null;
   
   return (
@@ -119,13 +123,13 @@ export const RecipeCard = ({ recipe, onClick }: RecipeCardProps) => {
             </div>
           )}
           
-          {recipe.cash_profit !== null && (
+          {scaledCashProfit !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
               <DollarSign className="h-4 w-4 text-accent" />
               <div>
                 <p className="text-xs text-muted-foreground">Cash Profit</p>
                 <p className="text-sm font-semibold text-foreground">
-                  ${recipe.cash_profit.toLocaleString()}
+                  ${scaledCashProfit.toLocaleString()}
                 </p>
               </div>
             </div>

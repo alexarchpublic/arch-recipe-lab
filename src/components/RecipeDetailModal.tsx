@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar, Image as ImageIcon } from "lucide-react";
 import { useState, useRef } from "react";
+import { scaleRecipeFreeText } from "@/utils/recipeScaling";
 
 interface Recipe {
   id: string;
@@ -43,6 +44,8 @@ interface RecipeDetailModalProps {
   recipe: Recipe | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  scale?: number;
+  initialCapital?: number;
 }
 
 const getFocusColor = (focus: string) => {
@@ -58,13 +61,25 @@ const getFocusColor = (focus: string) => {
   }
 };
 
-export const RecipeDetailModal = ({ recipe, open, onOpenChange }: RecipeDetailModalProps) => {
+export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initialCapital }: RecipeDetailModalProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const carouselRef = useRef<any>(null);
   
   if (!recipe) return null;
 
   const returnValue = recipe.cagr || recipe.annualized_return;
+  const scaledEntryTrade = scaleRecipeFreeText(recipe.entry_trade, scale) as string;
+  const scaledExitTrade = scaleRecipeFreeText(recipe.exit_trade, scale) as string;
+  const scaledInitialCapital = (initialCapital ?? recipe.initial_capital) ?? null;
+  const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
+    ? Math.round((recipe.cash_profit as number) * (Number.isFinite(scale) ? scale : 1))
+    : null;
+  const scaledAssetAccumulated = recipe.asset_accumulated
+    ? scaleRecipeFreeText(recipe.asset_accumulated, scale)
+    : null;
+  const scaledNetProfit = recipe.net_profit
+    ? scaleRecipeFreeText(recipe.net_profit, scale)
+    : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -165,14 +180,14 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange }: RecipeDetailMo
               <Target className="h-5 w-5 text-primary" />
               Parameters
             </h3>
-            <div className="grid gap-3">
+              <div className="grid gap-3">
               <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
                 <span className="text-sm font-medium text-muted-foreground">Entry Trade:</span>
-                <span className="text-sm">{recipe.entry_trade}</span>
+                  <span className="text-sm">{scaledEntryTrade}</span>
               </div>
               <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
                 <span className="text-sm font-medium text-muted-foreground">Exit Trade:</span>
-                <span className="text-sm">{recipe.exit_trade}</span>
+                  <span className="text-sm">{scaledExitTrade}</span>
               </div>
               {recipe.sell_above_cost_basis !== null && (
                 <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
@@ -204,31 +219,31 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange }: RecipeDetailMo
               Results
             </h3>
             <div className="grid md:grid-cols-2 gap-4">
-              {recipe.initial_capital !== null && (
+              {scaledInitialCapital !== null && (
                 <div className="p-4 rounded-lg bg-secondary/50 border border-border">
                   <p className="text-xs text-muted-foreground mb-1">Initial Capital</p>
-                  <p className="text-lg font-semibold">${recipe.initial_capital.toLocaleString()}</p>
+                  <p className="text-lg font-semibold">${Math.round(scaledInitialCapital).toLocaleString()}</p>
                 </div>
               )}
               
-              {recipe.cash_profit !== null && (
+              {scaledCashProfit !== null && (
                 <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
                   <p className="text-xs text-muted-foreground mb-1">Cash Profit</p>
-                  <p className="text-lg font-semibold text-accent">${recipe.cash_profit.toLocaleString()}</p>
+                  <p className="text-lg font-semibold text-accent">${scaledCashProfit.toLocaleString()}</p>
                 </div>
               )}
               
-              {recipe.asset_accumulated && (
+              {scaledAssetAccumulated && (
                 <div className="p-4 rounded-lg bg-secondary/50 border border-border">
                   <p className="text-xs text-muted-foreground mb-1">Asset Accumulated</p>
-                  <p className="text-sm font-semibold">{recipe.asset_accumulated}</p>
+                  <p className="text-sm font-semibold">{scaledAssetAccumulated}</p>
                 </div>
               )}
               
-              {recipe.net_profit && (
+              {scaledNetProfit && (
                 <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                   <p className="text-xs text-muted-foreground mb-1">Net Profit</p>
-                  <p className="text-sm font-semibold text-primary">{recipe.net_profit}</p>
+                  <p className="text-sm font-semibold text-primary">{scaledNetProfit}</p>
                 </div>
               )}
               
