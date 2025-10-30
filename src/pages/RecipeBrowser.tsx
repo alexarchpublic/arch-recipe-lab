@@ -254,6 +254,16 @@ export default function RecipeBrowser() {
       </header>
 
       <div className="container mx-auto px-4 py-6">
+        {/* Get started */}
+        <div className="mb-6 p-4 rounded-lg border border-border bg-secondary/20">
+          <h2 className="text-base font-semibold mb-2">Get started</h2>
+          <p className="text-sm text-muted-foreground">
+            Browse algorithm recipes, filter by asset, focus, time horizon, or strategy, and adjust
+            the Initial Capital to see all amounts scaled from the $100,000 baseline. Click a recipe
+            card to view details, parameters, and results.
+          </p>
+        </div>
+
         {/* Search and Controls */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
@@ -295,6 +305,19 @@ export default function RecipeBrowser() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] overflow-y-auto">
+                {/* Capital Controls (Mobile within Filters) */}
+                <div className="mt-2 mb-4 p-4 rounded-lg border border-border bg-secondary/30">
+                  <p className="text-sm font-semibold mb-2">Initial Capital</p>
+                  <Input
+                    type="number"
+                    value={initialCapital}
+                    onChange={(e) => setInitialCapital(Number(e.target.value))}
+                    min={0}
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Recipes are authored at $100,000. Displayed values are scaled.
+                  </p>
+                </div>
                 <FilterSidebar
                   filters={filters}
                   onFiltersChange={setFilters}
@@ -313,16 +336,8 @@ export default function RecipeBrowser() {
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block w-80 flex-shrink-0">
             <div className="sticky top-24">
-              <FilterSidebar
-                filters={filters}
-                onFiltersChange={setFilters}
-                availableAssets={availableAssets}
-                availableFocuses={availableFocuses}
-                availableTimeFrames={availableTimeFrames}
-                availableStrategyTypes={availableStrategyTypes}
-              />
-              {/* Capital Controls */}
-              <div className="mt-6 p-4 rounded-lg border border-border bg-secondary/30">
+              {/* Capital Controls (Desktop above Filters) */}
+              <div className="mb-4 p-4 rounded-lg border border-border bg-secondary/30">
                 <p className="text-sm font-semibold mb-2">Initial Capital</p>
                 <Input
                   type="number"
@@ -334,24 +349,19 @@ export default function RecipeBrowser() {
                   Recipes are authored at $100,000. Displayed values are scaled.
                 </p>
               </div>
+              <FilterSidebar
+                filters={filters}
+                onFiltersChange={setFilters}
+                availableAssets={availableAssets}
+                availableFocuses={availableFocuses}
+                availableTimeFrames={availableTimeFrames}
+                availableStrategyTypes={availableStrategyTypes}
+              />
             </div>
           </aside>
 
           {/* Recipe Grid */}
           <main className="flex-1">
-            {/* Capital Controls (Mobile) */}
-            <div className="lg:hidden mb-4 p-4 rounded-lg border border-border bg-secondary/30">
-              <p className="text-sm font-semibold mb-2">Initial Capital</p>
-              <Input
-                type="number"
-                value={initialCapital}
-                onChange={(e) => setInitialCapital(Number(e.target.value))}
-                min={0}
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                Recipes are authored at $100,000. Displayed values are scaled.
-              </p>
-            </div>
             {loading ? (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
