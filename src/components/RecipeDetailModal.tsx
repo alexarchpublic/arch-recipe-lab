@@ -232,7 +232,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
               <TrendingUp className="h-5 w-5 text-primary" />
               Results
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
               {scaledInitialCapital !== null && (
                 <div className="p-4 rounded-lg bg-secondary/50 border border-border">
                   <p className="text-xs text-muted-foreground mb-1">Initial Capital</p>
@@ -429,53 +429,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
             </div>
           </div>
 
-          <Separator />
-
-          {/* Results */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-accent" />
-              Results
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              {scaledInitialCapital !== null && (
-                <div className="p-4 rounded-lg bg-secondary/50 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Initial Capital</p>
-                  <p className="text-lg font-semibold">${Math.round(scaledInitialCapital).toLocaleString()}</p>
-                </div>
-              )}
-              
-              {scaledCashProfit !== null && (
-                <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
-                  <p className="text-xs text-muted-foreground mb-1">Cash Profit</p>
-                  <p className="text-lg font-semibold text-accent">${scaledCashProfit.toLocaleString()}</p>
-                </div>
-              )}
-              
-              {assetAccumulatedDisplay && (
-                <div className="p-4 rounded-lg bg-secondary/50 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Asset Accumulated</p>
-                  <p className="text-sm font-semibold">{assetAccumulatedDisplay}</p>
-                </div>
-              )}
-              
-              {netProfitDisplay && (
-                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-                  <p className="text-xs text-muted-foreground mb-1">Net Profit</p>
-                  <p className="text-sm font-semibold text-primary">{netProfitDisplay}</p>
-                </div>
-              )}
-              
-              {returnValue !== null && (
-                <div className="p-4 rounded-lg bg-gradient-hero text-white border-0">
-                  <p className="text-xs opacity-90 mb-1">
-                    {recipe.cagr ? 'CAGR' : 'Annualized Return'}
-                  </p>
-                  <p className="text-2xl font-bold">{returnValue.toFixed(2)}%</p>
-                </div>
-              )}
-            </div>
-          </div>
+          
 
           {/* Best For section removed as requested */}
         </div>
