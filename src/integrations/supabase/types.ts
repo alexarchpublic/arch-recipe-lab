@@ -55,6 +55,7 @@ export type Database = {
           asset_accumulated: string | null
           backtesting_period: string | null
           best_for: string | null
+          display_number: number | null
           cagr: number | null
           cash_profit: number | null
           created_at: string
@@ -81,6 +82,7 @@ export type Database = {
           asset_accumulated?: string | null
           backtesting_period?: string | null
           best_for?: string | null
+          display_number?: number | null
           cagr?: number | null
           cash_profit?: number | null
           created_at?: string
@@ -107,6 +109,7 @@ export type Database = {
           asset_accumulated?: string | null
           backtesting_period?: string | null
           best_for?: string | null
+          display_number?: number | null
           cagr?: number | null
           cash_profit?: number | null
           created_at?: string

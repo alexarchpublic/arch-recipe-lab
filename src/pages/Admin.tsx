@@ -29,6 +29,7 @@ interface Recipe {
   cash_profit: number | null;
   created_at: string;
   updated_at: string;
+  display_number?: number | null;
   screenshots?: Array<{
     id: string;
     image_url: string;

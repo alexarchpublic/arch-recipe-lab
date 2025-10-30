@@ -10,8 +10,7 @@ export interface Filters {
   assets: string[];
   focuses: string[];
   timeHorizons: string[];
-  timeFrames: string[];
-  strategyTypes: string[];
+  
   minCAGR: number;
 }
 
@@ -21,7 +20,6 @@ interface FilterSidebarProps {
   availableAssets: string[];
   availableFocuses: string[];
   availableTimeFrames: string[];
-  availableStrategyTypes: string[];
   onClose?: () => void;
 }
 
@@ -31,11 +29,10 @@ export const FilterSidebar = ({
   availableAssets,
   availableFocuses,
   availableTimeFrames,
-  availableStrategyTypes,
   onClose,
 }: FilterSidebarProps) => {
   const handleArrayFilterChange = (
-    key: keyof Pick<Filters, 'assets' | 'focuses' | 'timeHorizons' | 'timeFrames' | 'strategyTypes'>,
+    key: keyof Pick<Filters, 'assets' | 'focuses' | 'timeHorizons'>,
     value: string,
     checked: boolean
   ) => {
@@ -51,8 +48,6 @@ export const FilterSidebar = ({
       assets: [],
       focuses: [],
       timeHorizons: [],
-      timeFrames: [],
-      strategyTypes: [],
       minCAGR: 0,
     });
   };
@@ -61,8 +56,6 @@ export const FilterSidebar = ({
     filters.assets.length > 0 ||
     filters.focuses.length > 0 ||
     filters.timeHorizons.length > 0 ||
-    filters.timeFrames.length > 0 ||
-    filters.strategyTypes.length > 0 ||
     filters.minCAGR > 0;
 
   return (
@@ -168,57 +161,7 @@ export const FilterSidebar = ({
 
       <Separator />
 
-      {/* Time Frame Filter */}
-      <div className="space-y-3">
-        <Label className="text-sm font-medium">Time Frame</Label>
-        <div className="space-y-2 max-h-40 overflow-y-auto">
-          {availableTimeFrames.map(frame => (
-            <div key={frame} className="flex items-center space-x-2">
-              <Checkbox
-                id={`frame-${frame}`}
-                checked={filters.timeFrames.includes(frame)}
-                onCheckedChange={(checked) =>
-                  handleArrayFilterChange('timeFrames', frame, checked as boolean)
-                }
-              />
-              <label
-                htmlFor={`frame-${frame}`}
-                className="text-sm cursor-pointer hover:text-primary transition-colors"
-              >
-                {frame}
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Strategy Type Filter */}
-      <div className="space-y-3">
-        <Label className="text-sm font-medium">Strategy Type</Label>
-        <div className="space-y-2 max-h-40 overflow-y-auto">
-          {availableStrategyTypes.map(strategy => (
-            <div key={strategy} className="flex items-center space-x-2">
-              <Checkbox
-                id={`strategy-${strategy}`}
-                checked={filters.strategyTypes.includes(strategy)}
-                onCheckedChange={(checked) =>
-                  handleArrayFilterChange('strategyTypes', strategy, checked as boolean)
-                }
-              />
-              <label
-                htmlFor={`strategy-${strategy}`}
-                className="text-sm cursor-pointer hover:text-primary transition-colors"
-              >
-                {strategy}
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <Separator />
+      {/* Time Frame and Strategy Type filters removed per requirements */}
 
       {/* CAGR Slider */}
       <div className="space-y-3">

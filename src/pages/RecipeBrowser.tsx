@@ -34,6 +34,7 @@ interface Recipe {
   cagr: number | null;
   annualized_return: number | null;
   best_for: string | null;
+  display_number?: number | null;
   screenshots?: Array<{
     id: string;
     image_url: string;
@@ -55,8 +56,6 @@ export default function RecipeBrowser() {
     assets: [],
     focuses: [],
     timeHorizons: [],
-    timeFrames: [],
-    strategyTypes: [],
     minCAGR: 0,
   });
   const { toast } = useToast();
@@ -119,15 +118,7 @@ export default function RecipeBrowser() {
     [recipes]
   );
   
-  const availableTimeFrames = useMemo(() => 
-    [...new Set(recipes.map(r => r.time_frame))].sort(),
-    [recipes]
-  );
-  
-  const availableStrategyTypes = useMemo(() => 
-    [...new Set(recipes.map(r => r.strategy_type))].sort(),
-    [recipes]
-  );
+  // Removed time frame and strategy type filters from UI
 
   // Filter and sort recipes
   const filteredAndSortedRecipes = useMemo(() => {
@@ -160,15 +151,7 @@ export default function RecipeBrowser() {
         return false;
       }
 
-      // Time Frame filter
-      if (filters.timeFrames.length > 0 && !filters.timeFrames.includes(recipe.time_frame)) {
-        return false;
-      }
-
-      // Strategy Type filter
-      if (filters.strategyTypes.length > 0 && !filters.strategyTypes.includes(recipe.strategy_type)) {
-        return false;
-      }
+      // Removed time frame and strategy type filters
 
       // CAGR filter
       const returnValue = recipe.cagr || recipe.annualized_return || 0;
@@ -343,7 +326,7 @@ export default function RecipeBrowser() {
         <div className="flex gap-6">
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block w-80 flex-shrink-0">
-            <div className="sticky top-24">
+            <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
               {/* Capital Controls (Desktop above Filters) */}
               <div className="mb-4 p-4 rounded-lg border border-border bg-secondary/30">
                 <p className="text-sm font-semibold mb-2">Initial Capital</p>
@@ -362,8 +345,7 @@ export default function RecipeBrowser() {
                 onFiltersChange={setFilters}
                 availableAssets={availableAssets}
                 availableFocuses={availableFocuses}
-                availableTimeFrames={availableTimeFrames}
-                availableStrategyTypes={availableStrategyTypes}
+                availableTimeFrames={[]}
               />
             </div>
           </aside>

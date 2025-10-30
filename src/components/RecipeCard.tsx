@@ -16,6 +16,7 @@ interface Recipe {
   algorithm_inputs?: any;
   focus: string;
   goal: string;
+  display_number?: number | null;
   entry_trade: string;
   exit_trade: string;
   exit_to_entry_proportion: number;
@@ -148,6 +149,9 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
           <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
             {recipe.goal}
           </CardTitle>
+          {typeof recipe.display_number === 'number' && (
+            <Badge variant="outline" className="ml-2">#{recipe.display_number}</Badge>
+          )}
           <Button
             variant="ghost"
             size="icon"

@@ -18,6 +18,7 @@ interface Recipe {
   asset: string;
   time_horizon: string;
   strategy_type: string;
+  display_number?: number | null;
   algorithm?: string;
   algorithm_inputs?: any;
   focus: string;
@@ -143,7 +144,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl pr-8">{recipe.goal}</DialogTitle>
+          <DialogTitle className="text-2xl pr-8 flex items-center gap-2">{recipe.goal}{typeof recipe.display_number === 'number' && (<Badge variant="outline">#{recipe.display_number}</Badge>)}</DialogTitle>
           <DialogDescription className="flex flex-wrap gap-2 pt-2">
             <Badge variant="outline">{recipe.asset}</Badge>
             <Badge className={getFocusColor(recipe.focus)}>{recipe.focus}</Badge>
