@@ -167,6 +167,15 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     firstAddCallbackRef.current = cb;
   }, []);
 
+  const rows: ScaledRecipeMetrics[] = useMemo(() => {
+    return Object.values(positions)
+      .map(pos => {
+        const r = recipes[pos.recipeId];
+        return r ? computeScaledMetricsForRecipe(initialCapital, pos, r) : null;
+      })
+      .filter((x): x is ScaledRecipeMetrics => !!x);
+  }, [positions, recipes, initialCapital]);
+
   const optimizeAllocations = useCallback((objective: OptimizeObjective, assetSymbol?: string) => {
     // Compute yields per row relative to current initialCapital (rows already scaled by allocations)
     // To get per-dollar yield independent of current allocation, temporarily compute using 1% equivalent:
@@ -194,15 +203,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       return { ...prev, positions: newPositions };
     });
   }, [rows]);
-
-  const rows: ScaledRecipeMetrics[] = useMemo(() => {
-    return Object.values(positions)
-      .map(pos => {
-        const r = recipes[pos.recipeId];
-        return r ? computeScaledMetricsForRecipe(initialCapital, pos, r) : null;
-      })
-      .filter((x): x is ScaledRecipeMetrics => !!x);
-  }, [positions, recipes, initialCapital]);
 
   const aggregates = useMemo(() => computePortfolioAggregates(rows), [rows]);
   const remainingPct = useMemo(() => remainingAllocationPercent(positions), [positions]);
