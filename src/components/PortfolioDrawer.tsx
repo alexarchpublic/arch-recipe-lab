@@ -163,7 +163,8 @@ function DrawerInner() {
 
         {positionEntries.map(pos => {
           const r = recipes[pos.recipeId];
-          const row = rows.find(x => x.recipeId === pos.recipeId)!;
+          const row = rows.find(x => x.recipeId === pos.recipeId);
+          if (!r || !row) return null;
           const sliderMax = Math.max(0, Math.min(100, remainingPct + pos.allocationPct));
           return (
             <div key={pos.recipeId} className="rounded-md border p-3">
