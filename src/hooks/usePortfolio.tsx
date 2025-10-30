@@ -127,11 +127,20 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     setState(prev => {
       const pos = prev.positions[recipeId];
       if (!pos) return prev;
+      const requested = Number.isFinite(pct) ? pct : 0;
+      const boundedRequested = Math.max(0, Math.min(100, requested));
+      // Enforce portfolio-level cap: others + new <= 100
+      const othersSum = Object.values(prev.positions)
+        .filter(p => p.recipeId !== recipeId)
+        .reduce((acc, p) => acc + (Number.isFinite(p.allocationPct) ? p.allocationPct : 0), 0);
+      const maxAllowedForThis = Math.max(0, Math.min(100, 100 - othersSum));
+      const nextPct = Math.min(boundedRequested, maxAllowedForThis);
+      if (nextPct === pos.allocationPct) return prev;
       return {
         ...prev,
         positions: {
           ...prev.positions,
-          [recipeId]: { ...pos, allocationPct: Math.max(0, Math.min(100, Number.isFinite(pct) ? pct : 0)) },
+          [recipeId]: { ...pos, allocationPct: nextPct },
         },
       };
     });

@@ -105,6 +105,7 @@ function DrawerInner() {
         {positionEntries.map(pos => {
           const r = recipes[pos.recipeId];
           const row = rows.find(x => x.recipeId === pos.recipeId)!;
+          const sliderMax = Math.max(0, Math.min(100, remainingPct + pos.allocationPct));
           return (
             <div key={pos.recipeId} className="rounded-md border p-3">
               <div className="flex items-center justify-between">
@@ -124,7 +125,7 @@ function DrawerInner() {
                 <Slider
                   value={[pos.allocationPct]}
                   onValueChange={([v]) => setAllocation(pos.recipeId, v)}
-                  max={100}
+                  max={sliderMax}
                   step={0.5}
                 />
                 <div className="mt-2 flex items-center gap-2">
@@ -132,7 +133,7 @@ function DrawerInner() {
                     type="number"
                     value={pos.allocationPct}
                     min={0}
-                    max={100}
+                    max={sliderMax}
                     step={0.5}
                     onChange={e => setAllocation(pos.recipeId, Number(e.target.value))}
                     className="w-24"
