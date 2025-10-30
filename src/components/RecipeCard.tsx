@@ -109,6 +109,9 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   };
   const assetQty = parseAssetQuantity(recipe.asset_accumulated);
   const netProfitNumber = parseCurrencyFromString(recipe.net_profit);
+  const scaleFactor = Number.isFinite(scale) ? (scale as number) : 1;
+  const scaledAssetQty = assetQty !== null ? +(assetQty * scaleFactor) : null;
+  const scaledNetProfitNumber = netProfitNumber !== null ? Math.round(netProfitNumber * scaleFactor) : null;
   const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0 
     ? recipe.screenshots[0].image_url 
     : null;
@@ -203,22 +206,22 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
             </div>
           )}
 
-          {assetQty !== null && (
+          {scaledAssetQty !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
               <Target className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Asset Accumulated</p>
-                <p className="text-sm font-semibold">{assetQty} {recipe.asset}</p>
+                <p className="text-sm font-semibold">{scaledAssetQty} {recipe.asset}</p>
               </div>
             </div>
           )}
 
-          {netProfitNumber !== null && (
+          {scaledNetProfitNumber !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
               <DollarSign className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">Net Profit</p>
-                <p className="text-sm font-semibold">${netProfitNumber.toLocaleString()}</p>
+                <p className="text-sm font-semibold">${scaledNetProfitNumber.toLocaleString()}</p>
               </div>
             </div>
           )}
