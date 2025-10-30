@@ -314,8 +314,7 @@ export default function RecipeBrowser() {
                   onFiltersChange={setFilters}
                   availableAssets={availableAssets}
                   availableFocuses={availableFocuses}
-                  availableTimeFrames={availableTimeFrames}
-                  availableStrategyTypes={availableStrategyTypes}
+                  availableTimeFrames={[]}
                 />
               </SheetContent>
             </Sheet>
