@@ -109,6 +109,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   };
 
   const computedCagr = computeCagr();
+  const returnValue = computedCagr ?? recipe.cagr ?? recipe.annualized_return;
   const scaledEntryTrade = recipe.entry_trade ? (scaleRecipeFreeText(recipe.entry_trade, scale) as string) : '';
   const scaledExitTrade = recipe.exit_trade ? (scaleRecipeFreeText(recipe.exit_trade, scale) as string) : '';
   const scaledInitialCapital = (initialCapital ?? recipe.initial_capital) ?? null;
