@@ -133,7 +133,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
-            {recipe.name}
+            {recipe.goal}
           </CardTitle>
           <Button
             variant="ghost"
@@ -169,9 +169,6 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {recipe.goal}
-        </p>
         
         <div className="grid grid-cols-2 gap-3">
           {returnValue && (

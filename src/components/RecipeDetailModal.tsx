@@ -119,15 +119,27 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   const scaledAssetAccumulated = recipe.asset_accumulated
     ? scaleRecipeFreeText(recipe.asset_accumulated, scale)
     : null;
-  const scaledNetProfit = recipe.net_profit
+  const scaledNetProfitRaw = recipe.net_profit
     ? scaleRecipeFreeText(recipe.net_profit, scale)
     : null;
+
+  // Ensure Asset Accumulated includes crypto ticker
+  const ensureAssetTicker = (text: string | null, ticker: string): string | null => {
+    if (!text) return null;
+    const hasTicker = new RegExp(`\\b${ticker}\\b`, 'i').test(text);
+    return hasTicker ? text : `${text} ${ticker}`;
+  };
+  const assetAccumulatedDisplay = ensureAssetTicker(scaledAssetAccumulated as any, recipe.asset);
+
+  // Format Net Profit as dollars
+  const netProfitNumber = parseCurrencyFromString(scaledNetProfitRaw as any);
+  const netProfitDisplay = netProfitNumber !== null ? `$${netProfitNumber.toLocaleString()}` : (scaledNetProfitRaw as any);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl pr-8">{recipe.name}</DialogTitle>
+          <DialogTitle className="text-2xl pr-8">{recipe.goal}</DialogTitle>
           <DialogDescription className="flex flex-wrap gap-2 pt-2">
             <Badge variant="outline">{recipe.asset}</Badge>
             <Badge className={getFocusColor(recipe.focus)}>{recipe.focus}</Badge>
@@ -208,13 +220,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
             </>
           )}
 
-          {/* Goal */}
-          <div>
-            <h3 className="text-sm font-semibold mb-2 text-primary">Goal</h3>
-            <p className="text-sm text-muted-foreground">{recipe.goal}</p>
-          </div>
-
-          <Separator />
+          {/* Goal section removed; goal is now the title */}
 
           {/* Parameters - Algorithm specific */
           }
@@ -401,17 +407,17 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 </div>
               )}
               
-              {scaledAssetAccumulated && (
+              {assetAccumulatedDisplay && (
                 <div className="p-4 rounded-lg bg-secondary/50 border border-border">
                   <p className="text-xs text-muted-foreground mb-1">Asset Accumulated</p>
-                  <p className="text-sm font-semibold">{scaledAssetAccumulated}</p>
+                  <p className="text-sm font-semibold">{assetAccumulatedDisplay}</p>
                 </div>
               )}
               
-              {scaledNetProfit && (
+              {netProfitDisplay && (
                 <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                   <p className="text-xs text-muted-foreground mb-1">Net Profit</p>
-                  <p className="text-sm font-semibold text-primary">{scaledNetProfit}</p>
+                  <p className="text-sm font-semibold text-primary">{netProfitDisplay}</p>
                 </div>
               )}
               
@@ -426,15 +432,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
             </div>
           </div>
 
-          {recipe.best_for && (
-            <>
-              <Separator />
-              <div>
-                <h3 className="text-sm font-semibold mb-2 text-primary">Best For</h3>
-                <p className="text-sm text-muted-foreground">{recipe.best_for}</p>
-              </div>
-            </>
-          )}
+          {/* Best For section removed as requested */}
         </div>
       </DialogContent>
     </Dialog>
