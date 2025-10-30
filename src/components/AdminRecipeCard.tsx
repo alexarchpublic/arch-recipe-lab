@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
+import { usePortfolio } from "@/hooks/usePortfolio";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { TrendingUp, DollarSign, Clock, Target, Edit, Trash2, Eye, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -68,6 +70,7 @@ const getAssetColor = (asset: string) => {
 export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecipeCardProps) {
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
+  const { isInPortfolio, toggleRecipe } = usePortfolio();
 
   // Get thumbnail from screenshots prop
   const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0 
@@ -203,6 +206,24 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
           
           {/* Action Buttons */}
           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={isInPortfolio(recipe.id) ? "h-8 w-8 p-0 text-red-500" : "h-8 w-8 p-0"}
+              onClick={() =>
+                toggleRecipe({
+                  recipeId: recipe.id,
+                  title: recipe.name,
+                  assetSymbol: recipe.asset,
+                  baseInitialCapital: undefined,
+                  baseCashProfit: recipe.cash_profit ?? null,
+                  assetAccumulatedText: null,
+                })
+              }
+              aria-label={isInPortfolio(recipe.id) ? "Remove from portfolio" : "Add to portfolio"}
+            >
+              <Heart className={isInPortfolio(recipe.id) ? "h-4 w-4 fill-red-500" : "h-4 w-4"} />
+            </Button>
             <Button
               variant="outline"
               size="sm"

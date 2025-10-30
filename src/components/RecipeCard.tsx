@@ -1,5 +1,8 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
+import { usePortfolio } from "@/hooks/usePortfolio";
 import { TrendingUp, DollarSign, Clock, Target, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +60,7 @@ const getAssetColor = (asset: string) => {
 };
 
 export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
+  const { isInPortfolio, toggleRecipe } = usePortfolio();
   const returnValue = recipe.cagr || recipe.annualized_return;
   const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0 
     ? recipe.screenshots[0].image_url 
@@ -64,6 +68,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
     ? Math.round((recipe.cash_profit as number) * (Number.isFinite(scale) ? scale : 1))
     : null;
+  const inPortfolio = isInPortfolio(recipe.id);
   
   return (
     <Card 
@@ -93,6 +98,25 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
           <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
             {recipe.name}
           </CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleRecipe({
+                recipeId: recipe.id,
+                title: recipe.name,
+                assetSymbol: recipe.asset,
+                baseInitialCapital: undefined,
+                baseCashProfit: recipe.cash_profit ?? null,
+                assetAccumulatedText: null,
+              });
+            }}
+            className={inPortfolio ? "text-red-500" : ""}
+            aria-label={inPortfolio ? "Remove from portfolio" : "Add to portfolio"}
+          >
+            <Heart className={inPortfolio ? "h-4 w-4 fill-red-500" : "h-4 w-4"} />
+          </Button>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge className={getAssetColor(recipe.asset)}>
