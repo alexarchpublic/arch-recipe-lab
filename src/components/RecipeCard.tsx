@@ -153,13 +153,13 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
 
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
             {typeof recipe.display_number === 'number' && (
-              <div className="bg-primary text-primary-foreground text-base font-bold px-3 py-1 flex items-center justify-center">
+              <div className="bg-primary text-primary-foreground text-base font-bold px-3 py-1 flex items-center justify-center flex-shrink-0 whitespace-nowrap">
                 #{recipe.display_number}
               </div>
             )}
-            <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
+            <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors flex-1 min-w-0">
               {recipe.goal}
             </CardTitle>
           </div>
