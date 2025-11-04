@@ -6,7 +6,7 @@ import { Heart } from "lucide-react";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { TrendingUp, DollarSign, Clock, Target, Edit, Trash2, Eye, Image as ImageIcon } from "lucide-react";
+import { TrendingUp, DollarSign, Target, Edit, Trash2, Eye, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCurrencyFromString } from "@/lib/portfolio";
@@ -21,6 +21,7 @@ interface Recipe {
   algorithm_inputs?: any;
   focus: string;
   goal: string;
+  display_number?: number | null;
   entry_trade: string;
   exit_trade: string;
   exit_to_entry_proportion: number;
@@ -31,8 +32,6 @@ interface Recipe {
   cash_profit: number | null;
   asset_accumulated?: string | null;
   initial_capital?: number | null;
-  created_at: string;
-  updated_at: string;
   screenshots?: Array<{
     id: string;
     image_url: string;
@@ -81,6 +80,52 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
     ? recipe.screenshots[0].image_url 
     : null;
 
+  const getStartEndDates = (): { start?: Date; end?: Date } => {
+    const ai = recipe.algorithm_inputs as any;
+    if (!ai) return {};
+    if (recipe.algorithm === 'Intelligence Algorithm') {
+      const s = ai.start, e = ai.end;
+      const start = s && s.year && s.month && s.day ? new Date(s.year, (s.month - 1) || 0, s.day, s.hour || 0, s.minute || 0) : undefined;
+      const end = e && e.year && e.month && e.day ? new Date(e.year, (e.month - 1) || 0, e.day) : undefined;
+      return { start, end };
+    }
+    const ds = ai?.dates?.start, de = ai?.dates?.end;
+    const start = ds && ds.year && ds.month && ds.day ? new Date(ds.year, (ds.month - 1) || 0, ds.day, ds.hour || 0, ds.minute || 0) : undefined;
+    const end = de && de.year && de.month && de.day ? new Date(de.year, (de.month - 1) || 0, de.day) : undefined;
+    return { start, end };
+  };
+
+  const computeCagr = (): number | null => {
+    const { start, end } = getStartEndDates();
+    const begin = recipe.initial_capital ?? null;
+    const netProfit = parseCurrencyFromString(recipe.net_profit);
+    if (!begin || !netProfit || !start || !end) return null;
+    const years = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    if (years <= 0) return null;
+    const endingValue = begin + netProfit;
+    if (begin <= 0 || endingValue <= 0) return null;
+    const cagr = Math.pow(endingValue / begin, 1 / years) - 1;
+    return Number.isFinite(cagr) ? cagr * 100 : null;
+  };
+
+  const returnValue = computeCagr() ?? recipe.cagr ?? recipe.annualized_return;
+  
+  // Parse asset accumulated numeric qty and net profit dollars
+  const parseAssetQuantity = (text?: string | null): number | null => {
+    if (!text) return null;
+    const match = String(text).match(/\b([0-9]+(?:\.[0-9]+)?)\s*(?:[A-Z]{2,6})?\b/);
+    if (!match) return null;
+    const qty = parseFloat(match[1]);
+    return Number.isFinite(qty) ? qty : null;
+  };
+  const assetQty = parseAssetQuantity(recipe.asset_accumulated);
+  const netProfitNumber = parseCurrencyFromString(recipe.net_profit);
+  const scaledAssetQty = assetQty !== null ? assetQty : null;
+  const scaledNetProfitNumber = netProfitNumber !== null ? netProfitNumber : null;
+  const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
+    ? recipe.cash_profit
+    : null;
+
   const handleDelete = async () => {
     setDeleting(true);
     try {
@@ -108,8 +153,6 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
       setDeleting(false);
     }
   };
-
-  const returnValue = recipe.cagr || recipe.annualized_return;
   
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-card border-border/50">
@@ -134,8 +177,11 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
-            {recipe.name}
+            {recipe.goal}
           </CardTitle>
+          {typeof recipe.display_number === 'number' && (
+            <Badge variant="secondary" className="ml-2 font-semibold">#{recipe.display_number}</Badge>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge className={getAssetColor(recipe.asset)}>
@@ -151,9 +197,6 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {recipe.goal}
-        </p>
         
         <div className="grid grid-cols-2 gap-3">
           {returnValue && (
@@ -166,33 +209,47 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
             </div>
           )}
           
-          {recipe.cash_profit !== null && (
+          {scaledCashProfit !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
               <DollarSign className="h-4 w-4 text-accent" />
               <div>
                 <p className="text-xs text-muted-foreground">Cash Profit</p>
                 <p className="text-sm font-semibold text-foreground">
-                  ${recipe.cash_profit.toLocaleString()}
+                  ${scaledCashProfit.toLocaleString()}
                 </p>
               </div>
             </div>
           )}
-          
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="text-xs text-muted-foreground">Time Frame</p>
-              <p className="text-sm font-semibold">{recipe.time_frame}</p>
+
+          {scaledAssetQty !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Asset Accumulated</p>
+                <p className="text-sm font-semibold">{scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} {recipe.asset}</p>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-            <Target className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="text-xs text-muted-foreground">Exit/Entry</p>
-              <p className="text-sm font-semibold">{recipe.exit_to_entry_proportion}%</p>
+          )}
+
+          {scaledNetProfitNumber !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+              <DollarSign className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-xs text-muted-foreground">Net Profit</p>
+                <p className="text-sm font-semibold">${scaledNetProfitNumber.toLocaleString()}</p>
+              </div>
             </div>
-          </div>
+          )}
+
+          {recipe.algorithm && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 col-span-2">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Algorithm</p>
+                <p className="text-sm font-semibold">{recipe.algorithm}</p>
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
       
