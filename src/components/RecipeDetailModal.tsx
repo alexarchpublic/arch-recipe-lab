@@ -156,7 +156,8 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto texture-overlay">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div className="texture-overlay">
         <DialogHeader>
           <DialogTitle className="text-2xl pr-8 flex items-center gap-3">
             <span className="font-bold">{recipe.goal}</span>
@@ -475,6 +476,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
           
 
           {/* Best For section removed as requested */}
+        </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -6,7 +6,7 @@ import { RecipeDetailModal } from "@/components/RecipeDetailModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, SlidersHorizontal, Download, LogIn } from "lucide-react";
+import { Search, SlidersHorizontal, LogIn } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -277,42 +277,6 @@ export default function RecipeBrowser() {
     return filtered;
   }, [recipes, searchQuery, filters, sortBy, scale]);
 
-  const exportToCSV = () => {
-    const headers = [
-      'Name', 'Asset', 'Time Horizon', 'Strategy Type', 'Focus', 'CAGR/Return', 
-      'Cash Profit', 'Net Profit', 'Time Frame'
-    ];
-    
-    const rows = filteredAndSortedRecipes.map(recipe => [
-      recipe.name,
-      recipe.asset,
-      recipe.time_horizon,
-      recipe.strategy_type,
-      recipe.focus,
-      recipe.cagr || recipe.annualized_return || '',
-      recipe.cash_profit || '',
-      recipe.net_profit || '',
-      recipe.time_frame,
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'arch-public-recipes.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Export successful",
-      description: `Exported ${filteredAndSortedRecipes.length} recipes to CSV`,
-    });
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -338,7 +302,7 @@ export default function RecipeBrowser() {
 
       <div className="container mx-auto px-4 py-6">
         {/* Get started */}
-        <div className="mb-6 p-4 rounded-lg border border-border bg-secondary/20 texture-overlay">
+        <div className="mb-6 p-4 rounded-lg border border-border bg-white texture-overlay">
           <h2 className="text-base font-semibold mb-2">Get started</h2>
           <p className="text-sm text-muted-foreground">
             Browse algorithm recipes, filter by asset, focus, time horizon, or strategy, and adjust
@@ -361,7 +325,7 @@ export default function RecipeBrowser() {
           
           <div className="flex gap-2">
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[200px] bg-white">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -378,11 +342,6 @@ export default function RecipeBrowser() {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" onClick={exportToCSV} className="gap-2">
-              <Download className="h-4 w-4" />
-              Export CSV
-            </Button>
-
             {/* Mobile Filter Toggle */}
             <Sheet>
               <SheetTrigger asChild>
@@ -393,7 +352,7 @@ export default function RecipeBrowser() {
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] overflow-y-auto">
                 {/* Capital Controls (Mobile within Filters) */}
-                <div className="mt-2 mb-4 p-4 rounded-lg border border-border bg-secondary/30 texture-overlay">
+                <div className="mt-2 mb-4 p-4 rounded-lg border border-border bg-white texture-overlay">
                   <p className="text-sm font-semibold mb-2">Initial Capital</p>
                   <Input
                     type="text"
@@ -430,7 +389,7 @@ export default function RecipeBrowser() {
           <aside className="hidden lg:block w-80 flex-shrink-0">
             <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
               {/* Capital Controls (Desktop above Filters) */}
-              <div className="mb-4 p-4 rounded-lg border border-border bg-secondary/30 texture-overlay">
+              <div className="mb-4 p-4 rounded-lg border border-border bg-white texture-overlay">
                 <p className="text-sm font-semibold mb-2">Initial Capital</p>
                 <Input
                   type="text"
