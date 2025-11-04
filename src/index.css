@@ -8,84 +8,90 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Modern crypto blue theme */
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Arch Public brand colors */
+    /* Light Beige/Cream background: #eeebd2 */
+    --background: 54 31% 88%;
+    /* Dark Navy foreground: #0b1656 */
+    --foreground: 233 77% 19%;
 
+    /* White cards */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 233 77% 19%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 233 77% 19%;
 
-    /* Deep crypto blue primary */
-    --primary: 217 91% 60%;
+    /* Vibrant Blue primary: #244bd8 */
+    --primary: 227 71% 49%;
     --primary-foreground: 0 0% 100%;
     
-    /* Vibrant cyan accent */
-    --accent: 189 94% 43%;
+    /* Vibrant Blue accent (same as primary) */
+    --accent: 227 71% 49%;
     --accent-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    /* Light beige secondary */
+    --secondary: 54 31% 92%;
+    --secondary-foreground: 233 77% 19%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    /* Light beige muted */
+    --muted: 54 25% 90%;
+    --muted-foreground: 233 50% 45%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 60%;
+    --border: 54 20% 85%;
+    --input: 54 20% 85%;
+    --ring: 227 71% 49%;
 
     --radius: 0.75rem;
     
-    /* Crypto gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%), hsl(189 94% 43%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 98%));
+    /* Brand gradients using vibrant blue */
+    --gradient-hero: linear-gradient(135deg, hsl(227 71% 49%), hsl(233 77% 19%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(54 31% 95%));
     
-    /* Shadows */
-    --shadow-card: 0 4px 6px -1px hsl(217 91% 60% / 0.1), 0 2px 4px -1px hsl(217 91% 60% / 0.06);
-    --shadow-card-hover: 0 10px 15px -3px hsl(217 91% 60% / 0.15), 0 4px 6px -2px hsl(217 91% 60% / 0.1);
+    /* Shadows using brand colors */
+    --shadow-card: 0 4px 6px -1px hsl(233 77% 19% / 0.1), 0 2px 4px -1px hsl(233 77% 19% / 0.06);
+    --shadow-card-hover: 0 10px 15px -3px hsl(227 71% 49% / 0.15), 0 4px 6px -2px hsl(227 71% 49% / 0.1);
     
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    /* Dark mode uses dark navy background */
+    --background: 233 77% 19%;
+    --foreground: 54 31% 88%;
 
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
+    --card: 233 77% 22%;
+    --card-foreground: 54 31% 88%;
 
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 233 77% 22%;
+    --popover-foreground: 54 31% 88%;
 
-    --primary: 217 91% 60%;
+    --primary: 227 71% 49%;
     --primary-foreground: 0 0% 100%;
 
-    --accent: 189 94% 43%;
+    --accent: 227 71% 49%;
     --accent-foreground: 0 0% 100%;
 
-    --secondary: 217 33% 20%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 233 77% 25%;
+    --secondary-foreground: 54 31% 88%;
 
-    --muted: 217 33% 20%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 233 60% 30%;
+    --muted-foreground: 54 25% 75%;
 
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 54 31% 88%;
 
-    --border: 217 33% 25%;
-    --input: 217 33% 25%;
-    --ring: 217 91% 60%;
+    --border: 233 50% 35%;
+    --input: 233 50% 35%;
+    --ring: 227 71% 49%;
     
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 50%), hsl(189 94% 35%));
-    --gradient-card: linear-gradient(180deg, hsl(217 33% 17%), hsl(217 33% 15%));
+    --gradient-hero: linear-gradient(135deg, hsl(227 71% 49%), hsl(233 77% 19%));
+    --gradient-card: linear-gradient(180deg, hsl(233 77% 22%), hsl(233 77% 19%));
     --shadow-card: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -1px hsl(0 0% 0% / 0.2);
-    --shadow-card-hover: 0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -2px hsl(0 0% 0% / 0.3);
+    --shadow-card-hover: 0 10px 15px -3px hsl(227 71% 49% / 0.3), 0 4px 6px -2px hsl(227 71% 49% / 0.2);
   }
 }
 
@@ -96,5 +102,33 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Texture overlay system using SVG noise filter */
+@layer utilities {
+  .texture-overlay {
+    position: relative;
+  }
+
+  .texture-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    opacity: 0.1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    mix-blend-mode: overlay;
+    z-index: 1;
+  }
+
+  .texture-overlay > * {
+    position: relative;
+    z-index: 2;
   }
 }

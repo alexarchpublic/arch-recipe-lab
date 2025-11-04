@@ -317,7 +317,7 @@ export default function RecipeBrowser() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-gradient-hero border-b border-primary/20 shadow-lg">
+      <header className="sticky top-0 z-10 bg-gradient-hero border-b border-primary/20 shadow-lg texture-overlay">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -338,7 +338,7 @@ export default function RecipeBrowser() {
 
       <div className="container mx-auto px-4 py-6">
         {/* Get started */}
-        <div className="mb-6 p-4 rounded-lg border border-border bg-secondary/20">
+        <div className="mb-6 p-4 rounded-lg border border-border bg-secondary/20 texture-overlay">
           <h2 className="text-base font-semibold mb-2">Get started</h2>
           <p className="text-sm text-muted-foreground">
             Browse algorithm recipes, filter by asset, focus, time horizon, or strategy, and adjust
@@ -393,7 +393,7 @@ export default function RecipeBrowser() {
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] overflow-y-auto">
                 {/* Capital Controls (Mobile within Filters) */}
-                <div className="mt-2 mb-4 p-4 rounded-lg border border-border bg-secondary/30">
+                <div className="mt-2 mb-4 p-4 rounded-lg border border-border bg-secondary/30 texture-overlay">
                   <p className="text-sm font-semibold mb-2">Initial Capital</p>
                   <Input
                     type="text"
@@ -430,7 +430,7 @@ export default function RecipeBrowser() {
           <aside className="hidden lg:block w-80 flex-shrink-0">
             <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
               {/* Capital Controls (Desktop above Filters) */}
-              <div className="mb-4 p-4 rounded-lg border border-border bg-secondary/30">
+              <div className="mb-4 p-4 rounded-lg border border-border bg-secondary/30 texture-overlay">
                 <p className="text-sm font-semibold mb-2">Initial Capital</p>
                 <Input
                   type="text"

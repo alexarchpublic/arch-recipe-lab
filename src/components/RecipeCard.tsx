@@ -130,7 +130,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   
   return (
     <Card 
-      className="group cursor-pointer transition-all duration-300 hover:shadow-card-hover hover:scale-[1.02] bg-gradient-card border-border/50"
+      className="group cursor-pointer transition-all duration-300 hover:shadow-card-hover hover:scale-[1.02] bg-gradient-card border-border/50 texture-overlay"
       onClick={onClick}
     >
       {/* Thumbnail */}

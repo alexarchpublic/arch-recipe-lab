@@ -59,7 +59,7 @@ export const FilterSidebar = ({
     filters.minCAGR > 0;
 
   return (
-    <div className="space-y-6 p-6 bg-card rounded-lg border border-border shadow-card">
+    <div className="space-y-6 p-6 bg-card rounded-lg border border-border shadow-card texture-overlay">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Filters</h2>
         <div className="flex items-center gap-2">
