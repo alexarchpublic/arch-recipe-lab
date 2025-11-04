@@ -476,6 +476,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
 
           {/* Best For section removed as requested */}
         </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

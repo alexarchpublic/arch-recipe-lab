@@ -29,19 +29,19 @@ All colors MUST be HSL.
     --accent: 227 71% 49%;
     --accent-foreground: 0 0% 100%;
 
-    /* Light beige secondary */
-    --secondary: 54 31% 92%;
+    /* White secondary for tiles and inputs */
+    --secondary: 0 0% 100%;
     --secondary-foreground: 233 77% 19%;
 
-    /* Light beige muted */
-    --muted: 54 25% 90%;
+    /* Light gray muted */
+    --muted: 0 0% 96%;
     --muted-foreground: 233 50% 45%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 54 20% 85%;
-    --input: 54 20% 85%;
+    --border: 0 0% 90%;
+    --input: 0 0% 100%;
     --ring: 227 71% 49%;
 
     --radius: 0.75rem;
@@ -124,11 +124,6 @@ All colors MUST be HSL.
     background-repeat: repeat;
     background-size: 200px 200px;
     mix-blend-mode: overlay;
-    z-index: 1;
-  }
-
-  .texture-overlay > * {
-    position: relative;
-    z-index: 2;
+    z-index: 0;
   }
 }
