@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar, Image as ImageIcon } from "lucide-react";
 import { useState, useRef } from "react";
-import { scaleRecipeFreeText } from "@/utils/recipeScaling";
+import { scaleRecipeFreeText, scaleAlgorithmInputs } from "@/utils/recipeScaling";
 
 interface Recipe {
   id: string;
@@ -123,6 +123,11 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   const scaledNetProfitRaw = recipe.net_profit
     ? scaleRecipeFreeText(recipe.net_profit, scale)
     : null;
+
+  // Scale algorithm inputs based on initial capital scaling
+  const scaledAlgorithmInputs = recipe.algorithm_inputs 
+    ? scaleAlgorithmInputs(recipe.algorithm_inputs, scale)
+    : recipe.algorithm_inputs;
 
   // Parse numeric asset quantity and format as "<qty> <ASSET>"
   const parseAssetQuantity = (text?: string | null): number | null => {
@@ -294,38 +299,38 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   <div className="text-sm font-semibold mt-2">Inputs</div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Repeat Purchase Method:</span>
-                    {recipe.algorithm_inputs?.repeatPurchaseMethod && (
-                      <span className="text-sm">{recipe.algorithm_inputs?.repeatPurchaseMethod}</span>
+                    {scaledAlgorithmInputs?.repeatPurchaseMethod && (
+                      <span className="text-sm">{scaledAlgorithmInputs?.repeatPurchaseMethod}</span>
                     )}
                   </div>
-                  {recipe.algorithm_inputs?.start && (
+                  {scaledAlgorithmInputs?.start && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Start Date/Time:</span>
-                      <span className="text-sm">{recipe.algorithm_inputs?.start?.year}-{recipe.algorithm_inputs?.start?.month}-{recipe.algorithm_inputs?.start?.day}{(recipe.algorithm_inputs?.start?.hour ?? null) !== null ? ` ${recipe.algorithm_inputs?.start?.hour}:${String(recipe.algorithm_inputs?.start?.minute ?? 0).padStart(2,'0')}` : ''}</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.start?.year}-{scaledAlgorithmInputs?.start?.month}-{scaledAlgorithmInputs?.start?.day}{(scaledAlgorithmInputs?.start?.hour ?? null) !== null ? ` ${scaledAlgorithmInputs?.start?.hour}:${String(scaledAlgorithmInputs?.start?.minute ?? 0).padStart(2,'0')}` : ''}</span>
                     </div>
                   )}
-                  {recipe.algorithm_inputs?.end && (
+                  {scaledAlgorithmInputs?.end && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">End Date:</span>
-                      <span className="text-sm">{recipe.algorithm_inputs?.end?.year}-{recipe.algorithm_inputs?.end?.month}-{recipe.algorithm_inputs?.end?.day}</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.end?.year}-{scaledAlgorithmInputs?.end?.month}-{scaledAlgorithmInputs?.end?.day}</span>
                     </div>
                   )}
-                  {typeof recipe.algorithm_inputs?.startBarsBack?.bars === 'number' && (
+                  {typeof scaledAlgorithmInputs?.startBarsBack?.bars === 'number' && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Start X Bars Back:</span>
-                      <span className="text-sm">{recipe.algorithm_inputs?.startBarsBack?.bars}</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.startBarsBack?.bars}</span>
                     </div>
                   )}
-                  {recipe.algorithm_inputs?.backtest?.exitFullOnLastBar && (
+                  {scaledAlgorithmInputs?.backtest?.exitFullOnLastBar && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Exit Full on Last Bar:</span>
                       <span className="text-sm">Yes</span>
                     </div>
                   )}
-                  {recipe.algorithm_inputs?.activate?.enabled && (
+                  {scaledAlgorithmInputs?.activate?.enabled && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Activate Intelligence:</span>
-                      <span className="text-sm">Yes{typeof recipe.algorithm_inputs?.activate?.factor === 'number' ? ` (Factor ${recipe.algorithm_inputs?.activate?.factor})` : ''}</span>
+                      <span className="text-sm">Yes{typeof scaledAlgorithmInputs?.activate?.factor === 'number' ? ` (Factor ${scaledAlgorithmInputs?.activate?.factor})` : ''}</span>
                     </div>
                   )}
                 </>
@@ -337,32 +342,32 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   <div className="text-sm font-semibold mt-2">Inputs</div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
-                    {typeof recipe.algorithm_inputs?.longThreshold?.percent === 'number' && (
-                      <span className="text-sm">{recipe.algorithm_inputs?.longThreshold?.percent}</span>
+                    {typeof scaledAlgorithmInputs?.longThreshold?.percent === 'number' && (
+                      <span className="text-sm">{scaledAlgorithmInputs?.longThreshold?.percent}</span>
                     )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Exit Threshold (%):</span>
-                    {typeof recipe.algorithm_inputs?.exitThreshold?.percent === 'number' && (
-                      <span className="text-sm">{recipe.algorithm_inputs?.exitThreshold?.percent}</span>
+                    {typeof scaledAlgorithmInputs?.exitThreshold?.percent === 'number' && (
+                      <span className="text-sm">{scaledAlgorithmInputs?.exitThreshold?.percent}</span>
                     )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Entry Trade Size ($):</span>
-                    {typeof recipe.algorithm_inputs?.tradeSize?.entry === 'number' && (
-                      <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entry}</span>
+                    {typeof scaledAlgorithmInputs?.tradeSize?.entry === 'number' && (
+                      <span className="text-sm">${scaledAlgorithmInputs?.tradeSize?.entry.toLocaleString()}</span>
                     )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Exit Trade Size ($):</span>
-                    {typeof recipe.algorithm_inputs?.tradeSize?.exit === 'number' && (
-                      <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.exit}</span>
+                    {typeof scaledAlgorithmInputs?.tradeSize?.exit === 'number' && (
+                      <span className="text-sm">${scaledAlgorithmInputs?.tradeSize?.exit.toLocaleString()}</span>
                     )}
                   </div>
-                  {(recipe.algorithm_inputs?.dates?.start && recipe.algorithm_inputs?.dates?.end) && (
+                  {(scaledAlgorithmInputs?.dates?.start && scaledAlgorithmInputs?.dates?.end) && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Start/End:</span>
-                      <span className="text-sm">{recipe.algorithm_inputs?.dates?.start?.year}-{recipe.algorithm_inputs?.dates?.start?.month}-{recipe.algorithm_inputs?.dates?.start?.day} → {recipe.algorithm_inputs?.dates?.end?.year}-{recipe.algorithm_inputs?.dates?.end?.month}-{recipe.algorithm_inputs?.dates?.end?.day}</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.dates?.start?.year}-{scaledAlgorithmInputs?.dates?.start?.month}-{scaledAlgorithmInputs?.dates?.start?.day} → {scaledAlgorithmInputs?.dates?.end?.year}-{scaledAlgorithmInputs?.dates?.end?.month}-{scaledAlgorithmInputs?.dates?.end?.day}</span>
                     </div>
                   )}
                 </>
@@ -374,60 +379,60 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   <div className="text-sm font-semibold mt-2">Inputs</div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
-                    {typeof recipe.algorithm_inputs?.longThreshold?.percent === 'number' && (
-                      <span className="text-sm">{recipe.algorithm_inputs?.longThreshold?.percent}</span>
+                    {typeof scaledAlgorithmInputs?.longThreshold?.percent === 'number' && (
+                      <span className="text-sm">{scaledAlgorithmInputs?.longThreshold?.percent}</span>
                     )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Exit Threshold (%):</span>
-                    {typeof recipe.algorithm_inputs?.exitThreshold?.percent === 'number' && (
-                      <span className="text-sm">{recipe.algorithm_inputs?.exitThreshold?.percent}</span>
+                    {typeof scaledAlgorithmInputs?.exitThreshold?.percent === 'number' && (
+                      <span className="text-sm">{scaledAlgorithmInputs?.exitThreshold?.percent}</span>
                     )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Primary Trade Size Type:</span>
-                    {recipe.algorithm_inputs?.tradeSize?.primaryType && (
-                      <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.primaryType}</span>
+                    {scaledAlgorithmInputs?.tradeSize?.primaryType && (
+                      <span className="text-sm">{scaledAlgorithmInputs?.tradeSize?.primaryType}</span>
                     )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Entry/Exit %:</span>
-                    {(typeof recipe.algorithm_inputs?.tradeSize?.entryPercent === 'number' || typeof recipe.algorithm_inputs?.tradeSize?.exitPercent === 'number') && (
-                      <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entryPercent} / {recipe.algorithm_inputs?.tradeSize?.exitPercent}</span>
+                    {(typeof scaledAlgorithmInputs?.tradeSize?.entryPercent === 'number' || typeof scaledAlgorithmInputs?.tradeSize?.exitPercent === 'number') && (
+                      <span className="text-sm">{scaledAlgorithmInputs?.tradeSize?.entryPercent} / {scaledAlgorithmInputs?.tradeSize?.exitPercent}</span>
                     )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Entry/Exit Fixed:</span>
-                    {(typeof recipe.algorithm_inputs?.tradeSize?.entryFixed === 'number' || typeof recipe.algorithm_inputs?.tradeSize?.exitFixed === 'number') && (
-                      <span className="text-sm">{recipe.algorithm_inputs?.tradeSize?.entryFixed} / {recipe.algorithm_inputs?.tradeSize?.exitFixed}</span>
+                    {(typeof scaledAlgorithmInputs?.tradeSize?.entryFixed === 'number' || typeof scaledAlgorithmInputs?.tradeSize?.exitFixed === 'number') && (
+                      <span className="text-sm">${scaledAlgorithmInputs?.tradeSize?.entryFixed?.toLocaleString()} / ${scaledAlgorithmInputs?.tradeSize?.exitFixed?.toLocaleString()}</span>
                     )}
                   </div>
-                  {(recipe.algorithm_inputs?.dates?.start && recipe.algorithm_inputs?.dates?.end) && (
+                  {(scaledAlgorithmInputs?.dates?.start && scaledAlgorithmInputs?.dates?.end) && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Start/End:</span>
-                      <span className="text-sm">{recipe.algorithm_inputs?.dates?.start?.year}-{recipe.algorithm_inputs?.dates?.start?.month}-{recipe.algorithm_inputs?.dates?.start?.day} → {recipe.algorithm_inputs?.dates?.end?.year}-{recipe.algorithm_inputs?.dates?.end?.month}-{recipe.algorithm_inputs?.dates?.end?.day}</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.dates?.start?.year}-{scaledAlgorithmInputs?.dates?.start?.month}-{scaledAlgorithmInputs?.dates?.start?.day} → {scaledAlgorithmInputs?.dates?.end?.year}-{scaledAlgorithmInputs?.dates?.end?.month}-{scaledAlgorithmInputs?.dates?.end?.day}</span>
                     </div>
                   )}
                   {/* Properties subheader */}
-                  {(recipe.algorithm_inputs?.properties?.initialCapital || recipe.algorithm_inputs?.properties?.orderSize || typeof recipe.algorithm_inputs?.properties?.pyramiding === 'number') && (
+                  {(scaledAlgorithmInputs?.properties?.initialCapital || scaledAlgorithmInputs?.properties?.orderSize || typeof scaledAlgorithmInputs?.properties?.pyramiding === 'number') && (
                     <div className="text-sm font-semibold mt-4">Properties</div>
                   )}
-                  {typeof recipe.algorithm_inputs?.properties?.initialCapital === 'number' && (
+                  {typeof scaledAlgorithmInputs?.properties?.initialCapital === 'number' && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Initial Capital:</span>
-                      <span className="text-sm">{recipe.algorithm_inputs?.properties?.initialCapital}</span>
+                      <span className="text-sm">${scaledAlgorithmInputs?.properties?.initialCapital.toLocaleString()}</span>
                     </div>
                   )}
-                  {recipe.algorithm_inputs?.properties?.orderSize && (
+                  {scaledAlgorithmInputs?.properties?.orderSize && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Order Size:</span>
-                      <span className="text-sm">{recipe.algorithm_inputs?.properties?.orderSize?.value} ({recipe.algorithm_inputs?.properties?.orderSize?.type})</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.properties?.orderSize?.value} ({scaledAlgorithmInputs?.properties?.orderSize?.type})</span>
                     </div>
                   )}
-                  {typeof recipe.algorithm_inputs?.properties?.pyramiding === 'number' && (
+                  {typeof scaledAlgorithmInputs?.properties?.pyramiding === 'number' && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Pyramiding:</span>
-                      <span className="text-sm">{recipe.algorithm_inputs?.properties?.pyramiding}</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.properties?.pyramiding}</span>
                     </div>
                   )}
                 </>
