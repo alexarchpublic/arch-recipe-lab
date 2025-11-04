@@ -152,15 +152,15 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
       </div>
 
       <CardHeader className="space-y-3">
-        {typeof recipe.display_number === 'number' && (
-          <div className="flex items-center gap-2">
-            <Badge variant="default" className="text-base font-bold px-3 py-1">#{recipe.display_number}</Badge>
-          </div>
-        )}
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
-            {recipe.goal}
-          </CardTitle>
+          <div className="flex items-center gap-2 flex-wrap">
+            <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
+              {recipe.goal}
+            </CardTitle>
+            {typeof recipe.display_number === 'number' && (
+              <Badge variant="default" className="text-base font-bold px-3 py-1">#{recipe.display_number}</Badge>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge className={getAssetColor(recipe.asset)}>
