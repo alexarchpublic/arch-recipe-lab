@@ -17,16 +17,23 @@ interface Recipe {
   asset: string;
   time_horizon: string;
   strategy_type: string;
+  algorithm?: string;
+  algorithm_inputs?: any;
   focus: string;
   goal: string;
   entry_trade: string;
   exit_trade: string;
   exit_to_entry_proportion: number;
   time_frame: string;
+  backtesting_period?: string;
+  initial_capital?: number | null;
   cagr: number | null;
   annualized_return: number | null;
   net_profit: string | null;
   cash_profit: number | null;
+  asset_accumulated?: string | null;
+  sell_above_cost_basis?: boolean | null;
+  best_for?: string | null;
   created_at: string;
   updated_at: string;
   display_number?: number | null;
@@ -234,6 +241,8 @@ export default function Admin() {
         recipe={viewingRecipe}
         open={!!viewingRecipe}
         onOpenChange={(open) => !open && setViewingRecipe(null)}
+        scale={1}
+        initialCapital={null}
       />
     </div>
   );

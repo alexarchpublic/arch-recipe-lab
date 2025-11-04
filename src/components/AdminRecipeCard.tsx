@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { usePortfolio } from "@/hooks/usePortfolio";
+import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { TrendingUp, DollarSign, Clock, Target, Edit, Trash2, Eye, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ interface Recipe {
   time_horizon: string;
   strategy_type: string;
   algorithm?: string;
+  algorithm_inputs?: any;
   focus: string;
   goal: string;
   entry_trade: string;
@@ -221,6 +223,8 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
                   baseCashProfit: recipe.cash_profit ?? null,
                   baseNetProfit: parseCurrencyFromString(recipe.net_profit),
                   assetAccumulatedText: recipe.asset_accumulated ?? null,
+                  algorithm: recipe.algorithm,
+                  algorithm_inputs: recipe.algorithm_inputs,
                 })
               }
               aria-label={isInPortfolio(recipe.id) ? "Remove from portfolio" : "Add to portfolio"}
