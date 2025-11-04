@@ -45,7 +45,7 @@ export interface PortfolioAggregates {
 }
 
 export const PORTFOLIO_STORAGE_KEY: PortfolioStorageKey = "portfolio:v1";
-export const DEFAULT_BASE_CAPITAL = 10000; // fallback when recipe base initial capital is unknown
+export const DEFAULT_BASE_CAPITAL = 100000; // fallback when recipe base initial capital is unknown
 
 export function clampPct(value: number): number {
   if (!Number.isFinite(value)) return 0;

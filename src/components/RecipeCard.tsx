@@ -154,12 +154,14 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
+            {typeof recipe.display_number === 'number' && (
+              <div className="bg-primary text-primary-foreground text-base font-bold px-3 py-1 flex items-center justify-center">
+                #{recipe.display_number}
+              </div>
+            )}
             <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
               {recipe.goal}
             </CardTitle>
-            {typeof recipe.display_number === 'number' && (
-              <Badge variant="default" className="text-base font-bold px-3 py-1">#{recipe.display_number}</Badge>
-            )}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">

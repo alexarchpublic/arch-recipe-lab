@@ -55,16 +55,16 @@ function loadPersisted(): PersistedData {
   try {
     const raw = localStorage.getItem(PORTFOLIO_STORAGE_KEY);
     if (!raw) {
-      return { positions: {}, initialCapital: 10000, recipes: {} };
+      return { positions: {}, initialCapital: 100000, recipes: {} };
     }
     const parsed = JSON.parse(raw);
     return {
       positions: parsed.positions || {},
-      initialCapital: Number.isFinite(parsed.initialCapital) ? parsed.initialCapital : 10000,
+      initialCapital: Number.isFinite(parsed.initialCapital) ? parsed.initialCapital : 100000,
       recipes: parsed.recipes || {},
     };
   } catch {
-    return { positions: {}, initialCapital: 10000, recipes: {} };
+    return { positions: {}, initialCapital: 100000, recipes: {} };
   }
 }
 
@@ -160,7 +160,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const clear = useCallback(() => {
-    setState({ positions: {}, initialCapital: 10000, recipes: {} });
+    setState({ positions: {}, initialCapital: 100000, recipes: {} });
   }, []);
 
   const setOnFirstAdd = useCallback((cb: (() => void) | null) => {

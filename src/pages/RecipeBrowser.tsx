@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { usePortfolio } from "@/hooks/usePortfolio";
+import { parseCurrencyFromString, parseAssetQuantityFromText } from "@/lib/portfolio";
 
 interface Recipe {
   id: string;
@@ -43,7 +44,7 @@ interface Recipe {
   }>;
 }
 
-type SortOption = 'cagr-desc' | 'cagr-asc' | 'profit-desc' | 'profit-asc' | 'asset' | 'name';
+type SortOption = 'cagr-desc' | 'cagr-asc' | 'cash-profit-desc' | 'cash-profit-asc' | 'asset-accumulated-desc' | 'asset-accumulated-asc' | 'net-profit-desc' | 'net-profit-asc' | 'pnl-desc' | 'pnl-asc';
 
 export default function RecipeBrowser() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -187,28 +188,94 @@ export default function RecipeBrowser() {
       return true;
     });
 
+    // Helper function to get sortable values for a recipe
+    const getSortValue = (recipe: Recipe, field: string): number => {
+      const scaleFactor = scale;
+      
+      switch (field) {
+        case 'cagr':
+          return recipe.cagr || recipe.annualized_return || 0;
+        case 'cash-profit':
+          if (recipe.cash_profit === null || recipe.cash_profit === undefined) return 0;
+          return Math.round(recipe.cash_profit * scaleFactor);
+        case 'asset-accumulated':
+          const assetQty = parseAssetQuantityFromText(recipe.asset_accumulated, recipe.asset);
+          if (assetQty === null) return 0;
+          return assetQty * scaleFactor;
+        case 'net-profit':
+          const netProfit = parseCurrencyFromString(recipe.net_profit);
+          if (netProfit === null) return 0;
+          return Math.round(netProfit * scaleFactor);
+        case 'pnl':
+          const initialCap = recipe.initial_capital ?? null;
+          const netProfitForPnl = parseCurrencyFromString(recipe.net_profit);
+          if (initialCap === null || initialCap <= 0 || netProfitForPnl === null) return 0;
+          return (netProfitForPnl / initialCap) * 100;
+        default:
+          return 0;
+      }
+    };
+
     // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'cagr-desc':
-          return (b.cagr || b.annualized_return || 0) - (a.cagr || a.annualized_return || 0);
-        case 'cagr-asc':
-          return (a.cagr || a.annualized_return || 0) - (b.cagr || b.annualized_return || 0);
-        case 'profit-desc':
-          return (b.cash_profit || 0) - (a.cash_profit || 0);
-        case 'profit-asc':
-          return (a.cash_profit || 0) - (b.cash_profit || 0);
-        case 'asset':
-          return a.asset.localeCompare(b.asset);
-        case 'name':
-          return a.name.localeCompare(b.name);
+        case 'cagr-desc': {
+          const aVal = getSortValue(a, 'cagr');
+          const bVal = getSortValue(b, 'cagr');
+          return bVal - aVal;
+        }
+        case 'cagr-asc': {
+          const aVal = getSortValue(a, 'cagr');
+          const bVal = getSortValue(b, 'cagr');
+          return aVal - bVal;
+        }
+        case 'cash-profit-desc': {
+          const aVal = getSortValue(a, 'cash-profit');
+          const bVal = getSortValue(b, 'cash-profit');
+          return bVal - aVal;
+        }
+        case 'cash-profit-asc': {
+          const aVal = getSortValue(a, 'cash-profit');
+          const bVal = getSortValue(b, 'cash-profit');
+          return aVal - bVal;
+        }
+        case 'asset-accumulated-desc': {
+          const aVal = getSortValue(a, 'asset-accumulated');
+          const bVal = getSortValue(b, 'asset-accumulated');
+          return bVal - aVal;
+        }
+        case 'asset-accumulated-asc': {
+          const aVal = getSortValue(a, 'asset-accumulated');
+          const bVal = getSortValue(b, 'asset-accumulated');
+          return aVal - bVal;
+        }
+        case 'net-profit-desc': {
+          const aVal = getSortValue(a, 'net-profit');
+          const bVal = getSortValue(b, 'net-profit');
+          return bVal - aVal;
+        }
+        case 'net-profit-asc': {
+          const aVal = getSortValue(a, 'net-profit');
+          const bVal = getSortValue(b, 'net-profit');
+          return aVal - bVal;
+        }
+        case 'pnl-desc': {
+          const aVal = getSortValue(a, 'pnl');
+          const bVal = getSortValue(b, 'pnl');
+          return bVal - aVal;
+        }
+        case 'pnl-asc': {
+          const aVal = getSortValue(a, 'pnl');
+          const bVal = getSortValue(b, 'pnl');
+          return aVal - bVal;
+        }
         default:
           return 0;
       }
     });
 
     return filtered;
-  }, [recipes, searchQuery, filters, sortBy]);
+  }, [recipes, searchQuery, filters, sortBy, scale]);
 
   const exportToCSV = () => {
     const headers = [
@@ -294,16 +361,20 @@ export default function RecipeBrowser() {
           
           <div className="flex gap-2">
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="cagr-desc">CAGR (High to Low)</SelectItem>
                 <SelectItem value="cagr-asc">CAGR (Low to High)</SelectItem>
-                <SelectItem value="profit-desc">Profit (High to Low)</SelectItem>
-                <SelectItem value="profit-asc">Profit (Low to High)</SelectItem>
-                <SelectItem value="asset">Asset</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="cash-profit-desc">Cash Profit (High to Low)</SelectItem>
+                <SelectItem value="cash-profit-asc">Cash Profit (Low to High)</SelectItem>
+                <SelectItem value="asset-accumulated-desc">Asset Accumulated (High to Low)</SelectItem>
+                <SelectItem value="asset-accumulated-asc">Asset Accumulated (Low to High)</SelectItem>
+                <SelectItem value="net-profit-desc">Net Profit (High to Low)</SelectItem>
+                <SelectItem value="net-profit-asc">Net Profit (Low to High)</SelectItem>
+                <SelectItem value="pnl-desc">PnL (High to Low)</SelectItem>
+                <SelectItem value="pnl-asc">PnL (Low to High)</SelectItem>
               </SelectContent>
             </Select>
 
