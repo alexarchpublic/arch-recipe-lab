@@ -145,6 +145,15 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   const netProfitNumber = parseCurrencyFromString(scaledNetProfitRaw as any);
   const netProfitDisplay = netProfitNumber !== null ? `$${netProfitNumber.toLocaleString()}` : (scaledNetProfitRaw as any);
 
+  // Calculate PnL %
+  const scaledNetProfitNumber = netProfitNumber !== null ? Math.round(netProfitNumber * (Number.isFinite(scale) ? scale : 1)) : null;
+  const pnlPercent = scaledInitialCapital !== null && scaledInitialCapital > 0 && scaledNetProfitNumber !== null
+    ? (scaledNetProfitNumber / scaledInitialCapital) * 100
+    : null;
+
+  // Parse asset quantity for display
+  const scaledAssetQty = assetQty !== null ? +(assetQty * (Number.isFinite(scale) ? scale : 1)) : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -243,35 +252,58 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
               <TrendingUp className="h-5 w-5 text-primary" />
               Results
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
-              {scaledInitialCapital !== null && (
-                <div className="p-4 rounded-lg bg-secondary/50 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Initial Capital</p>
-                  <p className="text-lg font-semibold">${Math.round(scaledInitialCapital).toLocaleString()}</p>
+            <div className="grid grid-cols-2 gap-3">
+              {returnValue && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">CAGR</p>
+                    <p className="text-sm font-semibold text-primary">{returnValue.toFixed(1)}%</p>
+                  </div>
                 </div>
               )}
+              
               {scaledCashProfit !== null && (
-                <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
-                  <p className="text-xs text-muted-foreground mb-1">Cash Profit</p>
-                  <p className="text-lg font-semibold text-accent">${scaledCashProfit.toLocaleString()}</p>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+                  <DollarSign className="h-4 w-4 text-accent" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cash Profit</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      ${scaledCashProfit.toLocaleString()}
+                    </p>
+                  </div>
                 </div>
               )}
-              {assetAccumulatedDisplay && (
-                <div className="p-4 rounded-lg bg-secondary/50 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Asset Accumulated</p>
-                  <p className="text-sm font-semibold">{assetAccumulatedDisplay}</p>
+
+              {scaledAssetQty !== null && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Asset Accumulated</p>
+                    <p className="text-sm font-semibold">{scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} {recipe.asset}</p>
+                  </div>
                 </div>
               )}
-              {netProfitDisplay && (
-                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-                  <p className="text-xs text-muted-foreground mb-1">Net Profit</p>
-                  <p className="text-sm font-semibold text-primary">{netProfitDisplay}</p>
+
+              {scaledNetProfitNumber !== null && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+                  <DollarSign className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Net Profit</p>
+                    <p className="text-sm font-semibold">${scaledNetProfitNumber.toLocaleString()}</p>
+                  </div>
                 </div>
               )}
-              {returnValue !== null && (
-                <div className="p-4 rounded-lg bg-gradient-hero text-white border-0">
-                  <p className="text-xs opacity-90 mb-1">CAGR</p>
-                  <p className="text-2xl font-bold">{returnValue.toFixed(2)}%</p>
+
+              {pnlPercent !== null && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+                  <TrendingUp className={`h-4 w-4 ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`} />
+                  <div>
+                    <p className="text-xs text-muted-foreground">PnL %</p>
+                    <p className={`text-sm font-semibold ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                      {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(1)}%
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
