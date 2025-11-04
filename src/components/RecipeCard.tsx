@@ -155,7 +155,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             {typeof recipe.display_number === 'number' && (
-              <div className="bg-primary text-primary-foreground text-base font-bold px-3 py-0 h-6 leading-tight flex items-center justify-center flex-shrink-0 whitespace-nowrap">
+              <div className="bg-primary text-primary-foreground text-base font-bold px-3 leading-tight flex items-center justify-center flex-shrink-0 whitespace-nowrap" style={{ height: 'calc(1.125rem * 1.25)', lineHeight: 'calc(1.125rem * 1.25)' }}>
                 #{recipe.display_number}
               </div>
             )}
