@@ -181,7 +181,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
         
         <div className="grid grid-cols-2 gap-3">
           {returnValue && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
               <TrendingUp className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">CAGR</p>
@@ -191,7 +191,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
           )}
           
           {scaledCashProfit !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
               <DollarSign className="h-4 w-4 text-accent" />
               <div>
                 <p className="text-xs text-muted-foreground">Cash Profit</p>
@@ -203,7 +203,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
           )}
 
           {scaledAssetQty !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
               <Target className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Asset Accumulated</p>
@@ -213,7 +213,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
           )}
 
           {scaledNetProfitNumber !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
               <DollarSign className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">Net Profit</p>
@@ -223,7 +223,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
           )}
 
           {pnlPercent !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
               <TrendingUp className={`h-4 w-4 ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`} />
               <div>
                 <p className="text-xs text-muted-foreground">PnL %</p>

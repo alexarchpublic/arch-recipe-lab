@@ -194,15 +194,15 @@ function DrawerInner() {
               </div>
 
               <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                <div className="rounded-md bg-secondary/50 p-2">
+                <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
                   <div className="text-muted-foreground">Cash Realized</div>
                   <div className="font-medium">{currency(row.cashRealized)}</div>
                 </div>
-                <div className="rounded-md bg-secondary/50 p-2">
+                <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
                   <div className="text-muted-foreground">Net Profit</div>
                   <div className={"font-medium " + ((row.netProfit ?? 0) < 0 ? "text-destructive" : "")}>{currency(row.netProfit)}</div>
                 </div>
-                <div className="rounded-md bg-secondary/50 p-2">
+                <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
                   <div className="text-muted-foreground">Qty ({row.assetSymbol})</div>
                   <div className="font-medium">{row.assetQuantity !== null ? row.assetQuantity.toFixed(6) : "—"}</div>
                 </div>
@@ -216,15 +216,15 @@ function DrawerInner() {
       <div className="mt-4 space-y-2 flex-shrink-0">
         <div className="text-sm font-semibold">Aggregates</div>
         <div className="grid grid-cols-3 gap-2 text-xs">
-          <div className="rounded-md bg-muted/50 p-2">
+          <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
             <div className="text-muted-foreground">Capital</div>
             <div className="font-medium">{currency(aggregates.totalCapitalAllocated)}</div>
           </div>
-          <div className="rounded-md bg-muted/50 p-2">
+          <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
             <div className="text-muted-foreground">Cash Realized</div>
             <div className="font-medium">{currency(aggregates.totalCashRealized)}</div>
           </div>
-          <div className="rounded-md bg-muted/50 p-2">
+          <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
             <div className="text-muted-foreground">Net Profit</div>
             <div className={"font-medium " + ((aggregates.totalNetProfit ?? 0) < 0 ? "text-destructive" : "")}>{currency(aggregates.totalNetProfit)}</div>
           </div>
@@ -233,7 +233,7 @@ function DrawerInner() {
         {Object.keys(aggregates.assetAccumulations).length > 0 && (
           <div className="mt-3 text-xs">
             <div className="text-sm font-semibold mb-2">Crypto Accumulation</div>
-            <div className="rounded-md bg-secondary/50 p-3 space-y-2">
+            <div className="rounded-md bg-gray-100 border border-gray-200 p-3 space-y-2">
               {Object.entries(aggregates.assetAccumulations).map(([sym, qty]) => (
                 <div key={sym} className="flex items-center justify-between">
                   <Badge className="px-2 py-1 text-xs">{sym}</Badge>
