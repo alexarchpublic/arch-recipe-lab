@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { Plus, Trash2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function PortfolioDrawer() {
   const { setOnFirstAdd, positions } = usePortfolio() as any;
@@ -70,30 +70,30 @@ function DrawerInner() {
     setAllocation,
     removeRecipe,
     clear,
-    optimizeAllocations,
+    // optimizeAllocations,
   } = usePortfolio();
 
   const positionEntries = useMemo(() => Object.values(positions), [positions]);
-  const assetOptions = useMemo(() => {
-    const set = new Set<string>();
-    Object.values(recipes).forEach((r: any) => set.add(r.assetSymbol));
-    return Array.from(set);
-  }, [recipes]);
+  // const assetOptions = useMemo(() => {
+  //   const set = new Set<string>();
+  //   Object.values(recipes).forEach((r: any) => set.add(r.assetSymbol));
+  //   return Array.from(set);
+  // }, [recipes]);
 
-  const [objective, setObjective] = useState<"cash" | "pnl" | "asset">("cash");
-  const [asset, setAsset] = useState<string | undefined>(undefined);
-  useEffect(() => {
-    if (!asset && assetOptions.length > 0) setAsset(assetOptions[0]);
-  }, [asset, assetOptions]);
+  // const [objective, setObjective] = useState<"cash" | "pnl" | "asset">("cash");
+  // const [asset, setAsset] = useState<string | undefined>(undefined);
+  // useEffect(() => {
+  //   if (!asset && assetOptions.length > 0) setAsset(assetOptions[0]);
+  // }, [asset, assetOptions]);
 
   return (
     <div className="flex h-full flex-col">
-      <div className="space-y-1">
+      <div className="space-y-1 flex-shrink-0">
         <SheetTitle>Portfolio</SheetTitle>
         <SheetDescription>Allocate your capital across selected recipes.</SheetDescription>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-4 grid grid-cols-2 gap-2 flex-shrink-0">
         <div className="space-y-1">
           <div className="text-xs text-muted-foreground">Initial Capital</div>
           <Input
@@ -109,54 +109,9 @@ function DrawerInner() {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-3">
-        {/* Optimize Controls */}
-        <div className="rounded-md border p-3">
-          <div className="text-sm font-medium mb-2">Optimize Allocations</div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">Objective</div>
-              <Select value={objective} onValueChange={(v) => setObjective(v as any)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select objective" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash Profit</SelectItem>
-                  <SelectItem value="pnl">Net Profit (PnL)</SelectItem>
-                  <SelectItem value="asset">Asset Accumulation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {objective === "asset" && (
-              <div className="space-y-1">
-                <div className="text-xs text-muted-foreground">Asset</div>
-                <Select value={asset} onValueChange={setAsset}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select asset" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assetOptions.map((sym) => (
-                      <SelectItem key={sym} value={sym}>
-                        {sym}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-          <div className="mt-2">
-            <Button
-              onClick={() => optimizeAllocations(objective, objective === "asset" ? asset : undefined)}
-              disabled={positionEntries.length === 0}
-            >
-              Optimize
-            </Button>
-          </div>
-        </div>
-
-        {/* Positions */}
-        <div className="space-y-3 overflow-auto">
+      {/* Scrollable Positions Section */}
+      <div className="mt-4 flex-1 overflow-y-auto min-h-0">
+        <div className="space-y-3">
         {positionEntries.length === 0 && (
           <div className="text-sm text-muted-foreground">No recipes added yet. Tap the heart on a recipe to add it.</div>
         )}
@@ -222,7 +177,7 @@ function DrawerInner() {
         </div>
       </div>
 
-      <div className="mt-4 space-y-2">
+      <div className="mt-4 space-y-2 flex-shrink-0">
         <div className="text-sm font-semibold">Aggregates</div>
         <div className="grid grid-cols-3 gap-2 text-xs">
           <div className="rounded-md bg-muted/50 p-2">
@@ -254,7 +209,7 @@ function DrawerInner() {
         )}
       </div>
 
-      <div className="mt-auto flex items-center gap-2 pt-4">
+      <div className="mt-auto flex items-center gap-2 pt-4 flex-shrink-0">
         <Button variant="destructive" className="gap-2" onClick={clear}>
           <Trash2 className="h-4 w-4" /> Clear
         </Button>
