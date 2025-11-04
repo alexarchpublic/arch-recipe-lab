@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { usePortfolio } from "@/hooks/usePortfolio";
+import { parseCurrencyFromString } from "@/lib/portfolio";
 import { TrendingUp, DollarSign, Clock, Target, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -67,12 +68,6 @@ const getAssetColor = (asset: string) => {
 
 export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   const { isInPortfolio, toggleRecipe } = usePortfolio();
-  const parseCurrencyFromString = (text?: string | null): number | null => {
-    if (!text) return null;
-    const match = String(text).replace(/[^0-9.,-]/g, "").replace(/,/g, "");
-    const num = parseFloat(match);
-    return Number.isFinite(num) ? num : null;
-  };
 
   const getStartEndDates = (): { start?: Date; end?: Date } => {
     const ai = recipe.algorithm_inputs as any;
