@@ -11,6 +11,8 @@ export interface PortfolioRecipeSummary {
   baseNetProfit?: number | null; // recipe.net_profit parsed as number
   // Optional string like "$96,170 (0.92 BTC @ $104,000)"; we will try to parse qty
   assetAccumulatedText?: string | null;
+  algorithm?: string;
+  algorithm_inputs?: any;
 }
 
 export interface PortfolioPosition {

@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Copy } from "lucide-react";
+import { TradingViewModal } from "@/components/TradingViewModal";
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function PortfolioDrawer() {
@@ -74,6 +75,7 @@ function DrawerInner() {
   } = usePortfolio();
 
   const positionEntries = useMemo(() => Object.values(positions), [positions]);
+  const [tradingViewModalOpen, setTradingViewModalOpen] = useState(false);
   
   const [capitalInput, setCapitalInput] = useState<string>(() => 
     initialCapital.toLocaleString('en-US', { maximumFractionDigits: 0 })
@@ -244,10 +246,20 @@ function DrawerInner() {
       </div>
 
       <div className="mt-auto flex items-center gap-2 pt-4 flex-shrink-0">
+        <Button 
+          variant="outline" 
+          className="gap-2 flex-1" 
+          onClick={() => setTradingViewModalOpen(true)}
+          disabled={positionEntries.length === 0}
+        >
+          <Copy className="h-4 w-4" /> Copy To TradingView
+        </Button>
         <Button variant="destructive" className="gap-2" onClick={clear}>
           <Trash2 className="h-4 w-4" /> Clear
         </Button>
       </div>
+
+      <TradingViewModal open={tradingViewModalOpen} onOpenChange={setTradingViewModalOpen} />
     </div>
   );
 }

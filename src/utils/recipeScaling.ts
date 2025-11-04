@@ -55,3 +55,57 @@ export function getScale(initialCapital: number | null | undefined): number {
   return initialCapital / base;
 }
 
+/**
+ * Scales dollar amounts in algorithm_inputs based on portfolio allocation.
+ * Only scales dollar values; preserves percentages, dates, and other non-dollar values.
+ * 
+ * @param algorithm_inputs - The algorithm inputs object to scale
+ * @param scaleFactor - The scaling factor (portfolio allocation capital / recipe base initial capital)
+ * @returns A new object with scaled dollar values
+ */
+export function scaleAlgorithmInputs(algorithm_inputs: any, scaleFactor: number): any {
+  if (!algorithm_inputs || typeof algorithm_inputs !== 'object') return algorithm_inputs;
+  if (!isFinite(scaleFactor) || scaleFactor <= 0) return algorithm_inputs;
+
+  // Deep clone to avoid mutating the original
+  const scaled = JSON.parse(JSON.stringify(algorithm_inputs));
+
+  // Arbitrage Algorithm: scale tradeSize.entry and tradeSize.exit
+  if (typeof scaled.tradeSize === 'object' && scaled.tradeSize !== null) {
+    if (typeof scaled.tradeSize.entry === 'number') {
+      scaled.tradeSize.entry = Math.round(scaled.tradeSize.entry * scaleFactor);
+    }
+    if (typeof scaled.tradeSize.exit === 'number') {
+      scaled.tradeSize.exit = Math.round(scaled.tradeSize.exit * scaleFactor);
+    }
+  }
+
+  // Oracle Protocol: scale tradeSize.entryFixed, tradeSize.exitFixed, and properties.initialCapital
+  if (typeof scaled.tradeSize === 'object' && scaled.tradeSize !== null) {
+    if (typeof scaled.tradeSize.entryFixed === 'number') {
+      scaled.tradeSize.entryFixed = Math.round(scaled.tradeSize.entryFixed * scaleFactor);
+    }
+    if (typeof scaled.tradeSize.exitFixed === 'number') {
+      scaled.tradeSize.exitFixed = Math.round(scaled.tradeSize.exitFixed * scaleFactor);
+    }
+  }
+
+  // Oracle Protocol: scale properties.initialCapital
+  if (typeof scaled.properties === 'object' && scaled.properties !== null) {
+    if (typeof scaled.properties.initialCapital === 'number') {
+      scaled.properties.initialCapital = Math.round(scaled.properties.initialCapital * scaleFactor);
+    }
+    
+    // Scale orderSize.value if it's a dollar amount (type indicates if it's dollar-based)
+    if (typeof scaled.properties.orderSize === 'object' && scaled.properties.orderSize !== null) {
+      const orderSizeType = scaled.properties.orderSize.type;
+      if (typeof scaled.properties.orderSize.value === 'number' && 
+          (orderSizeType === 'Dollars' || orderSizeType === 'USD' || orderSizeType === '$')) {
+        scaled.properties.orderSize.value = Math.round(scaled.properties.orderSize.value * scaleFactor);
+      }
+    }
+  }
+
+  return scaled;
+}
+

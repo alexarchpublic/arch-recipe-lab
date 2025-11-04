@@ -249,6 +249,8 @@ function AddToPortfolioButton({ recipe }: { recipe: any }) {
           baseCashProfit: recipe.cash_profit ?? null,
           baseNetProfit: parseCurrencyFromString(recipe.net_profit),
           assetAccumulatedText: recipe.asset_accumulated ?? null,
+          algorithm: recipe.algorithm,
+          algorithm_inputs: recipe.algorithm_inputs,
         });
         setFlash(true);
         setTimeout(() => setFlash(false), 1500);
