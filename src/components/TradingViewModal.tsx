@@ -10,9 +10,6 @@ import { Separator } from "@/components/ui/separator";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { scaleAlgorithmInputs } from "@/utils/recipeScaling";
 import { computeScaledMetricsForRecipe, DEFAULT_BASE_CAPITAL } from "@/lib/portfolio";
-import { Copy, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
 
 interface TradingViewModalProps {
   open: boolean;
@@ -21,7 +18,6 @@ interface TradingViewModalProps {
 
 export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) {
   const { positions, initialCapital, recipes, rows } = usePortfolio();
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const portfolioEntries = Object.values(positions).map(pos => {
     const recipe = recipes[pos.recipeId];
@@ -44,16 +40,6 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
     };
   }).filter((entry): entry is NonNullable<typeof portfolioEntries[0]> => entry !== null);
 
-  const copyToClipboard = async (text: string, index: number) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
-
   const formatDate = (dateObj: any): string => {
     if (!dateObj || !dateObj.year || !dateObj.month || !dateObj.day) return '';
     const hour = dateObj.hour !== null && dateObj.hour !== undefined ? ` ${dateObj.hour}:${String(dateObj.minute ?? 0).padStart(2, '0')}` : '';
@@ -62,7 +48,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
 
   const formatRecipeParams = (recipe: any, scaledInputs: any, capitalAllocated: number): string => {
     const lines: string[] = [];
-    lines.push(`Recipe: ${recipe.title}`);
+    lines.push(`Recipe Name: ${recipe.title}`);
     lines.push(`Algorithm: ${recipe.algorithm || 'N/A'}`);
     lines.push(`Capital Allocated: $${Math.round(capitalAllocated).toLocaleString()}`);
     lines.push('');
@@ -161,9 +147,17 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Copy To TradingView</DialogTitle>
-          <DialogDescription>
-            Algorithm parameters and scaled input values for each recipe in your portfolio.
-            Use these values to manually configure your TradingView strategies.
+          <DialogDescription className="space-y-2">
+            <div>
+              Algorithm parameters and scaled input values for each recipe in your portfolio.
+              Use these values to manually configure your TradingView strategies.
+            </div>
+            <div className="font-semibold text-foreground mt-3">
+              IMPORTANT
+            </div>
+            <div>
+              Remember to set the start date to today's date, change the end year to some point in the future (we recommend 5+ years)
+            </div>
           </DialogDescription>
         </DialogHeader>
 
@@ -179,10 +173,10 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
 
               return (
                 <div key={recipe.recipeId} className="space-y-3">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold">{recipe.title}</h3>
+                        <h3 className="text-lg font-semibold">Recipe Name: {recipe.title}</h3>
                         <Badge variant="outline">{recipe.assetSymbol}</Badge>
                         {recipe.algorithm && (
                           <Badge variant="secondary">{recipe.algorithm}</Badge>
@@ -192,24 +186,6 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
                         Capital Allocated: ${Math.round(capitalAllocated).toLocaleString()}
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToClipboard(paramsText, index)}
-                      className="gap-2"
-                    >
-                      {copiedIndex === index ? (
-                        <>
-                          <Check className="h-4 w-4" />
-                          Copied
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-4 w-4" />
-                          Copy
-                        </>
-                      )}
-                    </Button>
                   </div>
 
                   <div className="rounded-md border bg-muted/30 p-4">
