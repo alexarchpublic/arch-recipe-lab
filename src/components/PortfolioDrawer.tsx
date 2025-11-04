@@ -195,13 +195,13 @@ function DrawerInner() {
         </div>
 
         {Object.keys(aggregates.assetAccumulations).length > 0 && (
-          <div className="mt-2 text-xs">
-            <div className="text-muted-foreground">Accumulation</div>
-            <div className="mt-1 space-y-1">
+          <div className="mt-3 text-xs">
+            <div className="text-sm font-semibold mb-2">Crypto Accumulation</div>
+            <div className="rounded-md bg-secondary/50 p-3 space-y-2">
               {Object.entries(aggregates.assetAccumulations).map(([sym, qty]) => (
                 <div key={sym} className="flex items-center justify-between">
-                  <span className="font-medium">{sym}</span>
-                  <span>{qty.toFixed(6)}</span>
+                  <Badge className="px-2 py-1 text-xs">{sym}</Badge>
+                  <span className="font-medium">{qty.toFixed(6)}</span>
                 </div>
               ))}
             </div>

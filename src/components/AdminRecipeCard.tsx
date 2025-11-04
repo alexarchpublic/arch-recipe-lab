@@ -27,6 +27,8 @@ interface Recipe {
   annualized_return: number | null;
   net_profit: string | null;
   cash_profit: number | null;
+  asset_accumulated?: string | null;
+  initial_capital?: number | null;
   created_at: string;
   updated_at: string;
   screenshots?: Array<{
@@ -215,9 +217,9 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
                   recipeId: recipe.id,
                   title: recipe.name,
                   assetSymbol: recipe.asset,
-                  baseInitialCapital: undefined,
+                  baseInitialCapital: recipe.initial_capital ?? undefined,
                   baseCashProfit: recipe.cash_profit ?? null,
-                  assetAccumulatedText: null,
+                  assetAccumulatedText: recipe.asset_accumulated ?? null,
                 })
               }
               aria-label={isInPortfolio(recipe.id) ? "Remove from portfolio" : "Add to portfolio"}

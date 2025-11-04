@@ -68,13 +68,30 @@ export function normalizeAllocations(
 
 export function parseAssetQuantityFromText(text: string | null | undefined, assetSymbol: string): number | null {
   if (!text) return null;
-  // Try to find a pattern like "0.92 BTC" anywhere in the string
+  const str = String(text);
+  
+  // First try: look for pattern like "0.92 BTC" anywhere in the string (case-insensitive)
   const symbol = assetSymbol.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
-  const re = new RegExp(`([0-9]+(?:\\.[0-9]+)?)\\s*${symbol}`, "i");
-  const m = text.match(re);
-  if (!m) return null;
-  const qty = parseFloat(m[1]);
-  return Number.isFinite(qty) ? qty : null;
+  const patterns = [
+    // Pattern 1: "0.92 BTC" or "0.92BTC" (with symbol)
+    new RegExp(`([0-9]+(?:\\.[0-9]+)?)\\s*${symbol}`, "i"),
+    // Pattern 2: Number in parentheses like "(0.92 BTC @ $104,000)"
+    new RegExp(`\\(([0-9]+(?:\\.[0-9]+)?)\\s*${symbol}`, "i"),
+    // Pattern 3: Just a number followed by optional space and any asset ticker (fallback)
+    new RegExp(`\\b([0-9]+(?:\\.[0-9]+)?)\\s*(?:[A-Z]{2,6})?\\b`, "i"),
+  ];
+  
+  for (const pattern of patterns) {
+    const m = str.match(pattern);
+    if (m) {
+      const qty = parseFloat(m[1]);
+      if (Number.isFinite(qty) && qty > 0) {
+        return qty;
+      }
+    }
+  }
+  
+  return null;
 }
 
 function safeNumber(n: number | null | undefined): number | null {

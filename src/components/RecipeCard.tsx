@@ -26,6 +26,8 @@ interface Recipe {
   annualized_return: number | null;
   net_profit: string | null;
   cash_profit: number | null;
+  asset_accumulated?: string | null;
+  initial_capital?: number | null;
   screenshots?: Array<{
     id: string;
     image_url: string;
@@ -248,9 +250,9 @@ function AddToPortfolioButton({ recipe }: { recipe: any }) {
           recipeId: recipe.id,
           title: recipe.name,
           assetSymbol: recipe.asset,
-          baseInitialCapital: undefined,
+          baseInitialCapital: recipe.initial_capital ?? undefined,
           baseCashProfit: recipe.cash_profit ?? null,
-          assetAccumulatedText: null,
+          assetAccumulatedText: recipe.asset_accumulated ?? null,
         });
         setFlash(true);
         setTimeout(() => setFlash(false), 1500);
