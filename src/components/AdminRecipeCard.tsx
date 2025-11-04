@@ -180,13 +180,15 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
       </div>
 
       <CardHeader className="space-y-3">
+        {typeof recipe.display_number === 'number' && (
+          <div className="flex items-center gap-2">
+            <Badge variant="default" className="text-base font-bold px-3 py-1">#{recipe.display_number}</Badge>
+          </div>
+        )}
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
             {recipe.goal}
           </CardTitle>
-          {typeof recipe.display_number === 'number' && (
-            <Badge variant="secondary" className="ml-2 font-semibold">#{recipe.display_number}</Badge>
-          )}
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge className={getAssetColor(recipe.asset)}>
@@ -299,6 +301,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
                   assetAccumulatedText: recipe.asset_accumulated ?? null,
                   algorithm: recipe.algorithm,
                   algorithm_inputs: recipe.algorithm_inputs,
+                  display_number: recipe.display_number ?? null,
                 })
               }
               aria-label={isInPortfolio(recipe.id) ? "Remove from portfolio" : "Add to portfolio"}

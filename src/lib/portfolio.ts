@@ -13,6 +13,7 @@ export interface PortfolioRecipeSummary {
   assetAccumulatedText?: string | null;
   algorithm?: string;
   algorithm_inputs?: any;
+  display_number?: number | null;
 }
 
 export interface PortfolioPosition {

@@ -48,6 +48,9 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
 
   const formatRecipeParams = (recipe: any, scaledInputs: any, capitalAllocated: number): string => {
     const lines: string[] = [];
+    if (typeof recipe.display_number === 'number') {
+      lines.push(`Recipe Number: #${recipe.display_number}`);
+    }
     lines.push(`Recipe Name: ${recipe.title}`);
     lines.push(`Algorithm: ${recipe.algorithm || 'N/A'}`);
     lines.push(`Capital Allocated: $${Math.round(capitalAllocated).toLocaleString()}`);
@@ -176,6 +179,9 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
                   <div className="flex items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
+                        {typeof recipe.display_number === 'number' && (
+                          <Badge variant="default" className="text-base font-bold px-3 py-1">#{recipe.display_number}</Badge>
+                        )}
                         <h3 className="text-lg font-semibold">Recipe Name: {recipe.title}</h3>
                         <Badge variant="outline">{recipe.assetSymbol}</Badge>
                         {recipe.algorithm && (
