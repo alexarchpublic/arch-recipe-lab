@@ -8,90 +8,91 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Arch Public brand colors */
-    /* Light Beige/Cream background: #eeebd2 */
-    --background: 54 31% 88%;
-    /* Dark Navy foreground: #0b1656 */
-    --foreground: 233 77% 19%;
+    /* Clean, Apple-inspired color palette */
+    /* Very light gray background: #f5f5f7 */
+    --background: 0 0% 96%;
+    /* Dark gray foreground: #1d1d1f */
+    --foreground: 0 0% 12%;
 
-    /* White cards */
+    /* Pure white cards */
     --card: 0 0% 100%;
-    --card-foreground: 233 77% 19%;
+    --card-foreground: 0 0% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 233 77% 19%;
+    --popover-foreground: 0 0% 12%;
 
-    /* Vibrant Blue primary: #244bd8 */
-    --primary: 227 71% 49%;
+    /* Subtle Apple blue primary: #0071e3 */
+    --primary: 210 100% 45%;
     --primary-foreground: 0 0% 100%;
     
-    /* Vibrant Blue accent (same as primary) */
-    --accent: 227 71% 49%;
+    /* Subtle blue accent */
+    --accent: 210 100% 45%;
     --accent-foreground: 0 0% 100%;
 
-    /* White secondary for tiles and inputs */
-    --secondary: 0 0% 100%;
-    --secondary-foreground: 233 77% 19%;
+    /* Light gray secondary */
+    --secondary: 0 0% 97%;
+    --secondary-foreground: 0 0% 12%;
 
-    /* Light gray muted */
+    /* Very light gray muted */
     --muted: 0 0% 96%;
-    --muted-foreground: 233 50% 45%;
+    --muted-foreground: 0 0% 45%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
+    /* Light gray borders */
+    --border: 0 0% 82%;
     --input: 0 0% 100%;
-    --ring: 227 71% 49%;
+    --ring: 210 100% 45%;
 
     --radius: 0.75rem;
     
-    /* Brand gradients using vibrant blue */
-    --gradient-hero: linear-gradient(135deg, hsl(227 71% 49%), hsl(233 77% 19%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(54 31% 95%));
+    /* Subtle gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(210 100% 45%), hsl(210 100% 40%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 99%));
     
-    /* Shadows using brand colors */
-    --shadow-card: 0 4px 6px -1px hsl(233 77% 19% / 0.1), 0 2px 4px -1px hsl(233 77% 19% / 0.06);
-    --shadow-card-hover: 0 10px 15px -3px hsl(227 71% 49% / 0.15), 0 4px 6px -2px hsl(227 71% 49% / 0.1);
+    /* Subtle shadows */
+    --shadow-card: 0 2px 8px -2px hsl(0 0% 0% / 0.08), 0 1px 4px -1px hsl(0 0% 0% / 0.04);
+    --shadow-card-hover: 0 4px 12px -2px hsl(0 0% 0% / 0.12), 0 2px 6px -1px hsl(0 0% 0% / 0.06);
     
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    /* Dark mode uses dark navy background */
-    --background: 233 77% 19%;
-    --foreground: 54 31% 88%;
+    /* Dark mode: clean dark theme */
+    --background: 0 0% 8%;
+    --foreground: 0 0% 98%;
 
-    --card: 233 77% 22%;
-    --card-foreground: 54 31% 88%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 233 77% 22%;
-    --popover-foreground: 54 31% 88%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 227 71% 49%;
+    --primary: 210 100% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --accent: 227 71% 49%;
+    --accent: 210 100% 55%;
     --accent-foreground: 0 0% 100%;
 
-    --secondary: 233 77% 25%;
-    --secondary-foreground: 54 31% 88%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 233 60% 30%;
-    --muted-foreground: 54 25% 75%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
 
     --destructive: 0 63% 31%;
-    --destructive-foreground: 54 31% 88%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 233 50% 35%;
-    --input: 233 50% 35%;
-    --ring: 227 71% 49%;
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 210 100% 55%;
     
-    --gradient-hero: linear-gradient(135deg, hsl(227 71% 49%), hsl(233 77% 19%));
-    --gradient-card: linear-gradient(180deg, hsl(233 77% 22%), hsl(233 77% 19%));
-    --shadow-card: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -1px hsl(0 0% 0% / 0.2);
-    --shadow-card-hover: 0 10px 15px -3px hsl(227 71% 49% / 0.3), 0 4px 6px -2px hsl(227 71% 49% / 0.2);
+    --gradient-hero: linear-gradient(135deg, hsl(210 100% 55%), hsl(210 100% 50%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 12%), hsl(0 0% 10%));
+    --shadow-card: 0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -1px hsl(0 0% 0% / 0.3);
+    --shadow-card-hover: 0 10px 15px -3px hsl(0 0% 0% / 0.5), 0 4px 6px -2px hsl(0 0% 0% / 0.4);
   }
 }
 
