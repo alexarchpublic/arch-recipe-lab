@@ -117,6 +117,15 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
     ? Math.round((recipe.cash_profit as number) * (Number.isFinite(scale) ? scale : 1))
     : null;
+  
+  // Calculate PnL %
+  const scaledInitialCapital = recipe.initial_capital !== null && recipe.initial_capital !== undefined
+    ? Math.round((recipe.initial_capital as number) * (Number.isFinite(scale) ? scale : 1))
+    : null;
+  const pnlPercent = scaledInitialCapital !== null && scaledInitialCapital > 0 && scaledNetProfitNumber !== null
+    ? (scaledNetProfitNumber / scaledInitialCapital) * 100
+    : null;
+  
   const inPortfolio = isInPortfolio(recipe.id);
   
   return (
@@ -205,6 +214,18 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
               <div>
                 <p className="text-xs text-muted-foreground">Net Profit</p>
                 <p className="text-sm font-semibold">${scaledNetProfitNumber.toLocaleString()}</p>
+              </div>
+            </div>
+          )}
+
+          {pnlPercent !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+              <TrendingUp className={`h-4 w-4 ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`} />
+              <div>
+                <p className="text-xs text-muted-foreground">PnL %</p>
+                <p className={`text-sm font-semibold ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                  {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(1)}%
+                </p>
               </div>
             </div>
           )}

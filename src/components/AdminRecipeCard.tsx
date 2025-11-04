@@ -126,6 +126,11 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
     ? recipe.cash_profit
     : null;
 
+  // Calculate PnL %
+  const pnlPercent = recipe.initial_capital !== null && recipe.initial_capital !== undefined && recipe.initial_capital > 0 && scaledNetProfitNumber !== null
+    ? (scaledNetProfitNumber / recipe.initial_capital) * 100
+    : null;
+
   const handleDelete = async () => {
     setDeleting(true);
     try {
@@ -237,6 +242,18 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
               <div>
                 <p className="text-xs text-muted-foreground">Net Profit</p>
                 <p className="text-sm font-semibold">${scaledNetProfitNumber.toLocaleString()}</p>
+              </div>
+            </div>
+          )}
+
+          {pnlPercent !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+              <TrendingUp className={`h-4 w-4 ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`} />
+              <div>
+                <p className="text-xs text-muted-foreground">PnL %</p>
+                <p className={`text-sm font-semibold ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                  {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(1)}%
+                </p>
               </div>
             </div>
           )}
