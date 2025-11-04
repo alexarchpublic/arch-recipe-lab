@@ -10,6 +10,7 @@ import { Search, SlidersHorizontal, Download, LogIn } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { usePortfolio } from "@/hooks/usePortfolio";
 
 interface Recipe {
   id: string;
@@ -50,8 +51,9 @@ export default function RecipeBrowser() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('cagr-desc');
+  const { initialCapital, setInitialCapital } = usePortfolio();
   // Keep the raw input as a string so empty state doesn't coerce to 0
-  const [initialCapitalInput, setInitialCapitalInput] = useState<string>('100000');
+  const [initialCapitalInput, setInitialCapitalInput] = useState<string>(initialCapital.toString());
   const [filters, setFilters] = useState<Filters>({
     assets: [],
     focuses: [],
@@ -61,10 +63,33 @@ export default function RecipeBrowser() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const formatCurrency = (value: number): string => {
+    if (!Number.isFinite(value) || value <= 0) return '';
+    return Math.round(value).toLocaleString('en-US', { maximumFractionDigits: 0 });
+  };
+
+  const parseCurrency = (value: string): number => {
+    const cleaned = value.replace(/[^0-9]/g, '');
+    const num = parseFloat(cleaned);
+    return Number.isFinite(num) && num >= 0 ? num : 0;
+  };
+
+  const handleInitialCapitalChange = (value: string) => {
+    setInitialCapitalInput(value);
+    const parsed = parseCurrency(value);
+    if (parsed > 0) {
+      setInitialCapital(parsed);
+    }
+  };
+
+  // Sync portfolio initialCapital to RecipeBrowser input
+  useEffect(() => {
+    setInitialCapitalInput(formatCurrency(initialCapital));
+  }, [initialCapital]);
+
   const initialCapitalNumber = useMemo(() => {
-    const n = parseFloat(initialCapitalInput);
-    return Number.isFinite(n) ? n : 0;
-  }, [initialCapitalInput]);
+    return initialCapital;
+  }, [initialCapital]);
 
   const scale = useMemo(() => {
     const base = 100000;
@@ -300,9 +325,16 @@ export default function RecipeBrowser() {
                 <div className="mt-2 mb-4 p-4 rounded-lg border border-border bg-secondary/30">
                   <p className="text-sm font-semibold mb-2">Initial Capital</p>
                   <Input
-                    type="number"
+                    type="text"
                     value={initialCapitalInput}
-                    onChange={(e) => setInitialCapitalInput(e.target.value)}
+                    onChange={(e) => handleInitialCapitalChange(e.target.value)}
+                    onBlur={(e) => {
+                      const parsed = parseCurrency(e.target.value);
+                      if (parsed > 0) {
+                        setInitialCapitalInput(formatCurrency(parsed));
+                      }
+                    }}
+                    placeholder="$100,000"
                     min={0}
                   />
                   <p className="text-xs text-muted-foreground mt-2">
@@ -330,9 +362,16 @@ export default function RecipeBrowser() {
               <div className="mb-4 p-4 rounded-lg border border-border bg-secondary/30">
                 <p className="text-sm font-semibold mb-2">Initial Capital</p>
                 <Input
-                  type="number"
+                  type="text"
                   value={initialCapitalInput}
-                  onChange={(e) => setInitialCapitalInput(e.target.value)}
+                  onChange={(e) => handleInitialCapitalChange(e.target.value)}
+                  onBlur={(e) => {
+                    const parsed = parseCurrency(e.target.value);
+                    if (parsed > 0) {
+                      setInitialCapitalInput(formatCurrency(parsed));
+                    }
+                  }}
+                  placeholder="$100,000"
                   min={0}
                 />
                 <p className="text-xs text-muted-foreground mt-2">

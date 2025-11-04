@@ -74,6 +74,33 @@ function DrawerInner() {
   } = usePortfolio();
 
   const positionEntries = useMemo(() => Object.values(positions), [positions]);
+  
+  const [capitalInput, setCapitalInput] = useState<string>(() => 
+    initialCapital.toLocaleString('en-US', { maximumFractionDigits: 0 })
+  );
+
+  useEffect(() => {
+    setCapitalInput(initialCapital.toLocaleString('en-US', { maximumFractionDigits: 0 }));
+  }, [initialCapital]);
+
+  const formatCurrency = (value: number): string => {
+    if (!Number.isFinite(value) || value <= 0) return '';
+    return Math.round(value).toLocaleString('en-US', { maximumFractionDigits: 0 });
+  };
+
+  const parseCurrency = (value: string): number => {
+    const cleaned = value.replace(/[^0-9]/g, '');
+    const num = parseFloat(cleaned);
+    return Number.isFinite(num) && num >= 0 ? num : 0;
+  };
+
+  const handleCapitalChange = (value: string) => {
+    setCapitalInput(value);
+    const parsed = parseCurrency(value);
+    if (parsed > 0) {
+      setInitialCapital(parsed);
+    }
+  };
   // const assetOptions = useMemo(() => {
   //   const set = new Set<string>();
   //   Object.values(recipes).forEach((r: any) => set.add(r.assetSymbol));
@@ -97,9 +124,16 @@ function DrawerInner() {
         <div className="space-y-1">
           <div className="text-xs text-muted-foreground">Initial Capital</div>
           <Input
-            type="number"
-            value={initialCapital}
-            onChange={e => setInitialCapital(Number(e.target.value))}
+            type="text"
+            value={capitalInput}
+            onChange={e => handleCapitalChange(e.target.value)}
+            onBlur={(e) => {
+              const parsed = parseCurrency(e.target.value);
+              if (parsed > 0) {
+                setCapitalInput(formatCurrency(parsed));
+              }
+            }}
+            placeholder="$100,000"
             min={0}
           />
         </div>
