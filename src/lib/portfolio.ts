@@ -8,6 +8,7 @@ export interface PortfolioRecipeSummary {
   assetSymbol: string; // e.g., BTC, ETH
   baseInitialCapital?: number | null; // recipe.initial_capital if present
   baseCashProfit?: number | null; // recipe.cash_profit if present
+  baseNetProfit?: number | null; // recipe.net_profit parsed as number
   // Optional string like "$96,170 (0.92 BTC @ $104,000)"; we will try to parse qty
   assetAccumulatedText?: string | null;
 }
@@ -27,7 +28,7 @@ export interface ScaledRecipeMetrics {
   allocationPct: number;
   capitalAllocated: number; // dollars
   cashRealized: number | null; // dollars (scaled)
-  pnl: number | null; // cashRealized - capitalAllocated (when cashRealized known)
+  netProfit: number | null; // dollars (scaled from baseNetProfit)
   assetQuantity: number | null; // e.g., BTC units (scaled)
   assetSymbol: string;
   title: string;
@@ -36,7 +37,7 @@ export interface ScaledRecipeMetrics {
 export interface PortfolioAggregates {
   totalCapitalAllocated: number;
   totalCashRealized: number | null;
-  totalPnL: number | null;
+  totalNetProfit: number | null;
   assetAccumulations: Record<string, number>; // symbol -> qty
 }
 
@@ -98,6 +99,13 @@ function safeNumber(n: number | null | undefined): number | null {
   return typeof n === "number" && Number.isFinite(n) ? n : null;
 }
 
+export function parseCurrencyFromString(text: string | null | undefined): number | null {
+  if (!text) return null;
+  const match = String(text).replace(/[^0-9.,-]/g, "").replace(/,/g, "");
+  const num = parseFloat(match);
+  return Number.isFinite(num) ? num : null;
+}
+
 export function computeScaledMetricsForRecipe(
   portfolioInitialCapital: number,
   position: PortfolioPosition,
@@ -111,7 +119,9 @@ export function computeScaledMetricsForRecipe(
 
   const baseCash = safeNumber(recipe.baseCashProfit);
   const cashRealized = baseCash !== null ? baseCash * scaleFactor : null;
-  const pnl = cashRealized !== null ? cashRealized - capitalAllocated : null;
+  
+  const baseNetProfit = safeNumber(recipe.baseNetProfit);
+  const netProfit = baseNetProfit !== null ? baseNetProfit * scaleFactor : null;
 
   const baseQty = parseAssetQuantityFromText(recipe.assetAccumulatedText, recipe.assetSymbol);
   const assetQuantity = baseQty !== null ? baseQty * scaleFactor : null;
@@ -121,7 +131,7 @@ export function computeScaledMetricsForRecipe(
     allocationPct,
     capitalAllocated,
     cashRealized,
-    pnl,
+    netProfit,
     assetQuantity,
     assetSymbol: recipe.assetSymbol,
     title: recipe.title,
@@ -132,7 +142,7 @@ export function computePortfolioAggregates(rows: ScaledRecipeMetrics[]): Portfol
   const totalCapitalAllocated = rows.reduce((acc, r) => acc + r.capitalAllocated, 0);
 
   let totalCashRealized: number | null = 0;
-  let totalPnL: number | null = 0;
+  let totalNetProfit: number | null = 0;
   const assetAccumulations: Record<string, number> = {};
 
   for (const r of rows) {
@@ -142,10 +152,10 @@ export function computePortfolioAggregates(rows: ScaledRecipeMetrics[]): Portfol
       totalCashRealized += r.cashRealized;
     }
 
-    if (r.pnl === null) {
-      totalPnL = null;
-    } else if (totalPnL !== null) {
-      totalPnL += r.pnl;
+    if (r.netProfit === null) {
+      totalNetProfit = null;
+    } else if (totalNetProfit !== null) {
+      totalNetProfit += r.netProfit;
     }
 
     if (r.assetQuantity !== null) {
@@ -155,9 +165,9 @@ export function computePortfolioAggregates(rows: ScaledRecipeMetrics[]): Portfol
 
   // If we never added any known values, coerce back to null for cleaner UI
   if (totalCashRealized === 0 && rows.every(r => r.cashRealized === null)) totalCashRealized = null;
-  if (totalPnL === 0 && rows.every(r => r.pnl === null)) totalPnL = null;
+  if (totalNetProfit === 0 && rows.every(r => r.netProfit === null)) totalNetProfit = null;
 
-  return { totalCapitalAllocated, totalCashRealized, totalPnL, assetAccumulations };
+  return { totalCapitalAllocated, totalCashRealized, totalNetProfit, assetAccumulations };
 }
 
 export function remainingAllocationPercent(positions: Record<string, PortfolioPosition>): number {
@@ -171,7 +181,7 @@ export function roundCurrency(value: number | null): number | null {
 }
 
 // Optimization helpers
-export type OptimizeObjective = "cash" | "pnl" | "asset";
+export type OptimizeObjective = "cash" | "netProfit" | "asset";
 
 export function perDollarYield(
   row: ScaledRecipeMetrics,
@@ -182,8 +192,8 @@ export function perDollarYield(
   switch (objective) {
     case "cash":
       return row.cashRealized !== null ? row.cashRealized / row.capitalAllocated : 0;
-    case "pnl":
-      return row.pnl !== null ? row.pnl / row.capitalAllocated : 0;
+    case "netProfit":
+      return row.netProfit !== null ? row.netProfit / row.capitalAllocated : 0;
     case "asset":
       if (!assetSymbol || row.assetSymbol !== assetSymbol) return 0;
       return row.assetQuantity !== null ? row.assetQuantity / row.capitalAllocated : 0;

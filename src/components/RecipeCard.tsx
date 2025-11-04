@@ -252,6 +252,7 @@ function AddToPortfolioButton({ recipe }: { recipe: any }) {
           assetSymbol: recipe.asset,
           baseInitialCapital: recipe.initial_capital ?? undefined,
           baseCashProfit: recipe.cash_profit ?? null,
+          baseNetProfit: parseCurrencyFromString(recipe.net_profit),
           assetAccumulatedText: recipe.asset_accumulated ?? null,
         });
         setFlash(true);

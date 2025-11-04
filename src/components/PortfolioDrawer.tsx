@@ -163,8 +163,8 @@ function DrawerInner() {
                   <div className="font-medium">{currency(row.cashRealized)}</div>
                 </div>
                 <div className="rounded-md bg-secondary/50 p-2">
-                  <div className="text-muted-foreground">PnL</div>
-                  <div className={"font-medium " + ((row.pnl ?? 0) < 0 ? "text-destructive" : "")}>{currency(row.pnl)}</div>
+                  <div className="text-muted-foreground">Net Profit</div>
+                  <div className={"font-medium " + ((row.netProfit ?? 0) < 0 ? "text-destructive" : "")}>{currency(row.netProfit)}</div>
                 </div>
                 <div className="rounded-md bg-secondary/50 p-2">
                   <div className="text-muted-foreground">Qty ({row.assetSymbol})</div>
@@ -189,8 +189,8 @@ function DrawerInner() {
             <div className="font-medium">{currency(aggregates.totalCashRealized)}</div>
           </div>
           <div className="rounded-md bg-muted/50 p-2">
-            <div className="text-muted-foreground">PnL</div>
-            <div className={"font-medium " + ((aggregates.totalPnL ?? 0) < 0 ? "text-destructive" : "")}>{currency(aggregates.totalPnL)}</div>
+            <div className="text-muted-foreground">Net Profit</div>
+            <div className={"font-medium " + ((aggregates.totalNetProfit ?? 0) < 0 ? "text-destructive" : "")}>{currency(aggregates.totalNetProfit)}</div>
           </div>
         </div>
 

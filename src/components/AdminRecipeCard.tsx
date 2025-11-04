@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { TrendingUp, DollarSign, Clock, Target, Edit, Trash2, Eye, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { parseCurrencyFromString } from "@/lib/portfolio";
 
 interface Recipe {
   id: string;
@@ -219,6 +219,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
                   assetSymbol: recipe.asset,
                   baseInitialCapital: recipe.initial_capital ?? undefined,
                   baseCashProfit: recipe.cash_profit ?? null,
+                  baseNetProfit: parseCurrencyFromString(recipe.net_profit),
                   assetAccumulatedText: recipe.asset_accumulated ?? null,
                 })
               }
