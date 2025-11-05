@@ -145,6 +145,56 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
     return lines.join('\n');
   };
 
+  const formatCurrencyShort = (n: number | null | undefined): string => {
+    if (n === null || n === undefined) return "";
+    return `$${Math.round(n).toLocaleString()}`;
+  };
+
+  const todayString = (): string => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const getAlgoCode = (algo?: string | null): string => {
+    if (!algo) return '';
+    if (algo === 'Oracle Protocol') return 'OP';
+    if (algo === 'Arbitrage Algorithm') return 'AA';
+    if (algo === 'Intelligence Algorithm') return 'IA';
+    return '';
+  };
+
+  const getSuggestedName = (entry: any): string => {
+    const { recipe, scaledInputs, capitalAllocated } = entry;
+    const num = typeof recipe.display_number === 'number' ? `R${recipe.display_number}` : 'R?';
+    const algo = getAlgoCode(recipe.algorithm);
+    const start = `Start(${todayString()})`;
+    const capital = `(${formatCurrencyShort(capitalAllocated)})`;
+
+    if (recipe.algorithm === 'Arbitrage Algorithm') {
+      const entrySize = typeof scaledInputs?.tradeSize?.entry === 'number' ? `$${scaledInputs.tradeSize.entry.toLocaleString()}` : '?';
+      const exitSize = typeof scaledInputs?.tradeSize?.exit === 'number' ? `$${scaledInputs.tradeSize.exit.toLocaleString()}` : '?';
+      return `${num} ${algo} ${start} ${capital} ${entrySize}/${exitSize}`.trim();
+    }
+    if (recipe.algorithm === 'Oracle Protocol') {
+      const entrySize = typeof scaledInputs?.tradeSize?.entryPercent === 'number'
+        ? `${scaledInputs.tradeSize.entryPercent}%`
+        : (typeof scaledInputs?.tradeSize?.entryFixed === 'number' ? `$${scaledInputs.tradeSize.entryFixed.toLocaleString()}` : '?');
+      const exitSize = typeof scaledInputs?.tradeSize?.exitPercent === 'number'
+        ? `${scaledInputs.tradeSize.exitPercent}%`
+        : (typeof scaledInputs?.tradeSize?.exitFixed === 'number' ? `$${scaledInputs.tradeSize.exitFixed.toLocaleString()}` : '?');
+      return `${num} ${algo} ${start} ${capital} ${entrySize}/${exitSize}`.trim();
+    }
+    if (recipe.algorithm === 'Intelligence Algorithm') {
+      const factor = typeof scaledInputs?.activate?.factor === 'number' ? ` IF(${scaledInputs.activate.factor})` : '';
+      const method = scaledInputs?.repeatPurchaseMethod ? ` (${scaledInputs.repeatPurchaseMethod})` : '';
+      return `${num} ${algo} ${start} ${capital}${factor}${method}`.trim();
+    }
+    return `${num} ${algo} ${start} ${capital}`.trim();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -173,6 +223,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
             portfolioEntries.map((entry, index) => {
               const { recipe, scaledInputs, capitalAllocated } = entry;
               const paramsText = formatRecipeParams(recipe, scaledInputs, capitalAllocated);
+              const suggestedName = getSuggestedName(entry);
 
               return (
                 <div key={recipe.recipeId} className="space-y-3">
@@ -187,6 +238,19 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
                         {recipe.algorithm && (
                           <Badge variant="secondary">{recipe.algorithm}</Badge>
                         )}
+                      </div>
+                      {/* Suggested TradingView Name */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="text-sm text-muted-foreground">Suggested TradingView Name:</div>
+                        <div className="text-sm font-medium bg-secondary/60 border border-border rounded px-2 py-1">
+                          {suggestedName}
+                        </div>
+                        <button
+                          className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground hover:opacity-90"
+                          onClick={() => navigator.clipboard.writeText(suggestedName)}
+                        >
+                          Copy
+                        </button>
                       </div>
                       <div className="text-sm text-muted-foreground mb-3">
                         Capital Allocated: ${Math.round(capitalAllocated).toLocaleString()}
