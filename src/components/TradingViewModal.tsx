@@ -257,7 +257,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
                         )}
                         <h3 className="text-lg font-semibold">
                           {typeof recipe.display_number === 'number' 
-                            ? `Recipe (${recipe.display_number})` 
+                            ? `Recipe #${recipe.display_number}` 
                             : `Recipe Name: ${recipe.title}`}
                         </h3>
                         <Badge 
