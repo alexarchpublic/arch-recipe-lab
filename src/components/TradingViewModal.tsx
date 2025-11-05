@@ -100,7 +100,20 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
           lines.push(`  Initial Capital: $${scaledInputs.properties.initialCapital.toLocaleString()}`);
         }
         if (scaledInputs.properties.orderSize) {
-          lines.push(`  Order Size: ${scaledInputs.properties.orderSize.value} (${scaledInputs.properties.orderSize.type})`);
+          const orderSizeValue = typeof scaledInputs.properties.orderSize.value === 'number' 
+            ? scaledInputs.properties.orderSize.value 
+            : null;
+          const orderSizeType = scaledInputs.properties.orderSize.type;
+          
+          if (orderSizeValue !== null) {
+            if (orderSizeType === 'Currency') {
+              lines.push(`  Order Size: $${orderSizeValue.toLocaleString()}`);
+            } else if (orderSizeType) {
+              lines.push(`  Order Size: ${orderSizeValue.toLocaleString()} (${orderSizeType})`);
+            } else {
+              lines.push(`  Order Size: ${orderSizeValue.toLocaleString()}`);
+            }
+          }
         }
         if (typeof scaledInputs.properties.pyramiding === 'number') {
           lines.push(`  Pyramiding: ${scaledInputs.properties.pyramiding}`);
@@ -158,7 +171,20 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
           lines.push(`  Initial Capital: $${scaledInputs.properties.initialCapital.toLocaleString()}`);
         }
         if (scaledInputs.properties.orderSize) {
-          lines.push(`  Order Size: ${scaledInputs.properties.orderSize.value} (${scaledInputs.properties.orderSize.type})`);
+          const orderSizeValue = typeof scaledInputs.properties.orderSize.value === 'number' 
+            ? scaledInputs.properties.orderSize.value 
+            : null;
+          const orderSizeType = scaledInputs.properties.orderSize.type;
+          
+          if (orderSizeValue !== null) {
+            if (orderSizeType === 'Currency') {
+              lines.push(`  Order Size: $${orderSizeValue.toLocaleString()}`);
+            } else if (orderSizeType) {
+              lines.push(`  Order Size: ${orderSizeValue.toLocaleString()} (${orderSizeType})`);
+            } else {
+              lines.push(`  Order Size: ${orderSizeValue.toLocaleString()}`);
+            }
+          }
         }
         if (typeof scaledInputs.properties.pyramiding === 'number') {
           lines.push(`  Pyramiding: ${scaledInputs.properties.pyramiding}`);
