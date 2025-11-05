@@ -55,15 +55,13 @@ const getFocusColor = (focus: string) => {
   }
 };
 
-const getAssetColor = (asset: string) => {
-  const colors: Record<string, string> = {
-    'BTC': 'bg-orange-500 text-white',
-    'ETH': 'bg-purple-500 text-white',
-    'SOL': 'bg-violet-500 text-white',
-    'XRP': 'bg-blue-500 text-white',
-    'SUI': 'bg-cyan-500 text-white',
-  };
-  return colors[asset] || 'bg-muted text-muted-foreground';
+const assetHexBySymbol: Record<string, string> = {
+  // Recognizable brand-adjacent colors
+  BTC: '#f7931a',     // Bitcoin orange
+  ETH: '#627eea',     // Ethereum blue/purple
+  SOL: '#14f195',     // Solana green
+  XRP: '#23292f',     // XRP black-ish
+  SUI: '#2F80ED',     // Sui blue
 };
 
 export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
@@ -130,7 +128,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   
   return (
     <Card 
-      className="group cursor-pointer transition-all duration-300 hover:shadow-card-hover hover:scale-[1.02] bg-gradient-card border-border/50 texture-overlay"
+      className="group h-full flex flex-col cursor-pointer transition-all duration-300 hover:shadow-card-hover hover:scale-[1.02] bg-gradient-card border-border/50 texture-overlay"
       onClick={onClick}
     >
       {/* Thumbnail */}
@@ -165,7 +163,10 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Badge className={getAssetColor(recipe.asset)}>
+          <Badge
+            className="text-white"
+            style={{ backgroundColor: assetHexBySymbol[recipe.asset] || '#6b7280' }}
+          >
             {recipe.asset}
           </Badge>
           <Badge className={getFocusColor(recipe.focus)}>
@@ -177,47 +178,25 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-1">
         
         <div className="grid grid-cols-2 gap-3">
-          {returnValue && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-xs text-muted-foreground">CAGR</p>
-                <p className="text-sm font-semibold text-primary">{returnValue.toFixed(1)}%</p>
-              </div>
-            </div>
-          )}
-          
-          {scaledCashProfit !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-              <DollarSign className="h-4 w-4 text-accent" />
-              <div>
-                <p className="text-xs text-muted-foreground">Cash Profit</p>
-                <p className="text-sm font-semibold text-foreground">
-                  ${scaledCashProfit.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {scaledAssetQty !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-              <Target className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Asset Accumulated</p>
-                <p className="text-sm font-semibold">{scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} {recipe.asset}</p>
-              </div>
-            </div>
-          )}
-
           {scaledNetProfitNumber !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
               <DollarSign className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">Net Profit</p>
                 <p className="text-sm font-semibold">${scaledNetProfitNumber.toLocaleString()}</p>
+              </div>
+            </div>
+          )}
+
+          {scaledCashProfit !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
+              <DollarSign className="h-4 w-4 text-accent" />
+              <div>
+                <p className="text-xs text-muted-foreground">Cash Profit</p>
+                <p className="text-sm font-semibold text-foreground">${scaledCashProfit.toLocaleString()}</p>
               </div>
             </div>
           )}
@@ -234,8 +213,28 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
             </div>
           )}
 
+          {returnValue && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-xs text-muted-foreground">CAGR</p>
+                <p className="text-sm font-semibold text-primary">{returnValue.toFixed(1)}%</p>
+              </div>
+            </div>
+          )}
+
+          {scaledAssetQty !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200 col-span-2">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Asset Accumulated</p>
+                <p className="text-sm font-semibold">{scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} {recipe.asset}</p>
+              </div>
+            </div>
+          )}
+
           {recipe.algorithm && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 col-span-2">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200 col-span-2">
               <Target className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Algorithm</p>

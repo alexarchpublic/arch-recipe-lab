@@ -285,8 +285,8 @@ export default function RecipeBrowser() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-semibold text-white">Arch Public Recipes</h1>
-              <p className="text-sm text-white/90 mt-1">Crypto Algorithm Recipe Browser</p>
+              <h1 className="text-2xl md:text-3xl font-semibold text-white">Recipe Lab</h1>
+              <p className="text-sm text-white/90 mt-1">Arch Public Crypto Algorithm Recipe Browser</p>
             </div>
             <Button 
               variant="secondary" 
@@ -305,9 +305,10 @@ export default function RecipeBrowser() {
         <div className="mb-6 p-4 rounded-lg border border-border bg-white texture-overlay">
           <h2 className="text-base font-semibold mb-2">Get started</h2>
           <p className="text-sm text-muted-foreground">
-            Browse algorithm recipes, filter by asset, focus, time horizon, or strategy, and adjust
-            the Initial Capital to see all amounts scaled from the $100,000 baseline. Click a recipe
-            card to view details, parameters, and results.
+            Search and filter recipes by asset, focus, or time horizon. Set your Initial
+            Capital to instantly scale every dollar amount from the $100,000 baseline.
+            Click a card to review parameters and results, then add it to your
+            portfolio to allocate capital and copy values to TradingView.
           </p>
         </div>
 
