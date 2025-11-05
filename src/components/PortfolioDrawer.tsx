@@ -68,6 +68,19 @@ const assetHexBySymbol: Record<string, string> = {
   SUI: '#2F80ED',     // Sui blue
 };
 
+const getFocusColor = (focus?: string | null): string => {
+  switch (focus) {
+    case 'Cash Yielding':
+      return 'bg-accent text-accent-foreground';
+    case 'Accumulation':
+      return 'bg-primary text-primary-foreground';
+    case 'Balanced':
+      return 'bg-secondary text-secondary-foreground';
+    default:
+      return 'bg-muted text-muted-foreground';
+  }
+};
+
 function DrawerInner() {
   const {
     positions,
@@ -180,6 +193,16 @@ function DrawerInner() {
                     >
                       {r.assetSymbol}
                     </Badge>
+                    {r.focus && (
+                      <Badge className={`px-1 py-0.5 text-[10px] ${getFocusColor(r.focus)}`}>
+                        {r.focus}
+                      </Badge>
+                    )}
+                    {r.algorithm && (
+                      <Badge variant="outline" className="px-1 py-0.5 text-[10px] border-muted-foreground/30">
+                        {r.algorithm}
+                      </Badge>
+                    )}
                     <span>Alloc: {pct(pos.allocationPct)}</span>
                   </div>
                 </div>
