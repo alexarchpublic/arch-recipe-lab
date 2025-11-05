@@ -276,6 +276,7 @@ function AddToPortfolioButton({ recipe }: { recipe: any }) {
           algorithm: recipe.algorithm,
           algorithm_inputs: recipe.algorithm_inputs,
           display_number: recipe.display_number ?? null,
+          focus: recipe.focus,
         });
         setFlash(true);
         setTimeout(() => setFlash(false), 1500);

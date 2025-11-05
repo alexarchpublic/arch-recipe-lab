@@ -14,6 +14,7 @@ export interface PortfolioRecipeSummary {
   algorithm?: string;
   algorithm_inputs?: any;
   display_number?: number | null;
+  focus?: string; // Recipe focus (Cash Yielding, Accumulation, Balanced)
 }
 
 export interface PortfolioPosition {

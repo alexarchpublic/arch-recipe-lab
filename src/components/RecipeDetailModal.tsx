@@ -11,6 +11,9 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar, Image as ImageIcon, Wallet, Coins, BarChart3 } from "lucide-react";
 import { useState, useRef } from "react";
 import { scaleRecipeFreeText, scaleAlgorithmInputs } from "@/utils/recipeScaling";
+import { usePortfolio } from "@/hooks/usePortfolio";
+import { parseCurrencyFromString } from "@/lib/portfolio";
+import { Button } from "@/components/ui/button";
 
 interface Recipe {
   id: string;
@@ -67,6 +70,7 @@ const getFocusColor = (focus: string) => {
 export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initialCapital }: RecipeDetailModalProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const carouselRef = useRef<any>(null);
+  const { isInPortfolio, toggleRecipe } = usePortfolio();
   
   if (!recipe) return null;
   // Helpers
@@ -310,6 +314,11 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
             </div>
           </div>
 
+          {/* Add To Portfolio Button */}
+          <div className="pt-2">
+            <AddToPortfolioButton recipe={recipe} />
+          </div>
+
           <Separator />
 
           {/* Parameters - Algorithm specific */}
@@ -482,3 +491,39 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
     </Dialog>
   );
 };
+
+function AddToPortfolioButton({ recipe }: { recipe: Recipe }) {
+  const { isInPortfolio, toggleRecipe } = usePortfolio();
+  const [flash, setFlash] = useState(false);
+  const added = isInPortfolio(recipe.id);
+  
+  return (
+    <Button
+      className={
+        "w-full transition-colors " +
+        (flash || added ? "bg-green-600 hover:bg-green-600 text-white" : "")
+      }
+      variant={added ? "secondary" : "outline"}
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleRecipe({
+          recipeId: recipe.id,
+          title: recipe.name,
+          assetSymbol: recipe.asset,
+          baseInitialCapital: recipe.initial_capital ?? undefined,
+          baseCashProfit: recipe.cash_profit ?? null,
+          baseNetProfit: parseCurrencyFromString(recipe.net_profit),
+          assetAccumulatedText: recipe.asset_accumulated ?? null,
+          algorithm: recipe.algorithm,
+          algorithm_inputs: recipe.algorithm_inputs,
+          display_number: recipe.display_number ?? null,
+          focus: recipe.focus,
+        });
+        setFlash(true);
+        setTimeout(() => setFlash(false), 1500);
+      }}
+    >
+      {added ? "Added" : "Add To Portfolio"}
+    </Button>
+  );
+}
