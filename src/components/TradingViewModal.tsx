@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ interface TradingViewModalProps {
 
 export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) {
   const { positions, initialCapital, recipes, rows } = usePortfolio();
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const portfolioEntries = Object.values(positions).map(pos => {
     const recipe = recipes[pos.recipeId];
@@ -258,9 +260,13 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
                         </div>
                         <button
                           className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground hover:opacity-90"
-                          onClick={() => navigator.clipboard.writeText(suggestedName)}
+                          onClick={() => {
+                            navigator.clipboard.writeText(suggestedName);
+                            setCopiedIndex(index);
+                            setTimeout(() => setCopiedIndex(null), 1500);
+                          }}
                         >
-                          Copy
+                          {copiedIndex === index ? 'Copied!' : 'Copy'}
                         </button>
                       </div>
                       <div className="text-sm text-muted-foreground mb-3">
