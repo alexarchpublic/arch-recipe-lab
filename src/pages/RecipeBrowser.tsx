@@ -146,8 +146,20 @@ export default function RecipeBrowser() {
   );
   
   const availableAlgorithms = useMemo(() => {
-    if (!recipes || recipes.length === 0) return [];
-    return [...new Set(recipes.map(r => r.algorithm).filter((a): a is string => !!a))].sort();
+    // Known algorithm values from the schema in preferred order
+    const knownAlgorithms = ['Intelligence Algorithm', 'Arbitrage Algorithm', 'Oracle Protocol'];
+    
+    // Get algorithms from recipes that exist
+    const recipeAlgorithms = recipes
+      .map(r => r.algorithm)
+      .filter((a): a is string => !!a && typeof a === 'string');
+    
+    // Combine known algorithms with recipe algorithms, remove duplicates
+    // Preserve order: start with known algorithms, then add any additional ones from recipes
+    const allAlgorithms = [...new Set([...knownAlgorithms, ...recipeAlgorithms])];
+    
+    // Sort alphabetically for consistency
+    return allAlgorithms.sort();
   }, [recipes]);
   
   // Removed time frame and strategy type filters from UI
