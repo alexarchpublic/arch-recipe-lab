@@ -171,7 +171,7 @@ function DrawerInner() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium leading-tight">
-                    {typeof r.display_number === 'number' ? `Recipe (${r.display_number})` : r.title}
+                    {typeof r.display_number === 'number' ? `Recipe #${r.display_number}` : r.title}
                   </div>
                   <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                     <Badge 
