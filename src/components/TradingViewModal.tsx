@@ -17,6 +17,15 @@ interface TradingViewModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const assetHexBySymbol: Record<string, string> = {
+  // Recognizable brand-adjacent colors
+  BTC: '#f7931a',     // Bitcoin orange
+  ETH: '#627eea',     // Ethereum blue/purple
+  SOL: '#14f195',     // Solana green
+  XRP: '#23292f',     // XRP black-ish
+  SUI: '#2F80ED',     // Sui blue
+};
+
 export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) {
   const { positions, initialCapital, recipes, rows } = usePortfolio();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -246,8 +255,18 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
                         {typeof recipe.display_number === 'number' && (
                           <Badge variant="default" className="text-base font-bold px-3 py-1">#{recipe.display_number}</Badge>
                         )}
-                        <h3 className="text-lg font-semibold">Recipe Name: {recipe.title}</h3>
-                        <Badge variant="outline">{recipe.assetSymbol}</Badge>
+                        <h3 className="text-lg font-semibold">
+                          {typeof recipe.display_number === 'number' 
+                            ? `Recipe (${recipe.display_number})` 
+                            : `Recipe Name: ${recipe.title}`}
+                        </h3>
+                        <Badge 
+                          variant="outline"
+                          className="text-white"
+                          style={{ backgroundColor: assetHexBySymbol[recipe.assetSymbol] || '#6b7280', borderColor: assetHexBySymbol[recipe.assetSymbol] || '#6b7280' }}
+                        >
+                          {recipe.assetSymbol}
+                        </Badge>
                         {recipe.algorithm && (
                           <Badge variant="secondary">{recipe.algorithm}</Badge>
                         )}

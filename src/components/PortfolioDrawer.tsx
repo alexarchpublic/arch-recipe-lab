@@ -59,6 +59,15 @@ function pct(n: number): string {
   return `${(Math.round(n * 100) / 100).toFixed(2)}%`;
 }
 
+const assetHexBySymbol: Record<string, string> = {
+  // Recognizable brand-adjacent colors
+  BTC: '#f7931a',     // Bitcoin orange
+  ETH: '#627eea',     // Ethereum blue/purple
+  SOL: '#14f195',     // Solana green
+  XRP: '#23292f',     // XRP black-ish
+  SUI: '#2F80ED',     // Sui blue
+};
+
 function DrawerInner() {
   const {
     positions,
@@ -161,9 +170,16 @@ function DrawerInner() {
             <div key={pos.recipeId} className="rounded-md border p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium leading-tight">{r.title}</div>
+                  <div className="font-medium leading-tight">
+                    {typeof r.display_number === 'number' ? `Recipe (${r.display_number})` : r.title}
+                  </div>
                   <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                    <Badge className="px-1 py-0.5 text-[10px]">{r.assetSymbol}</Badge>
+                    <Badge 
+                      className="px-1 py-0.5 text-[10px] text-white"
+                      style={{ backgroundColor: assetHexBySymbol[r.assetSymbol] || '#6b7280' }}
+                    >
+                      {r.assetSymbol}
+                    </Badge>
                     <span>Alloc: {pct(pos.allocationPct)}</span>
                   </div>
                 </div>
@@ -195,7 +211,7 @@ function DrawerInner() {
 
               <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                 <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
-                  <div className="text-muted-foreground">Cash Realized</div>
+                  <div className="text-muted-foreground">Cash Profit</div>
                   <div className="font-medium">{currency(row.cashRealized)}</div>
                 </div>
                 <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
@@ -221,7 +237,7 @@ function DrawerInner() {
             <div className="font-medium">{currency(aggregates.totalCapitalAllocated)}</div>
           </div>
           <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
-            <div className="text-muted-foreground">Cash Realized</div>
+            <div className="text-muted-foreground">Cash Profit</div>
             <div className="font-medium">{currency(aggregates.totalCashRealized)}</div>
           </div>
           <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
@@ -236,7 +252,12 @@ function DrawerInner() {
             <div className="rounded-md bg-gray-100 border border-gray-200 p-3 space-y-2">
               {Object.entries(aggregates.assetAccumulations).map(([sym, qty]) => (
                 <div key={sym} className="flex items-center justify-between">
-                  <Badge className="px-2 py-1 text-xs">{sym}</Badge>
+                  <Badge 
+                    className="px-2 py-1 text-xs text-white"
+                    style={{ backgroundColor: assetHexBySymbol[sym] || '#6b7280' }}
+                  >
+                    {sym}
+                  </Badge>
                   <span className="font-medium">{qty.toFixed(6)}</span>
                 </div>
               ))}
