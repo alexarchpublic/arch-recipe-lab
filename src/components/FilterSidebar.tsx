@@ -10,7 +10,7 @@ export interface Filters {
   assets: string[];
   focuses: string[];
   timeHorizons: string[];
-  
+  algorithms: string[];
   minCAGR: number;
 }
 
@@ -20,6 +20,7 @@ interface FilterSidebarProps {
   availableAssets: string[];
   availableFocuses: string[];
   availableTimeFrames: string[];
+  availableAlgorithms: string[];
   onClose?: () => void;
 }
 
@@ -29,10 +30,11 @@ export const FilterSidebar = ({
   availableAssets,
   availableFocuses,
   availableTimeFrames,
+  availableAlgorithms,
   onClose,
 }: FilterSidebarProps) => {
   const handleArrayFilterChange = (
-    key: keyof Pick<Filters, 'assets' | 'focuses' | 'timeHorizons'>,
+    key: keyof Pick<Filters, 'assets' | 'focuses' | 'timeHorizons' | 'algorithms'>,
     value: string,
     checked: boolean
   ) => {
@@ -48,6 +50,7 @@ export const FilterSidebar = ({
       assets: [],
       focuses: [],
       timeHorizons: [],
+      algorithms: [],
       minCAGR: 0,
     });
   };
@@ -56,6 +59,7 @@ export const FilterSidebar = ({
     filters.assets.length > 0 ||
     filters.focuses.length > 0 ||
     filters.timeHorizons.length > 0 ||
+    filters.algorithms.length > 0 ||
     filters.minCAGR > 0;
 
   return (
@@ -153,6 +157,32 @@ export const FilterSidebar = ({
                 className="text-sm cursor-pointer hover:text-primary transition-colors"
               >
                 {horizon === 'STH' ? 'Short Term' : 'Long Term'}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Algorithm Filter */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Algorithm</Label>
+        <div className="space-y-2">
+          {availableAlgorithms.map(algorithm => (
+            <div key={algorithm} className="flex items-center space-x-2">
+              <Checkbox
+                id={`algorithm-${algorithm}`}
+                checked={filters.algorithms.includes(algorithm)}
+                onCheckedChange={(checked) =>
+                  handleArrayFilterChange('algorithms', algorithm, checked as boolean)
+                }
+              />
+              <label
+                htmlFor={`algorithm-${algorithm}`}
+                className="text-sm cursor-pointer hover:text-primary transition-colors"
+              >
+                {algorithm}
               </label>
             </div>
           ))}

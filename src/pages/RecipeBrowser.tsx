@@ -59,6 +59,7 @@ export default function RecipeBrowser() {
     assets: [],
     focuses: [],
     timeHorizons: [],
+    algorithms: [],
     minCAGR: 0,
   });
   const { toast } = useToast();
@@ -144,6 +145,11 @@ export default function RecipeBrowser() {
     [recipes]
   );
   
+  const availableAlgorithms = useMemo(() => 
+    [...new Set(recipes.map(r => r.algorithm).filter((a): a is string => !!a))].sort(),
+    [recipes]
+  );
+  
   // Removed time frame and strategy type filters from UI
 
   // Filter and sort recipes
@@ -174,6 +180,11 @@ export default function RecipeBrowser() {
 
       // Time Horizon filter
       if (filters.timeHorizons.length > 0 && !filters.timeHorizons.includes(recipe.time_horizon)) {
+        return false;
+      }
+
+      // Algorithm filter
+      if (filters.algorithms.length > 0 && (!recipe.algorithm || !filters.algorithms.includes(recipe.algorithm))) {
         return false;
       }
 
@@ -371,6 +382,7 @@ export default function RecipeBrowser() {
                   availableAssets={availableAssets}
                   availableFocuses={availableFocuses}
                   availableTimeFrames={[]}
+                  availableAlgorithms={availableAlgorithms}
                 />
               </SheetContent>
             </Sheet>
