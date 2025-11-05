@@ -61,9 +61,10 @@ export function getScale(initialCapital: number | null | undefined): number {
  * 
  * @param algorithm_inputs - The algorithm inputs object to scale
  * @param scaleFactor - The scaling factor (portfolio allocation capital / recipe base initial capital)
+ * @param algorithm - Optional algorithm type to apply algorithm-specific scaling rules
  * @returns A new object with scaled dollar values
  */
-export function scaleAlgorithmInputs(algorithm_inputs: any, scaleFactor: number): any {
+export function scaleAlgorithmInputs(algorithm_inputs: any, scaleFactor: number, algorithm?: string): any {
   if (!algorithm_inputs || typeof algorithm_inputs !== 'object') return algorithm_inputs;
   if (!isFinite(scaleFactor) || scaleFactor <= 0) return algorithm_inputs;
 
@@ -96,17 +97,28 @@ export function scaleAlgorithmInputs(algorithm_inputs: any, scaleFactor: number)
       scaled.properties.initialCapital = Math.round(scaled.properties.initialCapital * scaleFactor);
     }
     
-    // Scale orderSize.value if it's a dollar amount (type indicates if it's dollar-based)
-    // This applies to both Intelligence Algorithm and Oracle Protocol
+    // Scale orderSize.value
+    // For Intelligence Algorithm: always scale if value is numeric (order size is always dollar-based)
+    // For Oracle Protocol: only scale if type indicates currency (may have percentage-based order sizes)
     if (typeof scaled.properties.orderSize === 'object' && scaled.properties.orderSize !== null) {
-      const orderSizeType = String(scaled.properties.orderSize.type || '').trim();
-      const isCurrencyType = orderSizeType === 'Currency' || 
-                            orderSizeType === 'Dollars' || 
-                            orderSizeType === 'USD' || 
-                            orderSizeType === '$' ||
-                            orderSizeType.toLowerCase() === 'currency';
-      if (typeof scaled.properties.orderSize.value === 'number' && isCurrencyType) {
-        scaled.properties.orderSize.value = Math.round(scaled.properties.orderSize.value * scaleFactor);
+      const isIntelligenceAlgorithm = algorithm === 'Intelligence Algorithm';
+      
+      if (isIntelligenceAlgorithm) {
+        // Intelligence Algorithm: always scale orderSize.value if it's a number
+        if (typeof scaled.properties.orderSize.value === 'number') {
+          scaled.properties.orderSize.value = Math.round(scaled.properties.orderSize.value * scaleFactor);
+        }
+      } else {
+        // Oracle Protocol and others: scale only if type indicates currency
+        const orderSizeType = String(scaled.properties.orderSize.type || '').trim();
+        const isCurrencyType = orderSizeType === 'Currency' || 
+                              orderSizeType === 'Dollars' || 
+                              orderSizeType === 'USD' || 
+                              orderSizeType === '$' ||
+                              orderSizeType.toLowerCase() === 'currency';
+        if (typeof scaled.properties.orderSize.value === 'number' && isCurrencyType) {
+          scaled.properties.orderSize.value = Math.round(scaled.properties.orderSize.value * scaleFactor);
+        }
       }
     }
   }

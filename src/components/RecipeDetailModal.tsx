@@ -130,7 +130,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
 
   // Scale algorithm inputs based on initial capital scaling
   const scaledAlgorithmInputs = recipe.algorithm_inputs 
-    ? scaleAlgorithmInputs(recipe.algorithm_inputs, scale)
+    ? scaleAlgorithmInputs(recipe.algorithm_inputs, scale, recipe.algorithm)
     : recipe.algorithm_inputs;
 
   // Parse numeric asset quantity and format as "<qty> <ASSET>"

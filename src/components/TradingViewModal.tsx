@@ -49,7 +49,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
     const scaleFactor = baseCapital > 0 ? capitalAllocated / baseCapital : 1;
     
     const scaledInputs = recipe.algorithm_inputs 
-      ? scaleAlgorithmInputs(recipe.algorithm_inputs, scaleFactor)
+      ? scaleAlgorithmInputs(recipe.algorithm_inputs, scaleFactor, recipe.algorithm)
       : null;
 
     return {
