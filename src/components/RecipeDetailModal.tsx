@@ -8,7 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar, Image as ImageIcon } from "lucide-react";
+import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar, Image as ImageIcon, Wallet, Coins, BarChart3 } from "lucide-react";
 import { useState, useRef } from "react";
 import { scaleRecipeFreeText, scaleAlgorithmInputs } from "@/utils/recipeScaling";
 
@@ -256,7 +256,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
             <div className="grid grid-cols-2 gap-3">
               {returnValue && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <BarChart3 className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-xs text-muted-foreground">CAGR</p>
                     <p className="text-sm font-semibold text-primary">{returnValue.toFixed(1)}%</p>
@@ -278,7 +278,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
 
               {scaledAssetQty !== null && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <Coins className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-xs text-muted-foreground">Asset Accumulated</p>
                     <p className="text-sm font-semibold">{scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} {recipe.asset}</p>
@@ -288,7 +288,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
 
               {scaledNetProfitNumber !== null && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-                  <DollarSign className="h-4 w-4 text-primary" />
+                  <Wallet className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-xs text-muted-foreground">Net Profit</p>
                     <p className="text-sm font-semibold">${scaledNetProfitNumber.toLocaleString()}</p>
