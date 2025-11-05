@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { Plus, Trash2, Copy } from "lucide-react";
+import { Trash2, Copy } from "lucide-react";
 import { TradingViewModal } from "@/components/TradingViewModal";
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -35,10 +35,10 @@ export function PortfolioDrawer() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
-          className={"fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg transition-colors " + (flash ? "bg-green-600 hover:bg-green-600" : "")}
+          className={"fixed bottom-6 right-6 h-12 px-5 rounded-full shadow-lg transition-colors " + (flash ? "bg-green-600 hover:bg-green-600 text-white" : "")}
           variant="default"
         >
-          <Plus className="h-5 w-5" />
+          Portfolio
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-full sm:max-w-md">

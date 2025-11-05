@@ -288,14 +288,7 @@ export default function RecipeBrowser() {
               <h1 className="text-2xl md:text-3xl font-semibold text-white">Recipe Lab</h1>
               <p className="text-sm text-white/90 mt-1">Arch Public Crypto Algorithm Recipe Browser</p>
             </div>
-            <Button 
-              variant="secondary" 
-              onClick={() => navigate('/admin')}
-              className="gap-2"
-            >
-              <LogIn className="h-4 w-4" />
-              Admin
-            </Button>
+            <img src="/APLogo.png" alt="Arch Public" className="h-8 w-auto" />
           </div>
         </div>
       </header>
@@ -451,6 +444,20 @@ export default function RecipeBrowser() {
           </main>
         </div>
       </div>
+
+      {/* Footer with Admin button */}
+      <footer className="border-t border-border/50 mt-8 py-4">
+        <div className="container mx-auto px-4 flex justify-end">
+          <Button 
+            variant="secondary" 
+            onClick={() => navigate('/admin')}
+            className="gap-2"
+          >
+            <LogIn className="h-4 w-4" />
+            Admin
+          </Button>
+        </div>
+      </footer>
 
       {/* Detail Modal */}
       <RecipeDetailModal
