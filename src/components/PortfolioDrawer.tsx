@@ -199,7 +199,7 @@ function DrawerInner() {
                       </Badge>
                     )}
                     {r.algorithm && (
-                      <Badge variant="outline" className="px-1 py-0.5 text-[10px] border-muted-foreground/30">
+                      <Badge variant="outline" className="px-2 py-0.5 text-[10px] border-muted-foreground/30 text-center whitespace-nowrap">
                         {r.algorithm}
                       </Badge>
                     )}
