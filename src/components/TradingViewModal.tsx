@@ -179,12 +179,23 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       return `${num} ${algo} ${start} ${capital} ${entrySize}/${exitSize}`.trim();
     }
     if (recipe.algorithm === 'Oracle Protocol') {
-      const entrySize = typeof scaledInputs?.tradeSize?.entryPercent === 'number'
-        ? `${scaledInputs.tradeSize.entryPercent}%`
-        : (typeof scaledInputs?.tradeSize?.entryFixed === 'number' ? `$${scaledInputs.tradeSize.entryFixed.toLocaleString()}` : '?');
-      const exitSize = typeof scaledInputs?.tradeSize?.exitPercent === 'number'
-        ? `${scaledInputs.tradeSize.exitPercent}%`
-        : (typeof scaledInputs?.tradeSize?.exitFixed === 'number' ? `$${scaledInputs.tradeSize.exitFixed.toLocaleString()}` : '?');
+      // Always use dollar amounts - prefer fixed, otherwise calculate from percentage
+      let entrySize = '?';
+      if (typeof scaledInputs?.tradeSize?.entryFixed === 'number') {
+        entrySize = `$${scaledInputs.tradeSize.entryFixed.toLocaleString()}`;
+      } else if (typeof scaledInputs?.tradeSize?.entryPercent === 'number' && capitalAllocated > 0) {
+        const entryDollar = Math.round(capitalAllocated * (scaledInputs.tradeSize.entryPercent / 100));
+        entrySize = `$${entryDollar.toLocaleString()}`;
+      }
+      
+      let exitSize = '?';
+      if (typeof scaledInputs?.tradeSize?.exitFixed === 'number') {
+        exitSize = `$${scaledInputs.tradeSize.exitFixed.toLocaleString()}`;
+      } else if (typeof scaledInputs?.tradeSize?.exitPercent === 'number' && capitalAllocated > 0) {
+        const exitDollar = Math.round(capitalAllocated * (scaledInputs.tradeSize.exitPercent / 100));
+        exitSize = `$${exitDollar.toLocaleString()}`;
+      }
+      
       return `${num} ${algo} ${start} ${capital} ${entrySize}/${exitSize}`.trim();
     }
     if (recipe.algorithm === 'Intelligence Algorithm') {
