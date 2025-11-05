@@ -499,6 +499,43 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                         {...register('algorithm_inputs.activate.factor' as any, { valueAsNumber: true })} />
                     </div>
                   </div>
+
+                  {/* Properties Section */}
+                  <div className="space-y-3 border-t pt-4 mt-4">
+                    <h5 className="font-medium">Properties</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Initial Capital</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.properties?.initialCapital}
+                          {...register('algorithm_inputs.properties.initialCapital' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Order Size</Label>
+                        <div className="flex gap-2">
+                          <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.properties?.orderSize?.value}
+                            {...register('algorithm_inputs.properties.orderSize.value' as any, { valueAsNumber: true })} />
+                          <Select
+                            onValueChange={(value) => setValue('algorithm_inputs.properties.orderSize.type' as any, value)}
+                            defaultValue={(recipe?.algorithm_inputs?.properties?.orderSize?.type as string) || 'Currency'}
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Quantity">Quantity</SelectItem>
+                              <SelectItem value="Currency">Currency</SelectItem>
+                              <SelectItem value="% of Equity">% of Equity</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Pyramiding</Label>
+                        <Input type="number" step="1" defaultValue={recipe?.algorithm_inputs?.properties?.pyramiding}
+                          {...register('algorithm_inputs.properties.pyramiding' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 

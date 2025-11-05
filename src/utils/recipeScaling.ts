@@ -100,7 +100,7 @@ export function scaleAlgorithmInputs(algorithm_inputs: any, scaleFactor: number)
     if (typeof scaled.properties.orderSize === 'object' && scaled.properties.orderSize !== null) {
       const orderSizeType = scaled.properties.orderSize.type;
       if (typeof scaled.properties.orderSize.value === 'number' && 
-          (orderSizeType === 'Dollars' || orderSizeType === 'USD' || orderSizeType === '$')) {
+          (orderSizeType === 'Currency' || orderSizeType === 'Dollars' || orderSizeType === 'USD' || orderSizeType === '$')) {
         scaled.properties.orderSize.value = Math.round(scaled.properties.orderSize.value * scaleFactor);
       }
     }

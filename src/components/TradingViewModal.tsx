@@ -93,6 +93,19 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
         const factor = typeof scaledInputs.activate.factor === 'number' ? ` (Factor ${scaledInputs.activate.factor})` : '';
         lines.push(`  Activate Intelligence: Yes${factor}`);
       }
+      if (scaledInputs.properties) {
+        lines.push('');
+        lines.push('Properties:');
+        if (typeof scaledInputs.properties.initialCapital === 'number') {
+          lines.push(`  Initial Capital: $${scaledInputs.properties.initialCapital.toLocaleString()}`);
+        }
+        if (scaledInputs.properties.orderSize) {
+          lines.push(`  Order Size: ${scaledInputs.properties.orderSize.value} (${scaledInputs.properties.orderSize.type})`);
+        }
+        if (typeof scaledInputs.properties.pyramiding === 'number') {
+          lines.push(`  Pyramiding: ${scaledInputs.properties.pyramiding}`);
+        }
+      }
     } else if (recipe.algorithm === 'Arbitrage Algorithm') {
       lines.push('Arbitrage Algorithm Parameters:');
       if (typeof scaledInputs.longThreshold?.percent === 'number') {

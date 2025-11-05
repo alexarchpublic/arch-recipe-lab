@@ -375,6 +375,31 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                       <span className="text-sm">Yes{typeof scaledAlgorithmInputs?.activate?.factor === 'number' ? ` (Factor ${scaledAlgorithmInputs?.activate?.factor})` : ''}</span>
                     </div>
                   )}
+                  
+                  {/* Properties Section */}
+                  {scaledAlgorithmInputs?.properties && (
+                    <>
+                      <div className="text-sm font-semibold mt-4">Properties</div>
+                      {typeof scaledAlgorithmInputs.properties.initialCapital === 'number' && (
+                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                          <span className="text-sm font-medium text-muted-foreground">Initial Capital:</span>
+                          <span className="text-sm">${scaledAlgorithmInputs.properties.initialCapital.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {scaledAlgorithmInputs.properties.orderSize && (
+                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                          <span className="text-sm font-medium text-muted-foreground">Order Size:</span>
+                          <span className="text-sm">{scaledAlgorithmInputs.properties.orderSize.value} ({scaledAlgorithmInputs.properties.orderSize.type})</span>
+                        </div>
+                      )}
+                      {typeof scaledAlgorithmInputs.properties.pyramiding === 'number' && (
+                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                          <span className="text-sm font-medium text-muted-foreground">Pyramiding:</span>
+                          <span className="text-sm">{scaledAlgorithmInputs.properties.pyramiding}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </>
               )}
 
