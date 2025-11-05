@@ -420,6 +420,7 @@ export default function RecipeBrowser() {
                 availableAssets={availableAssets}
                 availableFocuses={availableFocuses}
                 availableTimeFrames={[]}
+                availableAlgorithms={availableAlgorithms}
               />
             </div>
           </aside>
