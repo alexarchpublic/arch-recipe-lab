@@ -169,23 +169,27 @@ export const FilterSidebar = ({
       <div className="space-y-3">
         <Label className="text-sm font-medium">Algorithm</Label>
         <div className="space-y-2">
-          {availableAlgorithms.map(algorithm => (
-            <div key={algorithm} className="flex items-center space-x-2">
-              <Checkbox
-                id={`algorithm-${algorithm}`}
-                checked={filters.algorithms.includes(algorithm)}
-                onCheckedChange={(checked) =>
-                  handleArrayFilterChange('algorithms', algorithm, checked as boolean)
-                }
-              />
-              <label
-                htmlFor={`algorithm-${algorithm}`}
-                className="text-sm cursor-pointer hover:text-primary transition-colors"
-              >
-                {algorithm}
-              </label>
-            </div>
-          ))}
+          {availableAlgorithms && availableAlgorithms.length > 0 ? (
+            availableAlgorithms.map(algorithm => (
+              <div key={algorithm} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`algorithm-${algorithm}`}
+                  checked={filters.algorithms.includes(algorithm)}
+                  onCheckedChange={(checked) =>
+                    handleArrayFilterChange('algorithms', algorithm, checked as boolean)
+                  }
+                />
+                <label
+                  htmlFor={`algorithm-${algorithm}`}
+                  className="text-sm cursor-pointer hover:text-primary transition-colors"
+                >
+                  {algorithm}
+                </label>
+              </div>
+            ))
+          ) : (
+            <div className="text-sm text-muted-foreground">No algorithms available</div>
+          )}
         </div>
       </div>
 

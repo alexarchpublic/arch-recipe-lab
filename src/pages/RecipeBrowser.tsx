@@ -145,10 +145,10 @@ export default function RecipeBrowser() {
     [recipes]
   );
   
-  const availableAlgorithms = useMemo(() => 
-    [...new Set(recipes.map(r => r.algorithm).filter((a): a is string => !!a))].sort(),
-    [recipes]
-  );
+  const availableAlgorithms = useMemo(() => {
+    if (!recipes || recipes.length === 0) return [];
+    return [...new Set(recipes.map(r => r.algorithm).filter((a): a is string => !!a))].sort();
+  }, [recipes]);
   
   // Removed time frame and strategy type filters from UI
 
