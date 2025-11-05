@@ -90,17 +90,22 @@ export function scaleAlgorithmInputs(algorithm_inputs: any, scaleFactor: number)
     }
   }
 
-  // Oracle Protocol: scale properties.initialCapital
+  // Scale properties.initialCapital and properties.orderSize (for Intelligence Algorithm and Oracle Protocol)
   if (typeof scaled.properties === 'object' && scaled.properties !== null) {
     if (typeof scaled.properties.initialCapital === 'number') {
       scaled.properties.initialCapital = Math.round(scaled.properties.initialCapital * scaleFactor);
     }
     
     // Scale orderSize.value if it's a dollar amount (type indicates if it's dollar-based)
+    // This applies to both Intelligence Algorithm and Oracle Protocol
     if (typeof scaled.properties.orderSize === 'object' && scaled.properties.orderSize !== null) {
-      const orderSizeType = scaled.properties.orderSize.type;
-      if (typeof scaled.properties.orderSize.value === 'number' && 
-          (orderSizeType === 'Currency' || orderSizeType === 'Dollars' || orderSizeType === 'USD' || orderSizeType === '$')) {
+      const orderSizeType = String(scaled.properties.orderSize.type || '').trim();
+      const isCurrencyType = orderSizeType === 'Currency' || 
+                            orderSizeType === 'Dollars' || 
+                            orderSizeType === 'USD' || 
+                            orderSizeType === '$' ||
+                            orderSizeType.toLowerCase() === 'currency';
+      if (typeof scaled.properties.orderSize.value === 'number' && isCurrencyType) {
         scaled.properties.orderSize.value = Math.round(scaled.properties.orderSize.value * scaleFactor);
       }
     }

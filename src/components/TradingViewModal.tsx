@@ -35,7 +35,16 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
     if (!recipe) return null;
     
     const row = rows.find(r => r.recipeId === pos.recipeId);
-    const baseCapital = recipe.baseInitialCapital ?? DEFAULT_BASE_CAPITAL;
+    // For Intelligence Algorithm, use properties.initialCapital as base if available
+    // Otherwise fall back to recipe.baseInitialCapital
+    let baseCapital = recipe.baseInitialCapital ?? DEFAULT_BASE_CAPITAL;
+    if (recipe.algorithm === 'Intelligence Algorithm' && 
+        recipe.algorithm_inputs?.properties?.initialCapital) {
+      const propsInitialCapital = recipe.algorithm_inputs.properties.initialCapital;
+      if (typeof propsInitialCapital === 'number' && propsInitialCapital > 0) {
+        baseCapital = propsInitialCapital;
+      }
+    }
     const capitalAllocated = row?.capitalAllocated ?? 0;
     const scaleFactor = baseCapital > 0 ? capitalAllocated / baseCapital : 1;
     
