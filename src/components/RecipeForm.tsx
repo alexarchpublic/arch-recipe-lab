@@ -41,7 +41,9 @@ const recipeSchema = z.object({
   exit_trade: z.string().min(1, "Exit trade is required"),
   sell_above_cost_basis: z.boolean(),
   exit_to_entry_proportion: z.number().min(0, "Must be positive"),
-  time_frame: z.string().min(1, "Time frame is required"),
+  time_frame: z.enum(["1 Week", "1 Day", "6 Hours", "4 Hours", "1 Hour"], {
+    required_error: "Time frame is required",
+  }),
   backtesting_period: z.string().min(1, "Backtesting period is required"),
   initial_capital: z.number().optional(),
   cash_profit: z.number().optional(),
@@ -93,7 +95,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
       // Provide safe defaults so DB NOT NULL constraints are satisfied
       entry_trade: recipe?.entry_trade || 'See parameters',
       exit_trade: recipe?.exit_trade || 'See parameters',
-      time_frame: recipe?.time_frame || 'N/A',
+      time_frame: (recipe?.time_frame as any) || '1 Day',
       backtesting_period: recipe?.backtesting_period || 'N/A',
       algorithm: recipe?.algorithm || "Oracle Protocol",
       algorithm_inputs: recipe?.algorithm_inputs || {},
@@ -373,6 +375,25 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                 />
                 {errors.goal && (
                   <p className="text-sm text-destructive">{errors.goal.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="time_frame">Chart Time Frame *</Label>
+                <Select onValueChange={(value) => setValue("time_frame", value as any)} defaultValue={(recipe?.time_frame as any) || '1 Day'}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select time frame" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1 Week">1 Week</SelectItem>
+                    <SelectItem value="1 Day">1 Day</SelectItem>
+                    <SelectItem value="6 Hours">6 Hours</SelectItem>
+                    <SelectItem value="4 Hours">4 Hours</SelectItem>
+                    <SelectItem value="1 Hour">1 Hour</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.time_frame && (
+                  <p className="text-sm text-destructive">{errors.time_frame.message as any}</p>
                 )}
               </div>
             </div>

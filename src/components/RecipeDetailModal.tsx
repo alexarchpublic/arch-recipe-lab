@@ -328,6 +328,12 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
               Parameters
             </h3>
             <div className="grid gap-3">
+              {recipe.time_frame && (
+                <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
+                  <span className="text-sm font-medium text-muted-foreground">Chart Time Frame:</span>
+                  <span className="text-sm">{recipe.time_frame}</span>
+                </div>
+              )}
               {recipe.algorithm && (
                 <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
                   <span className="text-sm font-medium text-muted-foreground">Algorithm:</span>
