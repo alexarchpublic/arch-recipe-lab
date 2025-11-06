@@ -269,6 +269,7 @@ function AddToPortfolioButton({ recipe }: { recipe: any }) {
           recipeId: recipe.id,
           title: recipe.name,
           assetSymbol: recipe.asset,
+          time_frame: recipe.time_frame,
           baseInitialCapital: recipe.initial_capital ?? undefined,
           baseCashProfit: recipe.cash_profit ?? null,
           baseNetProfit: parseCurrencyFromString(recipe.net_profit),

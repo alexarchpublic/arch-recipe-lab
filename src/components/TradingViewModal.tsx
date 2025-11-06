@@ -73,10 +73,10 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
     }
     lines.push(`Recipe Name: ${recipe.title}`);
     lines.push(`Algorithm: ${recipe.algorithm || 'N/A'}`);
+    lines.push(`Capital Allocated: $${Math.round(capitalAllocated).toLocaleString()}`);
     if (recipe.time_frame) {
       lines.push(`Chart Time Frame: ${recipe.time_frame}`);
     }
-    lines.push(`Capital Allocated: $${Math.round(capitalAllocated).toLocaleString()}`);
     lines.push('');
 
     if (!scaledInputs) {
