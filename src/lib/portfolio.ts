@@ -6,6 +6,7 @@ export interface PortfolioRecipeSummary {
   recipeId: string;
   title: string;
   assetSymbol: string; // e.g., BTC, ETH
+  time_frame?: string | null; // e.g., 1 Day, 4 Hours
   baseInitialCapital?: number | null; // recipe.initial_capital if present
   baseCashProfit?: number | null; // recipe.cash_profit if present
   baseNetProfit?: number | null; // recipe.net_profit parsed as number
