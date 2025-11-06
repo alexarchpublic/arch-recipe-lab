@@ -7,9 +7,9 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar, Image as ImageIcon, Wallet, Coins, BarChart3 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { scaleRecipeFreeText, scaleAlgorithmInputs } from "@/utils/recipeScaling";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { parseCurrencyFromString } from "@/lib/portfolio";
@@ -69,8 +69,25 @@ const getFocusColor = (focus: string) => {
 
 export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initialCapital }: RecipeDetailModalProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const carouselRef = useRef<any>(null);
+  const [api, setApi] = useState<CarouselApi>();
   const { isInPortfolio, toggleRecipe } = usePortfolio();
+
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    const onSelect = () => {
+      setCurrentSlide(api.selectedScrollSnap());
+    };
+
+    api.on("select", onSelect);
+    onSelect();
+
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
   
   if (!recipe) return null;
   // Helpers
@@ -188,13 +205,12 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 </h3>
                 <div className="relative">
                   <Carousel 
-                    ref={carouselRef}
                     className="w-full" 
                     opts={{
                       loop: true,
                       align: "start",
                     }}
-                    onSlideChange={(index) => setCurrentSlide(index)}
+                    setApi={setApi}
                   >
                     <CarouselContent>
                       {recipe.screenshots.map((screenshot, index) => (
@@ -230,8 +246,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                         <button
                           key={index}
                           onClick={() => {
-                            setCurrentSlide(index);
-                            carouselRef.current?.scrollTo(index);
+                            api?.scrollTo(index);
                           }}
                           className={`w-2 h-2 rounded-full transition-colors ${
                             index === currentSlide 
