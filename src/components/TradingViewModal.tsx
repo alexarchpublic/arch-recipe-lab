@@ -142,8 +142,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       }
       // Cost Basis
       if (scaledInputs.costBasis?.onlySellAbove) {
-        lines.push(`  Cost Basis:`);
-        lines.push(`    Only Sell Above Cost Basis: Yes`);
+        lines.push(`  Only Sell Above Cost Basis: Yes`);
       }
       // Trade Size
       if (typeof scaledInputs.tradeSize?.entry === 'number') {
@@ -168,14 +167,11 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       }
       // Cost Basis
       if (scaledInputs.costBasis) {
-        if (scaledInputs.costBasis.onlySellAbove || typeof scaledInputs.costBasis.sellProfitThreshold === 'number') {
-          lines.push(`  Cost Basis:`);
-          if (scaledInputs.costBasis.onlySellAbove) {
-            lines.push(`    Only Sell Above Cost Basis: Yes`);
-          }
-          if (typeof scaledInputs.costBasis.sellProfitThreshold === 'number') {
-            lines.push(`    Sell Profit Threshold: ${scaledInputs.costBasis.sellProfitThreshold}%`);
-          }
+        if (scaledInputs.costBasis.onlySellAbove) {
+          lines.push(`  Only Sell Above Cost Basis: Yes`);
+        }
+        if (typeof scaledInputs.costBasis.sellProfitThreshold === 'number') {
+          lines.push(`  Sell Profit Threshold: ${scaledInputs.costBasis.sellProfitThreshold}%`);
         }
       }
       // Trade Size

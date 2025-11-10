@@ -443,13 +443,10 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   </div>
                   {/* Cost Basis Section - subsection under Inputs */}
                   {scaledAlgorithmInputs?.costBasis?.onlySellAbove && (
-                    <>
-                      <div className="text-sm font-medium mt-3 ml-4">Cost Basis</div>
-                      <div className="grid grid-cols-[180px_1fr] gap-2 items-start ml-4">
-                        <span className="text-sm font-medium text-muted-foreground">Only Sell Above Cost Basis:</span>
-                        <span className="text-sm">Yes</span>
-                      </div>
-                    </>
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Only Sell Above Cost Basis:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
                   )}
                   {/* Trade Size */}
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
@@ -492,22 +489,17 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                     )}
                   </div>
                   {/* Cost Basis Section - subsection under Inputs */}
-                  {(scaledAlgorithmInputs?.costBasis?.onlySellAbove || typeof scaledAlgorithmInputs?.costBasis?.sellProfitThreshold === 'number') && (
-                    <>
-                      <div className="text-sm font-medium mt-3 ml-4">Cost Basis</div>
-                      {scaledAlgorithmInputs?.costBasis?.onlySellAbove && (
-                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start ml-4">
-                          <span className="text-sm font-medium text-muted-foreground">Only Sell Above Cost Basis:</span>
-                          <span className="text-sm">Yes</span>
-                        </div>
-                      )}
-                      {typeof scaledAlgorithmInputs?.costBasis?.sellProfitThreshold === 'number' && (
-                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start ml-4">
-                          <span className="text-sm font-medium text-muted-foreground">Sell Profit Threshold (%):</span>
-                          <span className="text-sm">{scaledAlgorithmInputs?.costBasis?.sellProfitThreshold}</span>
-                        </div>
-                      )}
-                    </>
+                  {scaledAlgorithmInputs?.costBasis?.onlySellAbove && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Only Sell Above Cost Basis:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
+                  {typeof scaledAlgorithmInputs?.costBasis?.sellProfitThreshold === 'number' && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Sell Profit Threshold (%):</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.costBasis?.sellProfitThreshold}</span>
+                    </div>
                   )}
                   {/* Trade Size */}
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
