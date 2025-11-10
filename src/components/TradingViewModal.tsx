@@ -184,6 +184,9 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       if (typeof scaledInputs.tradeSize?.exitPercent === 'number') {
         lines.push(`  Exit Trade Size (%): ${scaledInputs.tradeSize.exitPercent}%`);
       }
+      if (scaledInputs.tradeSize?.useFixedAsMin) {
+        lines.push(`  Use Fixed Trade Size as Minimum Limit (Percentage): Yes`);
+      }
       if (typeof scaledInputs.tradeSize?.entryFixed === 'number') {
         lines.push(`  Entry Trade Size ($): $${scaledInputs.tradeSize.entryFixed.toLocaleString()}`);
       }

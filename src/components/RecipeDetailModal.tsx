@@ -514,6 +514,12 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                       <span className="text-sm">{scaledAlgorithmInputs?.tradeSize?.entryPercent} / {scaledAlgorithmInputs?.tradeSize?.exitPercent}</span>
                     )}
                   </div>
+                  {scaledAlgorithmInputs?.tradeSize?.useFixedAsMin && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Use Fixed Trade Size as Minimum Limit (Percentage):</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Entry/Exit Fixed:</span>
                     {(typeof scaledAlgorithmInputs?.tradeSize?.entryFixed === 'number' || typeof scaledAlgorithmInputs?.tradeSize?.exitFixed === 'number') && (
