@@ -133,30 +133,52 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       }
     } else if (recipe.algorithm === 'Arbitrage Algorithm') {
       lines.push('Arbitrage Algorithm Parameters:');
+      // Thresholds
       if (typeof scaledInputs.longThreshold?.percent === 'number') {
         lines.push(`  Long Threshold: ${scaledInputs.longThreshold.percent}%`);
       }
       if (typeof scaledInputs.exitThreshold?.percent === 'number') {
         lines.push(`  Exit Threshold: ${scaledInputs.exitThreshold.percent}%`);
       }
+      // Cost Basis
+      if (scaledInputs.costBasis?.onlySellAbove) {
+        lines.push(`  Cost Basis:`);
+        lines.push(`    Only Sell Above Cost Basis: Yes`);
+      }
+      // Trade Size
       if (typeof scaledInputs.tradeSize?.entry === 'number') {
         lines.push(`  Entry Trade Size: $${scaledInputs.tradeSize.entry.toLocaleString()}`);
       }
       if (typeof scaledInputs.tradeSize?.exit === 'number') {
         lines.push(`  Exit Trade Size: $${scaledInputs.tradeSize.exit.toLocaleString()}`);
       }
+      // Start/End Dates
       if (scaledInputs.dates?.start && scaledInputs.dates?.end) {
         lines.push(`  Start Date: ${formatDate(scaledInputs.dates.start)}`);
         lines.push(`  End Date: ${formatDate(scaledInputs.dates.end)}`);
       }
     } else if (recipe.algorithm === 'Oracle Protocol') {
       lines.push('Oracle Protocol Parameters:');
+      // Thresholds
       if (typeof scaledInputs.longThreshold?.percent === 'number') {
         lines.push(`  Long Threshold: ${scaledInputs.longThreshold.percent}%`);
       }
       if (typeof scaledInputs.exitThreshold?.percent === 'number') {
         lines.push(`  Exit Threshold: ${scaledInputs.exitThreshold.percent}%`);
       }
+      // Cost Basis
+      if (scaledInputs.costBasis) {
+        if (scaledInputs.costBasis.onlySellAbove || typeof scaledInputs.costBasis.sellProfitThreshold === 'number') {
+          lines.push(`  Cost Basis:`);
+          if (scaledInputs.costBasis.onlySellAbove) {
+            lines.push(`    Only Sell Above Cost Basis: Yes`);
+          }
+          if (typeof scaledInputs.costBasis.sellProfitThreshold === 'number') {
+            lines.push(`    Sell Profit Threshold: ${scaledInputs.costBasis.sellProfitThreshold}%`);
+          }
+        }
+      }
+      // Trade Size
       if (scaledInputs.tradeSize?.primaryType) {
         lines.push(`  Primary Trade Size Type: ${scaledInputs.tradeSize.primaryType}`);
       }
@@ -172,20 +194,10 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       if (typeof scaledInputs.tradeSize?.exitFixed === 'number') {
         lines.push(`  Exit Trade Size ($): $${scaledInputs.tradeSize.exitFixed.toLocaleString()}`);
       }
+      // Start/End Dates
       if (scaledInputs.dates?.start && scaledInputs.dates?.end) {
         lines.push(`  Start Date: ${formatDate(scaledInputs.dates.start)}`);
         lines.push(`  End Date: ${formatDate(scaledInputs.dates.end)}`);
-      }
-      if (scaledInputs.costBasis) {
-        if (scaledInputs.costBasis.onlySellAbove || typeof scaledInputs.costBasis.sellProfitThreshold === 'number') {
-          lines.push(`  Cost Basis:`);
-          if (scaledInputs.costBasis.onlySellAbove) {
-            lines.push(`    Only Sell Above Cost Basis: Yes`);
-          }
-          if (typeof scaledInputs.costBasis.sellProfitThreshold === 'number') {
-            lines.push(`    Sell Profit Threshold: ${scaledInputs.costBasis.sellProfitThreshold}%`);
-          }
-        }
       }
       if (scaledInputs.properties) {
         lines.push('');

@@ -428,6 +428,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
               {recipe.algorithm === 'Arbitrage Algorithm' && (
                 <>
                   <div className="text-sm font-semibold mt-2">Inputs</div>
+                  {/* Thresholds */}
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
                     {typeof scaledAlgorithmInputs?.longThreshold?.percent === 'number' && (
@@ -440,6 +441,17 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                       <span className="text-sm">{scaledAlgorithmInputs?.exitThreshold?.percent}</span>
                     )}
                   </div>
+                  {/* Cost Basis Section - subsection under Inputs */}
+                  {scaledAlgorithmInputs?.costBasis?.onlySellAbove && (
+                    <>
+                      <div className="text-sm font-medium mt-3 ml-4">Cost Basis</div>
+                      <div className="grid grid-cols-[180px_1fr] gap-2 items-start ml-4">
+                        <span className="text-sm font-medium text-muted-foreground">Only Sell Above Cost Basis:</span>
+                        <span className="text-sm">Yes</span>
+                      </div>
+                    </>
+                  )}
+                  {/* Trade Size */}
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Entry Trade Size ($):</span>
                     {typeof scaledAlgorithmInputs?.tradeSize?.entry === 'number' && (
@@ -452,6 +464,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                       <span className="text-sm">${scaledAlgorithmInputs?.tradeSize?.exit.toLocaleString()}</span>
                     )}
                   </div>
+                  {/* Start/End Dates */}
                   {(scaledAlgorithmInputs?.dates?.start && scaledAlgorithmInputs?.dates?.end) && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Start/End:</span>
@@ -465,6 +478,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
               {recipe.algorithm === 'Oracle Protocol' && (
                 <>
                   <div className="text-sm font-semibold mt-2">Inputs</div>
+                  {/* Thresholds */}
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
                     {typeof scaledAlgorithmInputs?.longThreshold?.percent === 'number' && (
@@ -477,6 +491,25 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                       <span className="text-sm">{scaledAlgorithmInputs?.exitThreshold?.percent}</span>
                     )}
                   </div>
+                  {/* Cost Basis Section - subsection under Inputs */}
+                  {(scaledAlgorithmInputs?.costBasis?.onlySellAbove || typeof scaledAlgorithmInputs?.costBasis?.sellProfitThreshold === 'number') && (
+                    <>
+                      <div className="text-sm font-medium mt-3 ml-4">Cost Basis</div>
+                      {scaledAlgorithmInputs?.costBasis?.onlySellAbove && (
+                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start ml-4">
+                          <span className="text-sm font-medium text-muted-foreground">Only Sell Above Cost Basis:</span>
+                          <span className="text-sm">Yes</span>
+                        </div>
+                      )}
+                      {typeof scaledAlgorithmInputs?.costBasis?.sellProfitThreshold === 'number' && (
+                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start ml-4">
+                          <span className="text-sm font-medium text-muted-foreground">Sell Profit Threshold (%):</span>
+                          <span className="text-sm">{scaledAlgorithmInputs?.costBasis?.sellProfitThreshold}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {/* Trade Size */}
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Primary Trade Size Type:</span>
                     {scaledAlgorithmInputs?.tradeSize?.primaryType && (
@@ -495,29 +528,12 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                       <span className="text-sm">${scaledAlgorithmInputs?.tradeSize?.entryFixed?.toLocaleString()} / ${scaledAlgorithmInputs?.tradeSize?.exitFixed?.toLocaleString()}</span>
                     )}
                   </div>
+                  {/* Start/End Dates */}
                   {(scaledAlgorithmInputs?.dates?.start && scaledAlgorithmInputs?.dates?.end) && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Start/End:</span>
                       <span className="text-sm">{scaledAlgorithmInputs?.dates?.start?.year}-{scaledAlgorithmInputs?.dates?.start?.month}-{scaledAlgorithmInputs?.dates?.start?.day} → {scaledAlgorithmInputs?.dates?.end?.year}-{scaledAlgorithmInputs?.dates?.end?.month}-{scaledAlgorithmInputs?.dates?.end?.day}</span>
                     </div>
-                  )}
-                  {/* Cost Basis Section - subsection under Inputs */}
-                  {(scaledAlgorithmInputs?.costBasis?.onlySellAbove || typeof scaledAlgorithmInputs?.costBasis?.sellProfitThreshold === 'number') && (
-                    <>
-                      <div className="text-sm font-medium mt-3 ml-4">Cost Basis</div>
-                      {scaledAlgorithmInputs?.costBasis?.onlySellAbove && (
-                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start ml-4">
-                          <span className="text-sm font-medium text-muted-foreground">Only Sell Above Cost Basis:</span>
-                          <span className="text-sm">Yes</span>
-                        </div>
-                      )}
-                      {typeof scaledAlgorithmInputs?.costBasis?.sellProfitThreshold === 'number' && (
-                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start ml-4">
-                          <span className="text-sm font-medium text-muted-foreground">Sell Profit Threshold (%):</span>
-                          <span className="text-sm">{scaledAlgorithmInputs?.costBasis?.sellProfitThreshold}</span>
-                        </div>
-                      )}
-                    </>
                   )}
                   {/* Properties subheader */}
                   {(scaledAlgorithmInputs?.properties?.initialCapital || scaledAlgorithmInputs?.properties?.orderSize || typeof scaledAlgorithmInputs?.properties?.pyramiding === 'number') && (
