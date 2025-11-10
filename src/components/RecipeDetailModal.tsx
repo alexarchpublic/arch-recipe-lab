@@ -501,6 +501,12 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                       <span className="text-sm">{scaledAlgorithmInputs?.costBasis?.sellProfitThreshold}</span>
                     </div>
                   )}
+                  {scaledAlgorithmInputs?.costBasis?.buyBelowOnly && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Buy Below Cost Basis Only:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
                   {/* Trade Size */}
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                     <span className="text-sm font-medium text-muted-foreground">Primary Trade Size Type:</span>

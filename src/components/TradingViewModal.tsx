@@ -173,6 +173,9 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
         if (typeof scaledInputs.costBasis.sellProfitThreshold === 'number') {
           lines.push(`  Sell Profit Threshold: ${scaledInputs.costBasis.sellProfitThreshold}%`);
         }
+        if (scaledInputs.costBasis.buyBelowOnly) {
+          lines.push(`  Buy Below Cost Basis Only: Yes`);
+        }
       }
       // Trade Size
       if (scaledInputs.tradeSize?.primaryType) {
