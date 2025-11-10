@@ -177,13 +177,14 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
         lines.push(`  End Date: ${formatDate(scaledInputs.dates.end)}`);
       }
       if (scaledInputs.costBasis) {
-        lines.push('');
-        lines.push('Cost Basis:');
-        if (scaledInputs.costBasis.onlySellAbove) {
-          lines.push(`  Only Sell Above Cost Basis: Yes`);
-        }
-        if (typeof scaledInputs.costBasis.sellProfitThreshold === 'number') {
-          lines.push(`  Sell Profit Threshold: ${scaledInputs.costBasis.sellProfitThreshold}%`);
+        if (scaledInputs.costBasis.onlySellAbove || typeof scaledInputs.costBasis.sellProfitThreshold === 'number') {
+          lines.push(`  Cost Basis:`);
+          if (scaledInputs.costBasis.onlySellAbove) {
+            lines.push(`    Only Sell Above Cost Basis: Yes`);
+          }
+          if (typeof scaledInputs.costBasis.sellProfitThreshold === 'number') {
+            lines.push(`    Sell Profit Threshold: ${scaledInputs.costBasis.sellProfitThreshold}%`);
+          }
         }
       }
       if (scaledInputs.properties) {
