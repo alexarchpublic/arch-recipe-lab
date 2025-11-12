@@ -215,86 +215,114 @@ export default function RecipeBrowser() {
     const getSortValue = (recipe: Recipe, field: string): number => {
       const scaleFactor = scale;
       
+      let value: number;
       switch (field) {
         case 'cagr':
-          return recipe.cagr || recipe.annualized_return || 0;
+          value = recipe.cagr || recipe.annualized_return || 0;
+          break;
         case 'cash-profit':
           if (recipe.cash_profit === null || recipe.cash_profit === undefined) return 0;
-          return Math.round(recipe.cash_profit * scaleFactor);
+          value = Math.round(recipe.cash_profit * scaleFactor);
+          break;
         case 'asset-accumulated':
           const assetQty = parseAssetQuantityFromText(recipe.asset_accumulated, recipe.asset);
           if (assetQty === null) return 0;
-          return assetQty * scaleFactor;
+          value = assetQty * scaleFactor;
+          break;
         case 'net-profit':
           const netProfit = parseCurrencyFromString(recipe.net_profit);
           if (netProfit === null) return 0;
-          return Math.round(netProfit * scaleFactor);
+          value = Math.round(netProfit * scaleFactor);
+          break;
         case 'pnl':
           const initialCap = recipe.initial_capital ?? null;
           const netProfitForPnl = parseCurrencyFromString(recipe.net_profit);
           if (initialCap === null || initialCap <= 0 || netProfitForPnl === null) return 0;
-          return (netProfitForPnl / initialCap) * 100;
+          value = (netProfitForPnl / initialCap) * 100;
+          break;
         default:
           return 0;
       }
+      
+      // Ensure the value is a finite number
+      return Number.isFinite(value) ? value : 0;
     };
 
-    // Sort
+    // Sort with tie-breaker for stable sorting
     filtered.sort((a, b) => {
+      let comparison = 0;
+      
       switch (sortBy) {
         case 'cagr-desc': {
           const aVal = getSortValue(a, 'cagr');
           const bVal = getSortValue(b, 'cagr');
-          return bVal - aVal;
+          comparison = bVal - aVal;
+          break;
         }
         case 'cagr-asc': {
           const aVal = getSortValue(a, 'cagr');
           const bVal = getSortValue(b, 'cagr');
-          return aVal - bVal;
+          comparison = aVal - bVal;
+          break;
         }
         case 'cash-profit-desc': {
           const aVal = getSortValue(a, 'cash-profit');
           const bVal = getSortValue(b, 'cash-profit');
-          return bVal - aVal;
+          comparison = bVal - aVal;
+          break;
         }
         case 'cash-profit-asc': {
           const aVal = getSortValue(a, 'cash-profit');
           const bVal = getSortValue(b, 'cash-profit');
-          return aVal - bVal;
+          comparison = aVal - bVal;
+          break;
         }
         case 'asset-accumulated-desc': {
           const aVal = getSortValue(a, 'asset-accumulated');
           const bVal = getSortValue(b, 'asset-accumulated');
-          return bVal - aVal;
+          comparison = bVal - aVal;
+          break;
         }
         case 'asset-accumulated-asc': {
           const aVal = getSortValue(a, 'asset-accumulated');
           const bVal = getSortValue(b, 'asset-accumulated');
-          return aVal - bVal;
+          comparison = aVal - bVal;
+          break;
         }
         case 'net-profit-desc': {
           const aVal = getSortValue(a, 'net-profit');
           const bVal = getSortValue(b, 'net-profit');
-          return bVal - aVal;
+          comparison = bVal - aVal;
+          break;
         }
         case 'net-profit-asc': {
           const aVal = getSortValue(a, 'net-profit');
           const bVal = getSortValue(b, 'net-profit');
-          return aVal - bVal;
+          comparison = aVal - bVal;
+          break;
         }
         case 'pnl-desc': {
           const aVal = getSortValue(a, 'pnl');
           const bVal = getSortValue(b, 'pnl');
-          return bVal - aVal;
+          comparison = bVal - aVal;
+          break;
         }
         case 'pnl-asc': {
           const aVal = getSortValue(a, 'pnl');
           const bVal = getSortValue(b, 'pnl');
-          return aVal - bVal;
+          comparison = aVal - bVal;
+          break;
         }
         default:
           return 0;
       }
+      
+      // Tie-breaker: if values are equal, sort by name for consistency
+      if (comparison === 0) {
+        return a.name.localeCompare(b.name);
+      }
+      
+      return comparison;
     });
 
     return filtered;
