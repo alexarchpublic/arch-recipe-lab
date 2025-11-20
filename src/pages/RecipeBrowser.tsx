@@ -388,6 +388,18 @@ export default function RecipeBrowser() {
             Click a card to review parameters and results, then add it to your
             portfolio to allocate capital and copy values to TradingView.
           </p>
+          <p className="text-sm text-muted-foreground mt-3">
+            Prefer a quick walkthrough? Watch{" "}
+            <a
+              className="text-primary underline hover:no-underline"
+              href="https://youtu.be/f_HjWioMlF8"
+              target="_blank"
+              rel="noreferrer"
+            >
+              How to use Recipe Lab in Under 5 minutes
+            </a>
+            .
+          </p>
         </div>
 
         {/* Search and Controls */}
