@@ -373,7 +373,9 @@ export default function RecipeBrowser() {
               <h1 className="text-2xl md:text-3xl font-semibold text-white">Recipe Lab</h1>
               <p className="text-sm text-white/90 mt-1">Arch Public Crypto Algorithm Recipe Browser</p>
             </div>
-            <img src="/APLogo.png" alt="Arch Public" className="h-8 w-auto" />
+            <a href="https://archpublic.com" target="_blank" rel="noreferrer">
+              <img src="/APLogo.png" alt="Arch Public" className="h-8 w-auto" />
+            </a>
           </div>
         </div>
       </header>
