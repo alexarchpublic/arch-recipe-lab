@@ -6,7 +6,7 @@ import { Heart } from "lucide-react";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { TrendingUp, DollarSign, Target, Edit, Trash2, Eye, Image as ImageIcon } from "lucide-react";
+import { TrendingUp, DollarSign, Target, Edit, Trash2, Eye, Image as ImageIcon, Archive, ArchiveRestore } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCurrencyFromString } from "@/lib/portfolio";
@@ -32,6 +32,7 @@ interface Recipe {
   cash_profit: number | null;
   asset_accumulated?: string | null;
   initial_capital?: number | null;
+  archived_at?: string | null;
   screenshots?: Array<{
     id: string;
     image_url: string;
@@ -72,6 +73,7 @@ const getAssetColor = (asset: string) => {
 
 export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecipeCardProps) {
   const [deleting, setDeleting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const { toast } = useToast();
   const { isInPortfolio, toggleRecipe } = usePortfolio();
 
@@ -156,6 +158,40 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
       });
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleToggleArchive = async () => {
+    setArchiving(true);
+    try {
+      const nextArchivedAt = recipe.archived_at ? null : new Date().toISOString();
+      const { error } = await supabase
+        .from('recipes')
+        .update({ archived_at: nextArchivedAt })
+        .eq('id', recipe.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: recipe.archived_at ? "Recipe unarchived." : "Recipe archived.",
+      });
+
+      onDelete();
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : "Failed to update recipe";
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
+    } finally {
+      setArchiving(false);
     }
   };
   
@@ -286,6 +322,17 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
           
           {/* Action Buttons */}
           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggleArchive}
+              className="h-8 w-8 p-0"
+              disabled={archiving}
+              aria-label={recipe.archived_at ? "Unarchive recipe" : "Archive recipe"}
+              title={recipe.archived_at ? "Unarchive" : "Archive"}
+            >
+              {recipe.archived_at ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+            </Button>
             <Button
               variant="ghost"
               size="sm"

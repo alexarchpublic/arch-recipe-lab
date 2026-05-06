@@ -37,6 +37,7 @@ interface Recipe {
   annualized_return: number | null;
   best_for: string | null;
   display_number?: number | null;
+  archived_at?: string | null;
   screenshots?: Array<{
     id: string;
     image_url: string;
@@ -112,6 +113,7 @@ export default function RecipeBrowser() {
           *,
           recipe_screenshots(*)
         `)
+        .is('archived_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

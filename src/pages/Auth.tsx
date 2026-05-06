@@ -47,12 +47,12 @@ export default function Auth() {
     }
 
     // Validate email domain
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@thearchpublic\.com$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@archpublic\.com$/;
     if (!emailRegex.test(email)) {
       toast({
         variant: "destructive",
         title: "Access Restricted",
-        description: "Only @thearchpublic.com email addresses are allowed",
+        description: "Only @archpublic.com email addresses are allowed",
       });
       return;
     }
@@ -90,11 +90,17 @@ export default function Auth() {
         });
         navigate('/admin');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : "Authentication failed";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Authentication failed",
+        description: message,
       });
     } finally {
       setLoading(false);
@@ -116,8 +122,8 @@ export default function Auth() {
             <CardTitle>{isSignUp ? 'Create Account' : 'Sign In'}</CardTitle>
             <CardDescription>
               {isSignUp 
-                ? 'Create an admin account to manage recipes (requires @thearchpublic.com email)' 
-                : 'Sign in to access the admin panel (requires @thearchpublic.com email)'}
+                ? 'Create an admin account to manage recipes (requires @archpublic.com email)' 
+                : 'Sign in to access the admin panel (requires @archpublic.com email)'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -127,7 +133,7 @@ export default function Auth() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@thearchpublic.com"
+                  placeholder="admin@archpublic.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
