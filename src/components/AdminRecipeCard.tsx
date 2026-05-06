@@ -170,7 +170,15 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
         .update({ archived_at: nextArchivedAt })
         .eq('id', recipe.id);
 
-      if (error) throw error;
+      if (error) {
+        const msg = String((error as any)?.message || "");
+        if (msg.includes("archived_at") || msg.includes("does not exist")) {
+          throw new Error(
+            "Archiving isn't enabled in the database yet (missing recipes.archived_at). Apply the latest Supabase migrations, then retry.",
+          );
+        }
+        throw error;
+      }
 
       toast({
         title: "Success",

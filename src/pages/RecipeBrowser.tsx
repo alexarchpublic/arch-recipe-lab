@@ -107,14 +107,32 @@ export default function RecipeBrowser() {
   const fetchRecipes = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('recipes')
-        .select(`
+      const baseQuery = supabase
+        .from("recipes")
+        .select(
+          `
           *,
           recipe_screenshots(*)
-        `)
-        .is('archived_at', null)
-        .order('created_at', { ascending: false });
+        `,
+        )
+        .order("created_at", { ascending: false });
+
+      // Prefer hiding archived recipes when the column exists. If the DB migration
+      // hasn't been applied yet, gracefully fall back to the old behavior.
+      let data: any[] | null = null;
+      let error: any = null;
+
+      {
+        const res = await baseQuery.is("archived_at", null);
+        data = res.data as any[] | null;
+        error = res.error;
+      }
+
+      if (error && String(error.message || "").includes("archived_at")) {
+        const res = await baseQuery;
+        data = res.data as any[] | null;
+        error = res.error;
+      }
 
       if (error) throw error;
       
