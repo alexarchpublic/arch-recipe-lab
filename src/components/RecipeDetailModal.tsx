@@ -563,6 +563,172 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   )}
                 </>
               )}
+
+              {/* Market Wave */}
+              {recipe.algorithm === 'Market Wave' && (
+                <>
+                  {/* User Initial Capital */}
+                  {(typeof scaledAlgorithmInputs?.userInitialCapital?.startingCash === 'number'
+                    || typeof scaledAlgorithmInputs?.userInitialCapital?.startingCryptoQty === 'number') && (
+                    <div className="text-sm font-semibold mt-2">User Initial Capital</div>
+                  )}
+                  {typeof scaledAlgorithmInputs?.userInitialCapital?.startingCash === 'number' && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Starting Cash:</span>
+                      <span className="text-sm">${scaledAlgorithmInputs?.userInitialCapital?.startingCash.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {typeof scaledAlgorithmInputs?.userInitialCapital?.startingCryptoQty === 'number' && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Starting Crypto Qty:</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.userInitialCapital?.startingCryptoQty} {recipe.asset}</span>
+                    </div>
+                  )}
+
+                  {/* Order Entry & Exit Rules */}
+                  <div className="text-sm font-semibold mt-2">Order Entry &amp; Exit Rules</div>
+                  {scaledAlgorithmInputs?.longThreshold?.enabled && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
+                      <span className="text-sm">{typeof scaledAlgorithmInputs?.longThreshold?.percent === 'number' ? scaledAlgorithmInputs?.longThreshold?.percent : '—'}</span>
+                    </div>
+                  )}
+                  {scaledAlgorithmInputs?.exitThreshold?.enabled && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Exit Threshold (%):</span>
+                      <span className="text-sm">{typeof scaledAlgorithmInputs?.exitThreshold?.percent === 'number' ? scaledAlgorithmInputs?.exitThreshold?.percent : '—'}</span>
+                    </div>
+                  )}
+
+                  {/* Trade Size */}
+                  <div className="text-sm font-semibold mt-2">Trade Size</div>
+                  {scaledAlgorithmInputs?.tradeSize?.fixedEnabled && (
+                    <>
+                      <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                        <span className="text-sm font-medium text-muted-foreground">Fixed Trade Size:</span>
+                        <span className="text-sm">Yes</span>
+                      </div>
+                      {typeof scaledAlgorithmInputs?.tradeSize?.entryFixed === 'number' && (
+                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                          <span className="text-sm font-medium text-muted-foreground">Entry Trade Size ($):</span>
+                          <span className="text-sm">${scaledAlgorithmInputs?.tradeSize?.entryFixed.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {typeof scaledAlgorithmInputs?.tradeSize?.exitFixed === 'number' && (
+                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                          <span className="text-sm font-medium text-muted-foreground">Exit Trade Size ($):</span>
+                          <span className="text-sm">${scaledAlgorithmInputs?.tradeSize?.exitFixed.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {scaledAlgorithmInputs?.tradeSize?.percentEnabled && (
+                    <>
+                      <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                        <span className="text-sm font-medium text-muted-foreground">Percentage Trade Size:</span>
+                        <span className="text-sm">Yes</span>
+                      </div>
+                      {typeof scaledAlgorithmInputs?.tradeSize?.entryPercent === 'number' && (
+                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                          <span className="text-sm font-medium text-muted-foreground">Entry Trade Size (%):</span>
+                          <span className="text-sm">{scaledAlgorithmInputs?.tradeSize?.entryPercent}%</span>
+                        </div>
+                      )}
+                      {typeof scaledAlgorithmInputs?.tradeSize?.exitPercent === 'number' && (
+                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                          <span className="text-sm font-medium text-muted-foreground">Exit Trade Size (%):</span>
+                          <span className="text-sm">{scaledAlgorithmInputs?.tradeSize?.exitPercent}%</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Market Wave */}
+                  <div className="text-sm font-semibold mt-2">Market Wave</div>
+                  {typeof scaledAlgorithmInputs?.marketWave?.scope === 'number' && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Scope:</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.marketWave?.scope} (0.5=micro, 10=macro)</span>
+                    </div>
+                  )}
+                  {scaledAlgorithmInputs?.marketWave?.onlySellAbove && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Only Sell Above:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
+                  {scaledAlgorithmInputs?.marketWave?.onlyBuyBelow && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Only Buy Below:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
+                  {typeof scaledAlgorithmInputs?.marketWave?.sellBuffer === 'number' && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Sell Buffer (%):</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.marketWave?.sellBuffer}</span>
+                    </div>
+                  )}
+                  {typeof scaledAlgorithmInputs?.marketWave?.buyBuffer === 'number' && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Buy Buffer (%):</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.marketWave?.buyBuffer}</span>
+                    </div>
+                  )}
+
+                  {/* Static Market Price Filter */}
+                  {(scaledAlgorithmInputs?.staticPriceFilter?.sellAboveEnabled
+                    || scaledAlgorithmInputs?.staticPriceFilter?.buyBelowEnabled) && (
+                    <div className="text-sm font-semibold mt-2">Static Market Price Filter</div>
+                  )}
+                  {scaledAlgorithmInputs?.staticPriceFilter?.sellAboveEnabled && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Only Sell Above:</span>
+                      <span className="text-sm">${typeof scaledAlgorithmInputs?.staticPriceFilter?.sellAbove === 'number' ? scaledAlgorithmInputs?.staticPriceFilter?.sellAbove.toLocaleString() : '—'}</span>
+                    </div>
+                  )}
+                  {scaledAlgorithmInputs?.staticPriceFilter?.buyBelowEnabled && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Only Buy Below:</span>
+                      <span className="text-sm">${typeof scaledAlgorithmInputs?.staticPriceFilter?.buyBelow === 'number' ? scaledAlgorithmInputs?.staticPriceFilter?.buyBelow.toLocaleString() : '—'}</span>
+                    </div>
+                  )}
+
+                  {/* Trend Filter */}
+                  {(scaledAlgorithmInputs?.trendFilter?.buyOnUpTrend
+                    || scaledAlgorithmInputs?.trendFilter?.sellOnDownTrend) && (
+                    <div className="text-sm font-semibold mt-2">Trend Filter</div>
+                  )}
+                  {scaledAlgorithmInputs?.trendFilter?.buyOnUpTrend && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Buy on Up Trend breakout:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
+                  {scaledAlgorithmInputs?.trendFilter?.sellOnDownTrend && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Sell on Down Trend breakout:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
+
+                  {/* Start/End Dates */}
+                  {(scaledAlgorithmInputs?.dates?.start && scaledAlgorithmInputs?.dates?.end) && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Start/End:</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.dates?.start?.year}-{scaledAlgorithmInputs?.dates?.start?.month}-{scaledAlgorithmInputs?.dates?.start?.day}{(scaledAlgorithmInputs?.dates?.start?.hour ?? null) !== null ? ` ${scaledAlgorithmInputs?.dates?.start?.hour}:${String(scaledAlgorithmInputs?.dates?.start?.minute ?? 0).padStart(2,'0')}` : ''} → {scaledAlgorithmInputs?.dates?.end?.year}-{scaledAlgorithmInputs?.dates?.end?.month}-{scaledAlgorithmInputs?.dates?.end?.day}</span>
+                    </div>
+                  )}
+
+                  {/* Backtesting */}
+                  {scaledAlgorithmInputs?.backtest?.exitFullOnLastBar && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Exit Full on Last Bar:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
 

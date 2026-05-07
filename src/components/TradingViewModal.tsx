@@ -156,6 +156,84 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
         lines.push(`  Start Date: ${formatDate(scaledInputs.dates.start)}`);
         lines.push(`  End Date: ${formatDate(scaledInputs.dates.end)}`);
       }
+    } else if (recipe.algorithm === 'Market Wave') {
+      lines.push('Market Wave Parameters:');
+      // User Initial Capital
+      if (scaledInputs.userInitialCapital) {
+        if (typeof scaledInputs.userInitialCapital.startingCash === 'number') {
+          lines.push(`  Starting Cash: $${scaledInputs.userInitialCapital.startingCash.toLocaleString()}`);
+        }
+        if (typeof scaledInputs.userInitialCapital.startingCryptoQty === 'number') {
+          lines.push(`  Starting Crypto Qty: ${scaledInputs.userInitialCapital.startingCryptoQty}`);
+        }
+      }
+      // Order Entry & Exit Rules
+      if (scaledInputs.longThreshold?.enabled && typeof scaledInputs.longThreshold?.percent === 'number') {
+        lines.push(`  Long Threshold: ${scaledInputs.longThreshold.percent}%`);
+      }
+      if (scaledInputs.exitThreshold?.enabled && typeof scaledInputs.exitThreshold?.percent === 'number') {
+        lines.push(`  Exit Threshold: ${scaledInputs.exitThreshold.percent}%`);
+      }
+      // Trade Size
+      if (scaledInputs.tradeSize?.fixedEnabled) {
+        lines.push(`  Fixed Trade Size: Yes`);
+        if (typeof scaledInputs.tradeSize.entryFixed === 'number') {
+          lines.push(`  Entry Trade Size ($): $${scaledInputs.tradeSize.entryFixed.toLocaleString()}`);
+        }
+        if (typeof scaledInputs.tradeSize.exitFixed === 'number') {
+          lines.push(`  Exit Trade Size ($): $${scaledInputs.tradeSize.exitFixed.toLocaleString()}`);
+        }
+      }
+      if (scaledInputs.tradeSize?.percentEnabled) {
+        lines.push(`  Percentage Trade Size: Yes`);
+        if (typeof scaledInputs.tradeSize.entryPercent === 'number') {
+          lines.push(`  Entry Trade Size (%): ${scaledInputs.tradeSize.entryPercent}%`);
+        }
+        if (typeof scaledInputs.tradeSize.exitPercent === 'number') {
+          lines.push(`  Exit Trade Size (%): ${scaledInputs.tradeSize.exitPercent}%`);
+        }
+      }
+      // Market Wave
+      if (scaledInputs.marketWave) {
+        if (typeof scaledInputs.marketWave.scope === 'number') {
+          lines.push(`  Scope (0.5=micro 10=macro): ${scaledInputs.marketWave.scope}`);
+        }
+        if (scaledInputs.marketWave.onlySellAbove) {
+          lines.push(`  Only Sell Above: Yes`);
+        }
+        if (scaledInputs.marketWave.onlyBuyBelow) {
+          lines.push(`  Only Buy Below: Yes`);
+        }
+        if (typeof scaledInputs.marketWave.sellBuffer === 'number') {
+          lines.push(`  Sell Buffer: ${scaledInputs.marketWave.sellBuffer}%`);
+        }
+        if (typeof scaledInputs.marketWave.buyBuffer === 'number') {
+          lines.push(`  Buy Buffer: ${scaledInputs.marketWave.buyBuffer}%`);
+        }
+      }
+      // Static Market Price Filter
+      if (scaledInputs.staticPriceFilter?.sellAboveEnabled && typeof scaledInputs.staticPriceFilter?.sellAbove === 'number') {
+        lines.push(`  Static Filter — Only Sell Above: $${scaledInputs.staticPriceFilter.sellAbove.toLocaleString()}`);
+      }
+      if (scaledInputs.staticPriceFilter?.buyBelowEnabled && typeof scaledInputs.staticPriceFilter?.buyBelow === 'number') {
+        lines.push(`  Static Filter — Only Buy Below: $${scaledInputs.staticPriceFilter.buyBelow.toLocaleString()}`);
+      }
+      // Trend Filter
+      if (scaledInputs.trendFilter?.buyOnUpTrend) {
+        lines.push(`  Buy on Up Trend breakout: Yes`);
+      }
+      if (scaledInputs.trendFilter?.sellOnDownTrend) {
+        lines.push(`  Sell on Down Trend breakout: Yes`);
+      }
+      // Start/End Dates
+      if (scaledInputs.dates?.start && scaledInputs.dates?.end) {
+        lines.push(`  Start Date: ${formatDate(scaledInputs.dates.start)}`);
+        lines.push(`  End Date: ${formatDate(scaledInputs.dates.end)}`);
+      }
+      // Backtesting
+      if (scaledInputs.backtest?.exitFullOnLastBar) {
+        lines.push(`  Exit Full on Last Bar: Yes`);
+      }
     } else if (recipe.algorithm === 'Oracle Protocol') {
       lines.push('Oracle Protocol Parameters:');
       // Thresholds
@@ -250,6 +328,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
     if (algo === 'Oracle Protocol') return 'OP';
     if (algo === 'Arbitrage Algorithm') return 'AA';
     if (algo === 'Intelligence Algorithm') return 'IA';
+    if (algo === 'Market Wave') return 'MW';
     return '';
   };
 
@@ -289,6 +368,26 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       const factor = typeof scaledInputs?.activate?.factor === 'number' ? ` IF(${scaledInputs.activate.factor})` : '';
       const method = scaledInputs?.repeatPurchaseMethod ? ` (${scaledInputs.repeatPurchaseMethod})` : '';
       return `${num} ${algo} ${start} ${capital}${factor}${method}`.trim();
+    }
+    if (recipe.algorithm === 'Market Wave') {
+      let entrySize = '?';
+      if (scaledInputs?.tradeSize?.fixedEnabled && typeof scaledInputs?.tradeSize?.entryFixed === 'number') {
+        entrySize = `$${scaledInputs.tradeSize.entryFixed.toLocaleString()}`;
+      } else if (scaledInputs?.tradeSize?.percentEnabled && typeof scaledInputs?.tradeSize?.entryPercent === 'number' && capitalAllocated > 0) {
+        const entryDollar = Math.round(capitalAllocated * (scaledInputs.tradeSize.entryPercent / 100));
+        entrySize = `$${entryDollar.toLocaleString()}`;
+      }
+
+      let exitSize = '?';
+      if (scaledInputs?.tradeSize?.fixedEnabled && typeof scaledInputs?.tradeSize?.exitFixed === 'number') {
+        exitSize = `$${scaledInputs.tradeSize.exitFixed.toLocaleString()}`;
+      } else if (scaledInputs?.tradeSize?.percentEnabled && typeof scaledInputs?.tradeSize?.exitPercent === 'number' && capitalAllocated > 0) {
+        const exitDollar = Math.round(capitalAllocated * (scaledInputs.tradeSize.exitPercent / 100));
+        exitSize = `$${exitDollar.toLocaleString()}`;
+      }
+
+      const scope = typeof scaledInputs?.marketWave?.scope === 'number' ? ` Scope(${scaledInputs.marketWave.scope})` : '';
+      return `${num} ${algo} ${start} ${capital} ${entrySize}/${exitSize}${scope}`.trim();
     }
     return `${num} ${algo} ${start} ${capital}`.trim();
   };

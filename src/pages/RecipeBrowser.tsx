@@ -167,7 +167,7 @@ export default function RecipeBrowser() {
   
   const availableAlgorithms = useMemo(() => {
     // Known algorithm values from the schema in preferred order
-    const knownAlgorithms = ['Intelligence Algorithm', 'Arbitrage Algorithm', 'Oracle Protocol'];
+    const knownAlgorithms = ['Intelligence Algorithm', 'Arbitrage Algorithm', 'Oracle Protocol', 'Market Wave'];
     
     // Get algorithms from recipes that exist
     const recipeAlgorithms = recipes

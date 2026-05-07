@@ -91,6 +91,17 @@ export function scaleAlgorithmInputs(algorithm_inputs: any, scaleFactor: number,
     }
   }
 
+  // Market Wave: scale userInitialCapital dollar/quantity fields. Static price filter
+  // levels are absolute market prices and intentionally are NOT scaled.
+  if (typeof scaled.userInitialCapital === 'object' && scaled.userInitialCapital !== null) {
+    if (typeof scaled.userInitialCapital.startingCash === 'number') {
+      scaled.userInitialCapital.startingCash = Math.round(scaled.userInitialCapital.startingCash * scaleFactor);
+    }
+    if (typeof scaled.userInitialCapital.startingCryptoQty === 'number') {
+      scaled.userInitialCapital.startingCryptoQty = scaled.userInitialCapital.startingCryptoQty * scaleFactor;
+    }
+  }
+
   // Scale properties.initialCapital and properties.orderSize (for Intelligence Algorithm and Oracle Protocol)
   if (typeof scaled.properties === 'object' && scaled.properties !== null) {
     if (typeof scaled.properties.initialCapital === 'number') {
