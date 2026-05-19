@@ -28,6 +28,7 @@ import {
   Loader2,
   Image as ImageIcon
 } from "lucide-react";
+import { computeCagr } from "@/utils/recipeMetrics";
 
 // Form validation schema
 const recipeSchema = z.object({
@@ -219,13 +220,17 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
     setLoading(true);
 
     try {
+      const payload = {
+        ...data,
+        cagr: computeCagr(data) ?? null,
+      };
       let recipeId: string;
 
       if (isEditMode) {
         // Update existing recipe
         const { data: updatedRecipe, error } = await supabase
           .from('recipes')
-          .update(data)
+          .update(payload)
           .eq('id', recipe.id)
           .select('id')
           .single();
@@ -236,7 +241,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
         // Create new recipe
         const { data: newRecipe, error } = await supabase
           .from('recipes')
-          .insert(data)
+          .insert(payload)
           .select('id')
           .single();
 
@@ -1184,6 +1189,21 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                     </div>
                   </div>
 
+                  {/* Benchmark */}
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Benchmark</h5>
+                    <div className="space-y-2 max-w-xs">
+                      <Label>Buy &amp; Hold PnL (%)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        defaultValue={recipe?.algorithm_inputs?.buyHoldPnlPercent}
+                        {...register('algorithm_inputs.buyHoldPnlPercent' as any, { valueAsNumber: true })}
+                        placeholder="e.g., 42.5"
+                      />
+                    </div>
+                  </div>
+
                   {/* Trend Filter */}
                   <div className="space-y-3">
                     <h5 className="font-medium">Trend Filter</h5>
@@ -1323,17 +1343,6 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                     id="net_profit"
                     {...register("net_profit")}
                     placeholder="e.g., $20,455 (87% from BTC growth, 13% cash)"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cagr">CAGR (%)</Label>
-                  <Input
-                    id="cagr"
-                    type="number"
-                    step="0.01"
-                    {...register("cagr", { valueAsNumber: true })}
-                    placeholder="e.g., 45.29"
                   />
                 </div>
               </div>

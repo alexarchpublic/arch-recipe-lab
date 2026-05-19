@@ -10,6 +10,12 @@ import { TrendingUp, DollarSign, Target, Edit, Trash2, Eye, Image as ImageIcon, 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCurrencyFromString } from "@/lib/portfolio";
+import {
+  formatSignedPercent,
+  getDisplayCagr,
+  getPnlVsBuyHoldDelta,
+  getStrategyPnlPercent,
+} from "@/utils/recipeMetrics";
 
 interface Recipe {
   id: string;
@@ -82,35 +88,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
     ? recipe.screenshots[0].image_url 
     : null;
 
-  const getStartEndDates = (): { start?: Date; end?: Date } => {
-    const ai = recipe.algorithm_inputs as any;
-    if (!ai) return {};
-    if (recipe.algorithm === 'Intelligence Algorithm') {
-      const s = ai.start, e = ai.end;
-      const start = s && s.year && s.month && s.day ? new Date(s.year, (s.month - 1) || 0, s.day, s.hour || 0, s.minute || 0) : undefined;
-      const end = e && e.year && e.month && e.day ? new Date(e.year, (e.month - 1) || 0, e.day) : undefined;
-      return { start, end };
-    }
-    const ds = ai?.dates?.start, de = ai?.dates?.end;
-    const start = ds && ds.year && ds.month && ds.day ? new Date(ds.year, (ds.month - 1) || 0, ds.day, ds.hour || 0, ds.minute || 0) : undefined;
-    const end = de && de.year && de.month && de.day ? new Date(de.year, (de.month - 1) || 0, de.day) : undefined;
-    return { start, end };
-  };
-
-  const computeCagr = (): number | null => {
-    const { start, end } = getStartEndDates();
-    const begin = recipe.initial_capital ?? null;
-    const netProfit = parseCurrencyFromString(recipe.net_profit);
-    if (!begin || !netProfit || !start || !end) return null;
-    const years = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-    if (years <= 0) return null;
-    const endingValue = begin + netProfit;
-    if (begin <= 0 || endingValue <= 0) return null;
-    const cagr = Math.pow(endingValue / begin, 1 / years) - 1;
-    return Number.isFinite(cagr) ? cagr * 100 : null;
-  };
-
-  const returnValue = computeCagr() ?? recipe.cagr ?? recipe.annualized_return;
+  const returnValue = getDisplayCagr(recipe);
   
   // Parse asset accumulated numeric qty and net profit dollars
   const parseAssetQuantity = (text?: string | null): number | null => {
@@ -128,10 +106,8 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
     ? recipe.cash_profit
     : null;
 
-  // Calculate PnL %
-  const pnlPercent = recipe.initial_capital !== null && recipe.initial_capital !== undefined && recipe.initial_capital > 0 && scaledNetProfitNumber !== null
-    ? (scaledNetProfitNumber / recipe.initial_capital) * 100
-    : null;
+  const pnlPercent = getStrategyPnlPercent(recipe);
+  const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -250,12 +226,24 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
       <CardContent className="space-y-4">
         
         <div className="grid grid-cols-2 gap-3">
-          {returnValue && (
+          {returnValue !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
               <TrendingUp className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">CAGR</p>
                 <p className="text-sm font-semibold text-primary">{returnValue.toFixed(1)}%</p>
+              </div>
+            </div>
+          )}
+
+          {recipe.algorithm === 'Market Wave' && pnlVsBuyHoldDelta !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 col-span-2">
+              <TrendingUp className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
+              <div>
+                <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
+                <p className={`text-sm font-semibold ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                  {formatSignedPercent(pnlVsBuyHoldDelta)}
+                </p>
               </div>
             </div>
           )}

@@ -13,6 +13,14 @@ import { useState, useEffect } from "react";
 import { scaleRecipeFreeText, scaleAlgorithmInputs } from "@/utils/recipeScaling";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { parseCurrencyFromString } from "@/lib/portfolio";
+import {
+  formatSignedPercent,
+  getBuyHoldPnlPercent,
+  getDisplayCagr,
+  getPnlVsBuyHoldDelta,
+  getPortfolioValues,
+  getStrategyPnlPercent,
+} from "@/utils/recipeMetrics";
 import { Button } from "@/components/ui/button";
 
 interface Recipe {
@@ -98,43 +106,10 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
     return Number.isFinite(num) ? num : null;
   };
 
-  const getStartEndDates = (): { start?: Date; end?: Date } => {
-    const ai = recipe.algorithm_inputs as any;
-    if (!ai) return {};
-    // Intelligence: start/end at root
-    if (recipe.algorithm === 'Intelligence Algorithm') {
-      const s = ai.start, e = ai.end;
-      const start = s && s.year && s.month && s.day ? new Date(s.year, (s.month - 1) || 0, s.day, s.hour || 0, s.minute || 0) : undefined;
-      const end = e && e.year && e.month && e.day ? new Date(e.year, (e.month - 1) || 0, e.day) : undefined;
-      return { start, end };
-    }
-    // Arbitrage/Oracle: dates.start/end
-    const ds = ai.dates?.start, de = ai.dates?.end;
-    const start = ds && ds.year && ds.month && ds.day ? new Date(ds.year, (ds.month - 1) || 0, ds.day, ds.hour || 0, ds.minute || 0) : undefined;
-    const end = de && de.year && de.month && de.day ? new Date(de.year, (de.month - 1) || 0, de.day) : undefined;
-    return { start, end };
-  };
-
-  const computeCagr = (): number | null => {
-    const startEnd = getStartEndDates();
-    const start = startEnd.start;
-    const end = startEnd.end;
-    const begin = (initialCapital ?? recipe.initial_capital) ?? null;
-    const netProfit = parseCurrencyFromString(recipe.net_profit);
-    if (!begin || !netProfit || !start || !end) return null;
-    const years = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-    if (years <= 0) return null;
-    const endingValue = begin + netProfit;
-    if (begin <= 0 || endingValue <= 0) return null;
-    const cagr = Math.pow(endingValue / begin, 1 / years) - 1;
-    return Number.isFinite(cagr) ? cagr * 100 : null;
-  };
-
-  const computedCagr = computeCagr();
-  const returnValue = computedCagr ?? recipe.cagr ?? recipe.annualized_return;
+  const scaledInitialCapital = (initialCapital ?? recipe.initial_capital) ?? null;
+  const returnValue = getDisplayCagr(recipe, { initialCapital: scaledInitialCapital });
   const scaledEntryTrade = recipe.entry_trade ? (scaleRecipeFreeText(recipe.entry_trade, scale) as string) : '';
   const scaledExitTrade = recipe.exit_trade ? (scaleRecipeFreeText(recipe.exit_trade, scale) as string) : '';
-  const scaledInitialCapital = (initialCapital ?? recipe.initial_capital) ?? null;
   const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
     ? Math.round((recipe.cash_profit as number) * (Number.isFinite(scale) ? scale : 1))
     : null;
@@ -167,13 +142,15 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   const netProfitDisplay = netProfitNumber !== null ? `$${netProfitNumber.toLocaleString()}` : (scaledNetProfitRaw as any);
 
   // Calculate PnL %
-  const scaledNetProfitNumber = netProfitNumber !== null ? Math.round(netProfitNumber * (Number.isFinite(scale) ? scale : 1)) : null;
-  const pnlPercent = scaledInitialCapital !== null && scaledInitialCapital > 0 && scaledNetProfitNumber !== null
-    ? (scaledNetProfitNumber / scaledInitialCapital) * 100
-    : null;
+  const scaleFactor = Number.isFinite(scale) ? scale : 1;
+  const scaledNetProfitNumber = netProfitNumber !== null ? Math.round(netProfitNumber * scaleFactor) : null;
+  const pnlPercent = getStrategyPnlPercent(recipe, scaleFactor);
+  const buyHoldPnlPercent = getBuyHoldPnlPercent(recipe);
+  const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe, scaleFactor);
+  const portfolioValues = getPortfolioValues(recipe, scaleFactor, scaledInitialCapital);
 
   // Parse asset quantity for display
-  const scaledAssetQty = assetQty !== null ? +(assetQty * (Number.isFinite(scale) ? scale : 1)) : null;
+  const scaledAssetQty = assetQty !== null ? +(assetQty * scaleFactor) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -273,7 +250,27 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
               Results
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              {returnValue && (
+              {portfolioValues.beginning !== null && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
+                  <Wallet className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Beginning Portfolio</p>
+                    <p className="text-sm font-semibold">${portfolioValues.beginning.toLocaleString()}</p>
+                  </div>
+                </div>
+              )}
+
+              {portfolioValues.ending !== null && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
+                  <Wallet className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Ending Portfolio</p>
+                    <p className="text-sm font-semibold">${portfolioValues.ending.toLocaleString()}</p>
+                  </div>
+                </div>
+              )}
+
+              {returnValue !== null && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
                   <BarChart3 className="h-4 w-4 text-primary" />
                   <div>
@@ -319,9 +316,31 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
                   <TrendingUp className={`h-4 w-4 ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`} />
                   <div>
-                    <p className="text-xs text-muted-foreground">PnL %</p>
+                    <p className="text-xs text-muted-foreground">Strategy PnL %</p>
                     <p className={`text-sm font-semibold ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                      {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(1)}%
+                      {formatSignedPercent(pnlPercent)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {recipe.algorithm === 'Market Wave' && buyHoldPnlPercent !== null && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Buy &amp; Hold PnL %</p>
+                    <p className="text-sm font-semibold">{formatSignedPercent(buyHoldPnlPercent)}</p>
+                  </div>
+                </div>
+              )}
+
+              {recipe.algorithm === 'Market Wave' && pnlVsBuyHoldDelta !== null && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200 col-span-2">
+                  <TrendingUp className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
+                  <div>
+                    <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
+                    <p className={`text-sm font-semibold ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                      {formatSignedPercent(pnlVsBuyHoldDelta)}
                     </p>
                   </div>
                 </div>

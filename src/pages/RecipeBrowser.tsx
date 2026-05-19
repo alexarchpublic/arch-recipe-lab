@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { parseCurrencyFromString, parseAssetQuantityFromText } from "@/lib/portfolio";
+import { getDisplayCagr, getStrategyPnlPercent } from "@/utils/recipeMetrics";
 
 interface Recipe {
   id: string;
@@ -186,35 +187,6 @@ export default function RecipeBrowser() {
 
   // Filter and sort recipes
   const filteredAndSortedRecipes = useMemo(() => {
-    // Helper function to compute CAGR from algorithm inputs (same logic as RecipeCard)
-    const computeCagr = (recipe: Recipe): number | null => {
-      const ai = recipe.algorithm_inputs as any;
-      if (!ai) return null;
-      
-      let start: Date | undefined;
-      let end: Date | undefined;
-      
-      if (recipe.algorithm === 'Intelligence Algorithm') {
-        const s = ai.start, e = ai.end;
-        start = s && s.year && s.month && s.day ? new Date(s.year, (s.month - 1) || 0, s.day, s.hour || 0, s.minute || 0) : undefined;
-        end = e && e.year && e.month && e.day ? new Date(e.year, (e.month - 1) || 0, e.day) : undefined;
-      } else {
-        const ds = ai?.dates?.start, de = ai?.dates?.end;
-        start = ds && ds.year && ds.month && ds.day ? new Date(ds.year, (ds.month - 1) || 0, ds.day, ds.hour || 0, ds.minute || 0) : undefined;
-        end = de && de.year && de.month && de.day ? new Date(de.year, (de.month - 1) || 0, de.day) : undefined;
-      }
-      
-      const begin = recipe.initial_capital ?? null;
-      const netProfit = parseCurrencyFromString(recipe.net_profit);
-      if (!begin || !netProfit || !start || !end) return null;
-      const years = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-      if (years <= 0) return null;
-      const endingValue = begin + netProfit;
-      if (begin <= 0 || endingValue <= 0) return null;
-      const cagr = Math.pow(endingValue / begin, 1 / years) - 1;
-      return Number.isFinite(cagr) ? cagr * 100 : null;
-    };
-
     let filtered = recipes.filter(recipe => {
       // Text search
       if (searchQuery) {
@@ -252,8 +224,7 @@ export default function RecipeBrowser() {
       // Removed time frame and strategy type filters
 
       // CAGR filter - use same logic as display
-      const computedCagr = computeCagr(recipe);
-      const returnValue = computedCagr ?? recipe.cagr ?? recipe.annualized_return ?? 0;
+      const returnValue = getDisplayCagr(recipe) ?? 0;
       if (returnValue < filters.minCAGR) {
         return false;
       }
@@ -268,10 +239,7 @@ export default function RecipeBrowser() {
       let value: number;
       switch (field) {
         case 'cagr': {
-          // Use same CAGR computation logic as display (computeCagr returns percentage)
-          // This ensures we sort by the same value that's displayed to the user
-          const computedCagr = computeCagr(recipe);
-          value = computedCagr ?? recipe.cagr ?? recipe.annualized_return ?? 0;
+          value = getDisplayCagr(recipe) ?? 0;
           break;
         }
         case 'cash-profit':
@@ -289,10 +257,7 @@ export default function RecipeBrowser() {
           value = Math.round(netProfit * scaleFactor);
           break;
         case 'pnl':
-          const initialCap = recipe.initial_capital ?? null;
-          const netProfitForPnl = parseCurrencyFromString(recipe.net_profit);
-          if (initialCap === null || initialCap <= 0 || netProfitForPnl === null) return 0;
-          value = (netProfitForPnl / initialCap) * 100;
+          value = getStrategyPnlPercent(recipe, scaleFactor) ?? 0;
           break;
         default:
           return 0;
