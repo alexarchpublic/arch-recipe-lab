@@ -17,6 +17,7 @@ import {
   uploadRecipeImage, 
   deleteRecipeImage, 
   getRecipeScreenshots,
+  getStoragePathFromPublicUrl,
   validateImage,
   MAX_IMAGES_PER_RECIPE 
 } from "@/lib/imageUpload";
@@ -75,6 +76,9 @@ interface RecipeFormProps {
 export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
   const [loading, setLoading] = useState(false);
   const [screenshots, setScreenshots] = useState<RecipeScreenshot[]>([]);
+  const [deletedScreenshots, setDeletedScreenshots] = useState<
+    Array<{ id: string; image_url: string }>
+  >([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const { toast } = useToast();
@@ -117,6 +121,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
     try {
       const existingScreenshots = await getRecipeScreenshots(recipeId);
       setScreenshots(existingScreenshots);
+      setDeletedScreenshots([]);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -193,13 +198,17 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
 
   const removeScreenshot = (index: number) => {
     const screenshot = screenshots[index];
-    
-    // Revoke object URL if it's a temporary file
-    if (screenshot.id.startsWith('temp_')) {
+
+    if (screenshot.id.startsWith("temp_")) {
       URL.revokeObjectURL(screenshot.image_url);
+    } else {
+      setDeletedScreenshots((prev) => [
+        ...prev,
+        { id: screenshot.id, image_url: screenshot.image_url },
+      ]);
     }
-    
-    setScreenshots(prev => prev.filter((_, i) => i !== index));
+
+    setScreenshots((prev) => prev.filter((_, i) => i !== index));
   };
 
   const moveScreenshot = (fromIndex: number, toIndex: number) => {
@@ -253,12 +262,19 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
         recipeId = newRecipe.id;
       }
 
-      // Upload new images
-      const newImageFiles = screenshots.filter(s => s.file);
-      for (let i = 0; i < newImageFiles.length; i++) {
-        const screenshot = newImageFiles[i];
+      for (const deleted of deletedScreenshots) {
+        const imagePath = getStoragePathFromPublicUrl(deleted.image_url);
+        await deleteRecipeImage(deleted.id, imagePath);
+      }
+
+      const newImageFiles = screenshots.filter((s) => s.file);
+      for (const screenshot of newImageFiles) {
         if (screenshot.file) {
-          await uploadRecipeImage(screenshot.file, recipeId, screenshot.display_order);
+          await uploadRecipeImage(
+            screenshot.file,
+            recipeId,
+            screenshot.display_order,
+          );
         }
       }
 

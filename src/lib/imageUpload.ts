@@ -190,6 +190,18 @@ export async function uploadRecipeImage(
 }
 
 /**
+ * Extracts the storage object path from a public recipe-screenshots URL.
+ */
+export function getStoragePathFromPublicUrl(imageUrl: string): string {
+  const marker = "/recipe-screenshots/";
+  const index = imageUrl.indexOf(marker);
+  if (index === -1) {
+    throw new Error("Invalid screenshot URL: cannot determine storage path");
+  }
+  return decodeURIComponent(imageUrl.slice(index + marker.length));
+}
+
+/**
  * Complete image deletion process: delete file + metadata
  */
 export async function deleteRecipeImage(imageId: string, imagePath: string): Promise<void> {
