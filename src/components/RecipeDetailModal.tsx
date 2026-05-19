@@ -23,6 +23,7 @@ import {
   isMarketWaveAlgorithm,
 } from "@/utils/recipeMetrics";
 import { Button } from "@/components/ui/button";
+import { MetricTileGrid } from "@/components/MetricTileGrid";
 
 interface Recipe {
   id: string;
@@ -251,7 +252,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
               <TrendingUp className="h-5 w-5 text-primary" />
               Results
             </h3>
-            <div className="grid grid-cols-2 gap-3">
+            <MetricTileGrid>
               {portfolioValues.beginning !== null && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
                   <Wallet className="h-4 w-4 text-muted-foreground" />
@@ -337,7 +338,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
               )}
 
               {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200 col-span-2">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
                   <TrendingUp className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
                   <div>
                     <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
@@ -347,7 +348,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   </div>
                 </div>
               )}
-            </div>
+            </MetricTileGrid>
           </div>
 
           {/* Add To Portfolio Button */}

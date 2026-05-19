@@ -13,7 +13,7 @@ import {
   isMarketWaveAlgorithm,
 } from "@/utils/recipeMetrics";
 import { TrendingUp, DollarSign, Target, Image as ImageIcon, Wallet, Coins, BarChart3 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { MetricTileGrid } from "@/components/MetricTileGrid";
 
 interface Recipe {
   id: string;
@@ -155,7 +155,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
       
       <CardContent className="relative z-10 space-y-4 flex-1">
         
-        <div className="grid grid-cols-2 gap-3">
+        <MetricTileGrid>
           {scaledNetProfitNumber !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
               <Wallet className="h-4 w-4 text-primary" />
@@ -229,7 +229,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
               </div>
             </div>
           )}
-        </div>
+        </MetricTileGrid>
       </CardContent>
       
       <CardFooter className="pt-0">

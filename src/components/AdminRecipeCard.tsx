@@ -7,6 +7,7 @@ import { usePortfolio } from "@/hooks/usePortfolio";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { TrendingUp, DollarSign, Target, Edit, Trash2, Eye, Image as ImageIcon, Archive, ArchiveRestore } from "lucide-react";
+import { MetricTileGrid } from "@/components/MetricTileGrid";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCurrencyFromString } from "@/lib/portfolio";
@@ -226,7 +227,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
       
       <CardContent className="space-y-4">
         
-        <div className="grid grid-cols-2 gap-3">
+        <MetricTileGrid>
           {returnValue !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
               <TrendingUp className="h-4 w-4 text-primary" />
@@ -238,7 +239,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
           )}
 
           {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 col-span-2">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
               <TrendingUp className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
               <div>
                 <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
@@ -302,7 +303,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
               </div>
             </div>
           )}
-        </div>
+        </MetricTileGrid>
       </CardContent>
       
       <CardFooter className="pt-0">
