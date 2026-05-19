@@ -97,7 +97,7 @@ export default function RecipeBrowser() {
 
   const scale = useMemo(() => {
     const base = 100000;
-    if (!initialCapitalNumber || initialCapitalNumber <= 0) return 0;
+    if (!initialCapitalNumber || initialCapitalNumber <= 0) return 1;
     return initialCapitalNumber / base;
   }, [initialCapitalNumber]);
 
@@ -257,7 +257,7 @@ export default function RecipeBrowser() {
           value = Math.round(netProfit * scaleFactor);
           break;
         case 'pnl':
-          value = getStrategyPnlPercent(recipe, scaleFactor) ?? 0;
+          value = getStrategyPnlPercent(recipe) ?? 0;
           break;
         default:
           return 0;

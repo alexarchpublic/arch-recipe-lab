@@ -144,9 +144,9 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   // Calculate PnL %
   const scaleFactor = Number.isFinite(scale) ? scale : 1;
   const scaledNetProfitNumber = netProfitNumber !== null ? Math.round(netProfitNumber * scaleFactor) : null;
-  const pnlPercent = getStrategyPnlPercent(recipe, scaleFactor);
+  const pnlPercent = getStrategyPnlPercent(recipe);
   const buyHoldPnlPercent = getBuyHoldPnlPercent(recipe);
-  const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe, scaleFactor);
+  const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
   const portfolioValues = getPortfolioValues(recipe, scaleFactor, scaledInitialCapital);
 
   // Parse asset quantity for display

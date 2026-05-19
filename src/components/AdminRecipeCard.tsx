@@ -15,6 +15,7 @@ import {
   getDisplayCagr,
   getPnlVsBuyHoldDelta,
   getStrategyPnlPercent,
+  isMarketWaveAlgorithm,
 } from "@/utils/recipeMetrics";
 
 interface Recipe {
@@ -236,7 +237,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
             </div>
           )}
 
-          {recipe.algorithm === 'Market Wave' && pnlVsBuyHoldDelta !== null && (
+          {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 col-span-2">
               <TrendingUp className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
               <div>

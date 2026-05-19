@@ -10,6 +10,7 @@ import {
   getDisplayCagr,
   getPnlVsBuyHoldDelta,
   getStrategyPnlPercent,
+  isMarketWaveAlgorithm,
 } from "@/utils/recipeMetrics";
 import { TrendingUp, DollarSign, Target, Image as ImageIcon, Wallet, Coins, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -94,8 +95,8 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
     ? Math.round((recipe.cash_profit as number) * (Number.isFinite(scale) ? scale : 1))
     : null;
   
-  const pnlPercent = getStrategyPnlPercent(recipe, scaleFactor);
-  const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe, scaleFactor);
+  const pnlPercent = getStrategyPnlPercent(recipe);
+  const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
   
   const inPortfolio = isInPortfolio(recipe.id);
   
@@ -186,24 +187,24 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
             </div>
           )}
 
+          {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
+              <BarChart3 className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
+              <div>
+                <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
+                <p className={`text-sm font-semibold ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                  {formatSignedPercent(pnlVsBuyHoldDelta)}
+                </p>
+              </div>
+            </div>
+          )}
+
           {returnValue !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
               <BarChart3 className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">CAGR</p>
                 <p className="text-sm font-semibold text-primary">{returnValue.toFixed(1)}%</p>
-              </div>
-            </div>
-          )}
-
-          {recipe.algorithm === 'Market Wave' && pnlVsBuyHoldDelta !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200 col-span-2">
-              <TrendingUp className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
-              <div>
-                <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
-                <p className={`text-sm font-semibold ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                  {formatSignedPercent(pnlVsBuyHoldDelta)}
-                </p>
               </div>
             </div>
           )}

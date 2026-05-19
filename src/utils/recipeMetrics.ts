@@ -73,36 +73,37 @@ export function getDisplayCagr(
   return computeCagr(recipe, options);
 }
 
-export function getStrategyPnlPercent(
-  recipe: RecipeMetricsInput,
-  scale = 1,
-): number | null {
-  const scaleFactor = Number.isFinite(scale) ? scale : 1;
-  const initial =
-    recipe.initial_capital !== null && recipe.initial_capital !== undefined
-      ? Math.round(recipe.initial_capital * scaleFactor)
-      : null;
+export function isMarketWaveAlgorithm(recipe: RecipeMetricsInput): boolean {
+  return recipe.algorithm?.trim() === "Market Wave";
+}
+
+function parsePercentValue(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+/** Strategy PnL % from base initial capital and net profit (invariant to display scale). */
+export function getStrategyPnlPercent(recipe: RecipeMetricsInput): number | null {
+  const initial = recipe.initial_capital ?? null;
   const netProfit = parseCurrencyFromString(recipe.net_profit);
-  const scaledNet =
-    netProfit !== null ? Math.round(netProfit * scaleFactor) : null;
-  if (initial === null || initial <= 0 || scaledNet === null) return null;
-  return (scaledNet / initial) * 100;
+  if (initial === null || initial <= 0 || netProfit === null) return null;
+  return (netProfit / initial) * 100;
 }
 
 /** Market Wave: admin-entered buy & hold PnL (%). */
 export function getBuyHoldPnlPercent(recipe: RecipeMetricsInput): number | null {
-  if (recipe.algorithm !== "Market Wave") return null;
-  const value = (recipe.algorithm_inputs as { buyHoldPnlPercent?: number } | undefined)
-    ?.buyHoldPnlPercent;
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
+  if (!isMarketWaveAlgorithm(recipe)) return null;
+  const ai = recipe.algorithm_inputs as { buyHoldPnlPercent?: unknown } | undefined;
+  return parsePercentValue(ai?.buyHoldPnlPercent);
 }
 
 /** Strategy PnL % minus buy & hold PnL % (positive = strategy outperformed). */
-export function getPnlVsBuyHoldDelta(
-  recipe: RecipeMetricsInput,
-  scale = 1,
-): number | null {
-  const strategy = getStrategyPnlPercent(recipe, scale);
+export function getPnlVsBuyHoldDelta(recipe: RecipeMetricsInput): number | null {
+  const strategy = getStrategyPnlPercent(recipe);
   const buyHold = getBuyHoldPnlPercent(recipe);
   if (strategy === null || buyHold === null) return null;
   return strategy - buyHold;
