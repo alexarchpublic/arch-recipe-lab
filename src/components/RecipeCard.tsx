@@ -12,7 +12,7 @@ import {
   getStrategyPnlPercent,
   isMarketWaveAlgorithm,
 } from "@/utils/recipeMetrics";
-import { TrendingUp, DollarSign, Target, Image as ImageIcon, Wallet, Coins, BarChart3 } from "lucide-react";
+import { TrendingUp, DollarSign, Target, Image as ImageIcon, Wallet, Coins, BarChart3, Scale } from "lucide-react";
 import { MetricTileGrid } from "@/components/MetricTileGrid";
 
 interface Recipe {
@@ -190,7 +190,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
 
           {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-              <BarChart3 className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
+              <Scale className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
               <div>
                 <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
                 <p className={`text-sm font-semibold ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
