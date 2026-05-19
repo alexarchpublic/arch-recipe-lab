@@ -23,6 +23,7 @@ interface Recipe {
   strategy_type: string;
   algorithm?: string;
   algorithm_inputs?: any;
+  buy_hold_pnl_percent?: number | null;
   focus: string;
   goal: string;
   display_number?: number | null;
@@ -152,7 +153,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4 flex-1">
+      <CardContent className="relative z-10 space-y-4 flex-1">
         
         <div className="grid grid-cols-2 gap-3">
           {scaledNetProfitNumber !== null && (

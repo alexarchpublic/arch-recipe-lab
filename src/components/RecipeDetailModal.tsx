@@ -20,6 +20,7 @@ import {
   getPnlVsBuyHoldDelta,
   getPortfolioValues,
   getStrategyPnlPercent,
+  isMarketWaveAlgorithm,
 } from "@/utils/recipeMetrics";
 import { Button } from "@/components/ui/button";
 
@@ -32,6 +33,7 @@ interface Recipe {
   display_number?: number | null;
   algorithm?: string;
   algorithm_inputs?: any;
+  buy_hold_pnl_percent?: number | null;
   focus: string;
   goal: string;
   entry_trade: string;
@@ -324,7 +326,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 </div>
               )}
 
-              {recipe.algorithm === 'Market Wave' && buyHoldPnlPercent !== null && (
+              {isMarketWaveAlgorithm(recipe) && buyHoldPnlPercent !== null && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                   <div>
@@ -334,7 +336,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 </div>
               )}
 
-              {recipe.algorithm === 'Market Wave' && pnlVsBuyHoldDelta !== null && (
+              {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200 col-span-2">
                   <TrendingUp className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
                   <div>

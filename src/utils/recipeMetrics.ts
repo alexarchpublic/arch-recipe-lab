@@ -3,10 +3,38 @@ import { parseCurrencyFromString } from "@/lib/portfolio";
 export interface RecipeMetricsInput {
   algorithm?: string | null;
   algorithm_inputs?: unknown;
+  buy_hold_pnl_percent?: number | null;
   initial_capital?: number | null;
   net_profit?: string | null;
   cagr?: number | null;
   annualized_return?: number | null;
+}
+
+export function normalizeAlgorithmInputs(
+  raw: unknown,
+): Record<string, unknown> | null {
+  if (!raw) return null;
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return typeof parsed === "object" && parsed !== null
+        ? (parsed as Record<string, unknown>)
+        : null;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof raw === "object") return raw as Record<string, unknown>;
+  return null;
+}
+
+function parsePercentValue(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
 }
 
 type DateParts = {
@@ -29,7 +57,7 @@ function dateFromParts(parts?: DateParts | null): Date | undefined {
 }
 
 export function getStartEndDates(recipe: RecipeMetricsInput): { start?: Date; end?: Date } {
-  const ai = recipe.algorithm_inputs as Record<string, unknown> | undefined;
+  const ai = normalizeAlgorithmInputs(recipe.algorithm_inputs);
   if (!ai) return {};
 
   if (recipe.algorithm === "Intelligence Algorithm") {
@@ -77,15 +105,6 @@ export function isMarketWaveAlgorithm(recipe: RecipeMetricsInput): boolean {
   return recipe.algorithm?.trim() === "Market Wave";
 }
 
-function parsePercentValue(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string" && value.trim() !== "") {
-    const parsed = parseFloat(value);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
-}
-
 /** Strategy PnL % from base initial capital and net profit (invariant to display scale). */
 export function getStrategyPnlPercent(recipe: RecipeMetricsInput): number | null {
   const initial = recipe.initial_capital ?? null;
@@ -97,8 +116,27 @@ export function getStrategyPnlPercent(recipe: RecipeMetricsInput): number | null
 /** Market Wave: admin-entered buy & hold PnL (%). */
 export function getBuyHoldPnlPercent(recipe: RecipeMetricsInput): number | null {
   if (!isMarketWaveAlgorithm(recipe)) return null;
-  const ai = recipe.algorithm_inputs as { buyHoldPnlPercent?: unknown } | undefined;
-  return parsePercentValue(ai?.buyHoldPnlPercent);
+
+  const fromColumn = parsePercentValue(recipe.buy_hold_pnl_percent);
+  if (fromColumn !== null) return fromColumn;
+
+  const ai = normalizeAlgorithmInputs(recipe.algorithm_inputs);
+  if (!ai) return null;
+
+  return (
+    parsePercentValue(ai.buyHoldPnlPercent) ??
+    parsePercentValue(ai.buy_hold_pnl_percent) ??
+    parsePercentValue((ai.benchmark as Record<string, unknown> | undefined)?.buyHoldPnlPercent)
+  );
+}
+
+/** Persisted value for Market Wave recipes (column + algorithm_inputs). */
+export function resolveBuyHoldPnlPercentForSave(
+  algorithm: string | undefined,
+  algorithm_inputs: unknown,
+): number | null {
+  if (algorithm?.trim() !== "Market Wave") return null;
+  return getBuyHoldPnlPercent({ algorithm, algorithm_inputs });
 }
 
 /** Strategy PnL % minus buy & hold PnL % (positive = strategy outperformed). */

@@ -28,7 +28,7 @@ import {
   Loader2,
   Image as ImageIcon
 } from "lucide-react";
-import { computeCagr } from "@/utils/recipeMetrics";
+import { computeCagr, resolveBuyHoldPnlPercentForSave } from "@/utils/recipeMetrics";
 
 // Form validation schema
 const recipeSchema = z.object({
@@ -223,6 +223,10 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
       const payload = {
         ...data,
         cagr: computeCagr(data) ?? null,
+        buy_hold_pnl_percent: resolveBuyHoldPnlPercentForSave(
+          data.algorithm,
+          data.algorithm_inputs,
+        ),
       };
       let recipeId: string;
 
