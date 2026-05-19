@@ -1,13 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
+import { usePortfolio } from "@/hooks/usePortfolio";
+import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { TrendingUp, DollarSign, Clock, Target, Edit, Trash2, Eye, Image as ImageIcon } from "lucide-react";
+import { TrendingUp, DollarSign, Target, Edit, Trash2, Eye, Image as ImageIcon, Archive, ArchiveRestore } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { getRecipeScreenshots } from "@/lib/imageUpload";
-import { useToast } from "@/hooks/use-toast";
+import { parseCurrencyFromString } from "@/lib/portfolio";
+import {
+  formatSignedPercent,
+  getDisplayCagr,
+  getPnlVsBuyHoldDelta,
+  getStrategyPnlPercent,
+  isMarketWaveAlgorithm,
+} from "@/utils/recipeMetrics";
 
 interface Recipe {
   id: string;
@@ -15,8 +24,11 @@ interface Recipe {
   asset: string;
   time_horizon: string;
   strategy_type: string;
+  algorithm?: string;
+  algorithm_inputs?: any;
   focus: string;
   goal: string;
+  display_number?: number | null;
   entry_trade: string;
   exit_trade: string;
   exit_to_entry_proportion: number;
@@ -25,8 +37,14 @@ interface Recipe {
   annualized_return: number | null;
   net_profit: string | null;
   cash_profit: number | null;
-  created_at: string;
-  updated_at: string;
+  asset_accumulated?: string | null;
+  initial_capital?: number | null;
+  archived_at?: string | null;
+  screenshots?: Array<{
+    id: string;
+    image_url: string;
+    display_order: number;
+  }>;
 }
 
 interface AdminRecipeCardProps {
@@ -61,29 +79,36 @@ const getAssetColor = (asset: string) => {
 };
 
 export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecipeCardProps) {
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-  const [loadingThumbnail, setLoadingThumbnail] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const { toast } = useToast();
+  const { isInPortfolio, toggleRecipe } = usePortfolio();
 
-  // Load thumbnail on mount
-  useEffect(() => {
-    loadThumbnail();
-  }, [recipe.id]);
+  // Get thumbnail from screenshots prop
+  const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0 
+    ? recipe.screenshots[0].image_url 
+    : null;
 
-  const loadThumbnail = async () => {
-    try {
-      setLoadingThumbnail(true);
-      const screenshots = await getRecipeScreenshots(recipe.id);
-      if (screenshots.length > 0) {
-        setThumbnailUrl(screenshots[0].image_url);
-      }
-    } catch (error) {
-      console.error('Failed to load thumbnail:', error);
-    } finally {
-      setLoadingThumbnail(false);
-    }
+  const returnValue = getDisplayCagr(recipe);
+  
+  // Parse asset accumulated numeric qty and net profit dollars
+  const parseAssetQuantity = (text?: string | null): number | null => {
+    if (!text) return null;
+    const match = String(text).match(/\b([0-9]+(?:\.[0-9]+)?)\s*(?:[A-Z]{2,6})?\b/);
+    if (!match) return null;
+    const qty = parseFloat(match[1]);
+    return Number.isFinite(qty) ? qty : null;
   };
+  const assetQty = parseAssetQuantity(recipe.asset_accumulated);
+  const netProfitNumber = parseCurrencyFromString(recipe.net_profit);
+  const scaledAssetQty = assetQty !== null ? assetQty : null;
+  const scaledNetProfitNumber = netProfitNumber !== null ? netProfitNumber : null;
+  const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
+    ? recipe.cash_profit
+    : null;
+
+  const pnlPercent = getStrategyPnlPercent(recipe);
+  const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -113,17 +138,53 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
     }
   };
 
-  const returnValue = recipe.cagr || recipe.annualized_return;
+  const handleToggleArchive = async () => {
+    setArchiving(true);
+    try {
+      const nextArchivedAt = recipe.archived_at ? null : new Date().toISOString();
+      const { error } = await supabase
+        .from('recipes')
+        .update({ archived_at: nextArchivedAt })
+        .eq('id', recipe.id);
+
+      if (error) {
+        const msg = String((error as any)?.message || "");
+        if (msg.includes("archived_at") || msg.includes("does not exist")) {
+          throw new Error(
+            "Archiving isn't enabled in the database yet (missing recipes.archived_at). Apply the latest Supabase migrations, then retry.",
+          );
+        }
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: recipe.archived_at ? "Recipe unarchived." : "Recipe archived.",
+      });
+
+      onDelete();
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : "Failed to update recipe";
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
+    } finally {
+      setArchiving(false);
+    }
+  };
   
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-card border-border/50">
       {/* Thumbnail */}
       <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
-        {loadingThumbnail ? (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="animate-pulse bg-muted-foreground/20 rounded w-full h-full" />
-          </div>
-        ) : thumbnailUrl ? (
+        {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
             alt={`${recipe.name} thumbnail`}
@@ -141,9 +202,14 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
 
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
-            {recipe.name}
-          </CardTitle>
+          <div className="flex items-center gap-2 flex-wrap">
+            <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
+              {recipe.goal}
+            </CardTitle>
+            {typeof recipe.display_number === 'number' && (
+              <Badge variant="default" className="text-base font-bold px-3 py-1">#{recipe.display_number}</Badge>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge className={getAssetColor(recipe.asset)}>
@@ -159,12 +225,9 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {recipe.goal}
-        </p>
         
         <div className="grid grid-cols-2 gap-3">
-          {returnValue && (
+          {returnValue !== null && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
               <TrendingUp className="h-4 w-4 text-primary" />
               <div>
@@ -173,45 +236,122 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
               </div>
             </div>
           )}
-          
-          {recipe.cash_profit !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-              <DollarSign className="h-4 w-4 text-accent" />
+
+          {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 col-span-2">
+              <TrendingUp className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
               <div>
-                <p className="text-xs text-muted-foreground">Cash Profit</p>
-                <p className="text-sm font-semibold text-foreground">
-                  ${recipe.cash_profit.toLocaleString()}
+                <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
+                <p className={`text-sm font-semibold ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                  {formatSignedPercent(pnlVsBuyHoldDelta)}
                 </p>
               </div>
             </div>
           )}
           
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="text-xs text-muted-foreground">Time Frame</p>
-              <p className="text-sm font-semibold">{recipe.time_frame}</p>
+          {scaledCashProfit !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+              <DollarSign className="h-4 w-4 text-accent" />
+              <div>
+                <p className="text-xs text-muted-foreground">Cash Profit</p>
+                <p className="text-sm font-semibold text-foreground">
+                  ${scaledCashProfit.toLocaleString()}
+                </p>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-            <Target className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="text-xs text-muted-foreground">Exit/Entry</p>
-              <p className="text-sm font-semibold">{recipe.exit_to_entry_proportion}%</p>
+          )}
+
+          {scaledAssetQty !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Asset Accumulated</p>
+                <p className="text-sm font-semibold">{scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} {recipe.asset}</p>
+              </div>
             </div>
-          </div>
+          )}
+
+          {scaledNetProfitNumber !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+              <DollarSign className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-xs text-muted-foreground">Net Profit</p>
+                <p className="text-sm font-semibold">${scaledNetProfitNumber.toLocaleString()}</p>
+              </div>
+            </div>
+          )}
+
+          {pnlPercent !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+              <TrendingUp className={`h-4 w-4 ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`} />
+              <div>
+                <p className="text-xs text-muted-foreground">PnL %</p>
+                <p className={`text-sm font-semibold ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                  {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(1)}%
+                </p>
+              </div>
+            </div>
+          )}
+
+          {recipe.algorithm && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 col-span-2">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Algorithm</p>
+                <p className="text-sm font-semibold">{recipe.algorithm}</p>
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
       
       <CardFooter className="pt-0">
         <div className="flex justify-between items-center w-full">
-          <p className="text-xs text-muted-foreground">
-            {recipe.strategy_type}
-          </p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>{recipe.strategy_type}</span>
+            {recipe.algorithm && (
+              <span className="before:content-['•'] before:mx-2 text-muted-foreground/80" />
+            )}
+            {recipe.algorithm && (
+              <span>{recipe.algorithm}</span>
+            )}
+          </div>
           
           {/* Action Buttons */}
           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggleArchive}
+              className="h-8 w-8 p-0"
+              disabled={archiving}
+              aria-label={recipe.archived_at ? "Unarchive recipe" : "Archive recipe"}
+              title={recipe.archived_at ? "Unarchive" : "Archive"}
+            >
+              {recipe.archived_at ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={isInPortfolio(recipe.id) ? "h-8 w-8 p-0 text-red-500" : "h-8 w-8 p-0"}
+              onClick={() =>
+                toggleRecipe({
+                  recipeId: recipe.id,
+                  title: recipe.name,
+                  assetSymbol: recipe.asset,
+                  baseInitialCapital: recipe.initial_capital ?? undefined,
+                  baseCashProfit: recipe.cash_profit ?? null,
+                  baseNetProfit: parseCurrencyFromString(recipe.net_profit),
+                  assetAccumulatedText: recipe.asset_accumulated ?? null,
+                  algorithm: recipe.algorithm,
+                  algorithm_inputs: recipe.algorithm_inputs,
+                  display_number: recipe.display_number ?? null,
+                })
+              }
+              aria-label={isInPortfolio(recipe.id) ? "Remove from portfolio" : "Add to portfolio"}
+            >
+              <Heart className={isInPortfolio(recipe.id) ? "h-4 w-4 fill-red-500" : "h-4 w-4"} />
+            </Button>
             <Button
               variant="outline"
               size="sm"

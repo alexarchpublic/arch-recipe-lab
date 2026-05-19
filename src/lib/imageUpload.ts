@@ -10,9 +10,9 @@ export interface ImageValidationError {
 }
 
 // Image validation constants
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-const MAX_IMAGES_PER_RECIPE = 5;
+export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+export const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+export const MAX_IMAGES_PER_RECIPE = 5;
 
 /**
  * Validates an image file

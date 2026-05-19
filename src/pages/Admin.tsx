@@ -10,6 +10,10 @@ import { LogOut, Plus, Search, Eye } from "lucide-react";
 import { AdminRecipeCard } from "@/components/AdminRecipeCard";
 import { RecipeForm } from "@/components/RecipeForm";
 import { RecipeDetailModal } from "@/components/RecipeDetailModal";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import type { Session, User } from "@supabase/supabase-js";
 
 interface Recipe {
   id: string;
@@ -17,45 +21,83 @@ interface Recipe {
   asset: string;
   time_horizon: string;
   strategy_type: string;
+  algorithm?: string;
+  algorithm_inputs?: unknown;
   focus: string;
   goal: string;
   entry_trade: string;
   exit_trade: string;
   exit_to_entry_proportion: number;
   time_frame: string;
+  backtesting_period?: string;
+  initial_capital?: number | null;
   cagr: number | null;
   annualized_return: number | null;
   net_profit: string | null;
   cash_profit: number | null;
+  asset_accumulated?: string | null;
+  sell_above_cost_basis?: boolean | null;
+  best_for?: string | null;
   created_at: string;
   updated_at: string;
+  display_number?: number | null;
+  archived_at?: string | null;
+  screenshots?: Array<{
+    id: string;
+    image_url: string;
+    display_order: number;
+  }>;
 }
 
 export default function Admin() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const isAdminEmail = (email?: string | null) =>
+    typeof email === "string" && email.toLowerCase().endsWith("@archpublic.com");
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         navigate('/auth');
       } else {
+        if (!isAdminEmail(session.user.email)) {
+          supabase.auth.signOut();
+          toast({
+            variant: "destructive",
+            title: "Access Restricted",
+            description: "Admin access requires an @archpublic.com email address.",
+          });
+          navigate('/auth');
+          return;
+        }
         setUser(session.user);
         fetchRecipes();
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session: Session | null) => {
       if (!session) {
         navigate('/auth');
       } else {
+        if (!isAdminEmail(session.user.email)) {
+          supabase.auth.signOut();
+          toast({
+            variant: "destructive",
+            title: "Access Restricted",
+            description: "Admin access requires an @archpublic.com email address.",
+          });
+          navigate('/auth');
+          return;
+        }
         setUser(session.user);
         fetchRecipes();
       }
@@ -69,11 +111,21 @@ export default function Admin() {
       setLoading(true);
       const { data, error } = await supabase
         .from('recipes')
-        .select('*')
+        .select(`
+          *,
+          recipe_screenshots(*)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRecipes(data || []);
+      
+      // Transform the data to include screenshots in the expected format
+      const transformedData = (data || []).map(recipe => ({
+        ...recipe,
+        screenshots: recipe.recipe_screenshots?.sort((a: any, b: any) => a.display_order - b.display_order) || []
+      }));
+      
+      setRecipes(transformedData);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -121,12 +173,15 @@ export default function Admin() {
   };
 
   // Filter recipes based on search query
-  const filteredRecipes = recipes.filter(recipe =>
-    recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    recipe.asset.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    recipe.strategy_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    recipe.goal.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredRecipes = recipes
+    .filter((recipe) => (showArchived ? true : !recipe.archived_at))
+    .filter(recipe =>
+      recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      recipe.asset.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      recipe.strategy_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      recipe.goal.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  const archivedCount = recipes.filter((r) => !!r.archived_at).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -157,6 +212,23 @@ export default function Admin() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="show-archived"
+                checked={showArchived}
+                onCheckedChange={setShowArchived}
+              />
+              <Label htmlFor="show-archived" className="text-sm">
+                Show archived
+              </Label>
+            </div>
+            {archivedCount > 0 && (
+              <Badge variant="secondary" className="whitespace-nowrap">
+                {archivedCount} archived
+              </Badge>
+            )}
           </div>
           <Button onClick={handleCreateRecipe} className="gap-2">
             <Plus className="h-4 w-4" />
@@ -218,6 +290,8 @@ export default function Admin() {
         recipe={viewingRecipe}
         open={!!viewingRecipe}
         onOpenChange={(open) => !open && setViewingRecipe(null)}
+        scale={1}
+        initialCapital={null}
       />
     </div>
   );

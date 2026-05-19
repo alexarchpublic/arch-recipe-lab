@@ -6,10 +6,13 @@ import { RecipeDetailModal } from "@/components/RecipeDetailModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, SlidersHorizontal, Download, LogIn } from "lucide-react";
+import { Search, SlidersHorizontal, LogIn } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { usePortfolio } from "@/hooks/usePortfolio";
+import { parseCurrencyFromString, parseAssetQuantityFromText } from "@/lib/portfolio";
+import { getDisplayCagr, getStrategyPnlPercent } from "@/utils/recipeMetrics";
 
 interface Recipe {
   id: string;
@@ -17,6 +20,8 @@ interface Recipe {
   asset: string;
   time_horizon: string;
   strategy_type: string;
+  algorithm?: string;
+  algorithm_inputs?: any;
   focus: string;
   goal: string;
   entry_trade: string;
@@ -32,6 +37,8 @@ interface Recipe {
   cagr: number | null;
   annualized_return: number | null;
   best_for: string | null;
+  display_number?: number | null;
+  archived_at?: string | null;
   screenshots?: Array<{
     id: string;
     image_url: string;
@@ -39,7 +46,7 @@ interface Recipe {
   }>;
 }
 
-type SortOption = 'cagr-desc' | 'cagr-asc' | 'profit-desc' | 'profit-asc' | 'asset' | 'name';
+type SortOption = 'cagr-desc' | 'cagr-asc' | 'cash-profit-desc' | 'cash-profit-asc' | 'asset-accumulated-desc' | 'asset-accumulated-asc' | 'net-profit-desc' | 'net-profit-asc' | 'pnl-desc' | 'pnl-asc';
 
 export default function RecipeBrowser() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -47,16 +54,52 @@ export default function RecipeBrowser() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('cagr-desc');
+  const { initialCapital, setInitialCapital } = usePortfolio();
+  // Keep the raw input as a string so empty state doesn't coerce to 0
+  const [initialCapitalInput, setInitialCapitalInput] = useState<string>(initialCapital.toString());
   const [filters, setFilters] = useState<Filters>({
     assets: [],
     focuses: [],
     timeHorizons: [],
-    timeFrames: [],
-    strategyTypes: [],
+    algorithms: [],
     minCAGR: 0,
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const formatCurrency = (value: number): string => {
+    if (!Number.isFinite(value) || value <= 0) return '';
+    return Math.round(value).toLocaleString('en-US', { maximumFractionDigits: 0 });
+  };
+
+  const parseCurrency = (value: string): number => {
+    const cleaned = value.replace(/[^0-9]/g, '');
+    const num = parseFloat(cleaned);
+    return Number.isFinite(num) && num >= 0 ? num : 0;
+  };
+
+  const handleInitialCapitalChange = (value: string) => {
+    setInitialCapitalInput(value);
+    const parsed = parseCurrency(value);
+    if (parsed > 0) {
+      setInitialCapital(parsed);
+    }
+  };
+
+  // Sync portfolio initialCapital to RecipeBrowser input
+  useEffect(() => {
+    setInitialCapitalInput(formatCurrency(initialCapital));
+  }, [initialCapital]);
+
+  const initialCapitalNumber = useMemo(() => {
+    return initialCapital;
+  }, [initialCapital]);
+
+  const scale = useMemo(() => {
+    const base = 100000;
+    if (!initialCapitalNumber || initialCapitalNumber <= 0) return 1;
+    return initialCapitalNumber / base;
+  }, [initialCapitalNumber]);
 
   useEffect(() => {
     fetchRecipes();
@@ -65,20 +108,39 @@ export default function RecipeBrowser() {
   const fetchRecipes = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('recipes')
-        .select(`
+      const baseQuery = supabase
+        .from("recipes")
+        .select(
+          `
           *,
-          screenshots:recipe_screenshots(*)
-        `)
-        .order('created_at', { ascending: false });
+          recipe_screenshots(*)
+        `,
+        )
+        .order("created_at", { ascending: false });
+
+      // Prefer hiding archived recipes when the column exists. If the DB migration
+      // hasn't been applied yet, gracefully fall back to the old behavior.
+      let data: any[] | null = null;
+      let error: any = null;
+
+      {
+        const res = await baseQuery.is("archived_at", null);
+        data = res.data as any[] | null;
+        error = res.error;
+      }
+
+      if (error && String(error.message || "").includes("archived_at")) {
+        const res = await baseQuery;
+        data = res.data as any[] | null;
+        error = res.error;
+      }
 
       if (error) throw error;
       
       // Transform the data to include screenshots in the expected format
       const transformedData = (data || []).map(recipe => ({
         ...recipe,
-        screenshots: recipe.screenshots?.sort((a: any, b: any) => a.display_order - b.display_order) || []
+        screenshots: recipe.recipe_screenshots?.sort((a: any, b: any) => a.display_order - b.display_order) || []
       }));
       
       setRecipes(transformedData);
@@ -104,15 +166,24 @@ export default function RecipeBrowser() {
     [recipes]
   );
   
-  const availableTimeFrames = useMemo(() => 
-    [...new Set(recipes.map(r => r.time_frame))].sort(),
-    [recipes]
-  );
+  const availableAlgorithms = useMemo(() => {
+    // Known algorithm values from the schema in preferred order
+    const knownAlgorithms = ['Intelligence Algorithm', 'Arbitrage Algorithm', 'Oracle Protocol', 'Market Wave'];
+    
+    // Get algorithms from recipes that exist
+    const recipeAlgorithms = recipes
+      .map(r => r.algorithm)
+      .filter((a): a is string => !!a && typeof a === 'string');
+    
+    // Combine known algorithms with recipe algorithms, remove duplicates
+    // Preserve order: start with known algorithms, then add any additional ones from recipes
+    const allAlgorithms = [...new Set([...knownAlgorithms, ...recipeAlgorithms])];
+    
+    // Sort alphabetically for consistency
+    return allAlgorithms.sort();
+  }, [recipes]);
   
-  const availableStrategyTypes = useMemo(() => 
-    [...new Set(recipes.map(r => r.strategy_type))].sort(),
-    [recipes]
-  );
+  // Removed time frame and strategy type filters from UI
 
   // Filter and sort recipes
   const filteredAndSortedRecipes = useMemo(() => {
@@ -145,18 +216,15 @@ export default function RecipeBrowser() {
         return false;
       }
 
-      // Time Frame filter
-      if (filters.timeFrames.length > 0 && !filters.timeFrames.includes(recipe.time_frame)) {
+      // Algorithm filter
+      if (filters.algorithms.length > 0 && (!recipe.algorithm || !filters.algorithms.includes(recipe.algorithm))) {
         return false;
       }
 
-      // Strategy Type filter
-      if (filters.strategyTypes.length > 0 && !filters.strategyTypes.includes(recipe.strategy_type)) {
-        return false;
-      }
+      // Removed time frame and strategy type filters
 
-      // CAGR filter
-      const returnValue = recipe.cagr || recipe.annualized_return || 0;
+      // CAGR filter - use same logic as display
+      const returnValue = getDisplayCagr(recipe) ?? 0;
       if (returnValue < filters.minCAGR) {
         return false;
       }
@@ -164,89 +232,163 @@ export default function RecipeBrowser() {
       return true;
     });
 
-    // Sort
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'cagr-desc':
-          return (b.cagr || b.annualized_return || 0) - (a.cagr || a.annualized_return || 0);
-        case 'cagr-asc':
-          return (a.cagr || a.annualized_return || 0) - (b.cagr || b.annualized_return || 0);
-        case 'profit-desc':
-          return (b.cash_profit || 0) - (a.cash_profit || 0);
-        case 'profit-asc':
-          return (a.cash_profit || 0) - (b.cash_profit || 0);
-        case 'asset':
-          return a.asset.localeCompare(b.asset);
-        case 'name':
-          return a.name.localeCompare(b.name);
+    // Helper function to get sortable values for a recipe
+    const getSortValue = (recipe: Recipe, field: string): number => {
+      const scaleFactor = scale;
+      
+      let value: number;
+      switch (field) {
+        case 'cagr': {
+          value = getDisplayCagr(recipe) ?? 0;
+          break;
+        }
+        case 'cash-profit':
+          if (recipe.cash_profit === null || recipe.cash_profit === undefined) return 0;
+          value = Math.round(recipe.cash_profit * scaleFactor);
+          break;
+        case 'asset-accumulated':
+          const assetQty = parseAssetQuantityFromText(recipe.asset_accumulated, recipe.asset);
+          if (assetQty === null) return 0;
+          value = assetQty * scaleFactor;
+          break;
+        case 'net-profit':
+          const netProfit = parseCurrencyFromString(recipe.net_profit);
+          if (netProfit === null) return 0;
+          value = Math.round(netProfit * scaleFactor);
+          break;
+        case 'pnl':
+          value = getStrategyPnlPercent(recipe) ?? 0;
+          break;
         default:
           return 0;
       }
+      
+      // Ensure the value is a finite number
+      return Number.isFinite(value) ? value : 0;
+    };
+
+    // Sort with tie-breaker for stable sorting
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'cagr-desc': {
+          const aVal = getSortValue(a, 'cagr');
+          const bVal = getSortValue(b, 'cagr');
+          comparison = bVal - aVal;
+          break;
+        }
+        case 'cagr-asc': {
+          const aVal = getSortValue(a, 'cagr');
+          const bVal = getSortValue(b, 'cagr');
+          comparison = aVal - bVal;
+          break;
+        }
+        case 'cash-profit-desc': {
+          const aVal = getSortValue(a, 'cash-profit');
+          const bVal = getSortValue(b, 'cash-profit');
+          comparison = bVal - aVal;
+          break;
+        }
+        case 'cash-profit-asc': {
+          const aVal = getSortValue(a, 'cash-profit');
+          const bVal = getSortValue(b, 'cash-profit');
+          comparison = aVal - bVal;
+          break;
+        }
+        case 'asset-accumulated-desc': {
+          const aVal = getSortValue(a, 'asset-accumulated');
+          const bVal = getSortValue(b, 'asset-accumulated');
+          comparison = bVal - aVal;
+          break;
+        }
+        case 'asset-accumulated-asc': {
+          const aVal = getSortValue(a, 'asset-accumulated');
+          const bVal = getSortValue(b, 'asset-accumulated');
+          comparison = aVal - bVal;
+          break;
+        }
+        case 'net-profit-desc': {
+          const aVal = getSortValue(a, 'net-profit');
+          const bVal = getSortValue(b, 'net-profit');
+          comparison = bVal - aVal;
+          break;
+        }
+        case 'net-profit-asc': {
+          const aVal = getSortValue(a, 'net-profit');
+          const bVal = getSortValue(b, 'net-profit');
+          comparison = aVal - bVal;
+          break;
+        }
+        case 'pnl-desc': {
+          const aVal = getSortValue(a, 'pnl');
+          const bVal = getSortValue(b, 'pnl');
+          comparison = bVal - aVal;
+          break;
+        }
+        case 'pnl-asc': {
+          const aVal = getSortValue(a, 'pnl');
+          const bVal = getSortValue(b, 'pnl');
+          comparison = aVal - bVal;
+          break;
+        }
+        default:
+          return 0;
+      }
+      
+      // Tie-breaker: if values are equal, sort by name for consistency
+      if (comparison === 0) {
+        return a.name.localeCompare(b.name);
+      }
+      
+      return comparison;
     });
 
     return filtered;
-  }, [recipes, searchQuery, filters, sortBy]);
+  }, [recipes, searchQuery, filters, sortBy, scale]);
 
-  const exportToCSV = () => {
-    const headers = [
-      'Name', 'Asset', 'Time Horizon', 'Strategy Type', 'Focus', 'CAGR/Return', 
-      'Cash Profit', 'Net Profit', 'Time Frame'
-    ];
-    
-    const rows = filteredAndSortedRecipes.map(recipe => [
-      recipe.name,
-      recipe.asset,
-      recipe.time_horizon,
-      recipe.strategy_type,
-      recipe.focus,
-      recipe.cagr || recipe.annualized_return || '',
-      recipe.cash_profit || '',
-      recipe.net_profit || '',
-      recipe.time_frame,
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'arch-public-recipes.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Export successful",
-      description: `Exported ${filteredAndSortedRecipes.length} recipes to CSV`,
-    });
-  };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-gradient-hero border-b border-primary/20 shadow-lg">
+      <header className="sticky top-0 z-10" style={{ backgroundColor: '#244bd8' }}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white">Arch Public Recipes</h1>
-              <p className="text-sm text-white/80 mt-1">Crypto Algorithm Recipe Browser</p>
+              <h1 className="text-2xl md:text-3xl font-semibold text-white">Recipe Lab</h1>
+              <p className="text-sm text-white/90 mt-1">Arch Public Crypto Algorithm Recipe Browser</p>
             </div>
-            <Button 
-              variant="secondary" 
-              onClick={() => navigate('/admin')}
-              className="gap-2"
-            >
-              <LogIn className="h-4 w-4" />
-              Admin
-            </Button>
+            <a href="https://archpublic.com" target="_blank" rel="noreferrer">
+              <img src="/APLogo.png" alt="Arch Public" className="h-8 w-auto" />
+            </a>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-6">
+        {/* Get started */}
+        <div className="mb-6 p-4 rounded-lg border border-border bg-white texture-overlay">
+          <h2 className="text-base font-semibold mb-2">Get started</h2>
+          <p className="text-sm text-muted-foreground">
+            Search and filter recipes by asset, focus, or time horizon. Set your Initial
+            Capital to instantly scale every dollar amount from the $100,000 baseline.
+            Click a card to review parameters and results, then add it to your
+            portfolio to allocate capital and copy values to TradingView.
+          </p>
+          <p className="text-sm text-muted-foreground mt-3">
+            Prefer a quick walkthrough? Watch{" "}
+            <a
+              className="text-primary underline hover:no-underline"
+              href="https://youtu.be/f_HjWioMlF8"
+              target="_blank"
+              rel="noreferrer"
+            >
+              How to use Recipe Lab in Under 5 minutes
+            </a>
+            .
+          </p>
+        </div>
+
         {/* Search and Controls */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
@@ -261,23 +403,22 @@ export default function RecipeBrowser() {
           
           <div className="flex gap-2">
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[200px] bg-white">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="cagr-desc">CAGR (High to Low)</SelectItem>
                 <SelectItem value="cagr-asc">CAGR (Low to High)</SelectItem>
-                <SelectItem value="profit-desc">Profit (High to Low)</SelectItem>
-                <SelectItem value="profit-asc">Profit (Low to High)</SelectItem>
-                <SelectItem value="asset">Asset</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="cash-profit-desc">Cash Profit (High to Low)</SelectItem>
+                <SelectItem value="cash-profit-asc">Cash Profit (Low to High)</SelectItem>
+                <SelectItem value="asset-accumulated-desc">Asset Accumulated (High to Low)</SelectItem>
+                <SelectItem value="asset-accumulated-asc">Asset Accumulated (Low to High)</SelectItem>
+                <SelectItem value="net-profit-desc">Net Profit (High to Low)</SelectItem>
+                <SelectItem value="net-profit-asc">Net Profit (Low to High)</SelectItem>
+                <SelectItem value="pnl-desc">PnL (High to Low)</SelectItem>
+                <SelectItem value="pnl-asc">PnL (Low to High)</SelectItem>
               </SelectContent>
             </Select>
-
-            <Button variant="outline" onClick={exportToCSV} className="gap-2">
-              <Download className="h-4 w-4" />
-              Export CSV
-            </Button>
 
             {/* Mobile Filter Toggle */}
             <Sheet>
@@ -288,13 +429,33 @@ export default function RecipeBrowser() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] overflow-y-auto">
+                {/* Capital Controls (Mobile within Filters) */}
+                <div className="mt-2 mb-4 p-4 rounded-lg border border-border bg-white texture-overlay">
+                  <p className="text-sm font-semibold mb-2">Initial Capital</p>
+                  <Input
+                    type="text"
+                    value={initialCapitalInput}
+                    onChange={(e) => handleInitialCapitalChange(e.target.value)}
+                    onBlur={(e) => {
+                      const parsed = parseCurrency(e.target.value);
+                      if (parsed > 0) {
+                        setInitialCapitalInput(formatCurrency(parsed));
+                      }
+                    }}
+                    placeholder="$100,000"
+                    min={0}
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Recipes are authored at $100,000. Displayed values are scaled.
+                  </p>
+                </div>
                 <FilterSidebar
                   filters={filters}
                   onFiltersChange={setFilters}
                   availableAssets={availableAssets}
                   availableFocuses={availableFocuses}
-                  availableTimeFrames={availableTimeFrames}
-                  availableStrategyTypes={availableStrategyTypes}
+                  availableTimeFrames={[]}
+                  availableAlgorithms={availableAlgorithms}
                 />
               </SheetContent>
             </Sheet>
@@ -305,14 +466,34 @@ export default function RecipeBrowser() {
         <div className="flex gap-6">
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block w-80 flex-shrink-0">
-            <div className="sticky top-24">
+            <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
+              {/* Capital Controls (Desktop above Filters) */}
+              <div className="mb-4 p-4 rounded-lg border border-border bg-white texture-overlay">
+                <p className="text-sm font-semibold mb-2">Initial Capital</p>
+                <Input
+                  type="text"
+                  value={initialCapitalInput}
+                  onChange={(e) => handleInitialCapitalChange(e.target.value)}
+                  onBlur={(e) => {
+                    const parsed = parseCurrency(e.target.value);
+                    if (parsed > 0) {
+                      setInitialCapitalInput(formatCurrency(parsed));
+                    }
+                  }}
+                  placeholder="$100,000"
+                  min={0}
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Recipes are authored at $100,000. Displayed values are scaled.
+                </p>
+              </div>
               <FilterSidebar
                 filters={filters}
                 onFiltersChange={setFilters}
                 availableAssets={availableAssets}
                 availableFocuses={availableFocuses}
-                availableTimeFrames={availableTimeFrames}
-                availableStrategyTypes={availableStrategyTypes}
+                availableTimeFrames={[]}
+                availableAlgorithms={availableAlgorithms}
               />
             </div>
           </aside>
@@ -339,6 +520,7 @@ export default function RecipeBrowser() {
                     <RecipeCard
                       key={recipe.id}
                       recipe={recipe}
+                      scale={scale}
                       onClick={() => setSelectedRecipe(recipe)}
                     />
                   ))}
@@ -349,11 +531,27 @@ export default function RecipeBrowser() {
         </div>
       </div>
 
+      {/* Footer with Admin button */}
+      <footer className="border-t border-border/50 mt-8 py-4">
+        <div className="container mx-auto px-4 flex justify-end">
+          <Button 
+            variant="secondary" 
+            onClick={() => navigate('/admin')}
+            className="gap-2"
+          >
+            <LogIn className="h-4 w-4" />
+            Admin
+          </Button>
+        </div>
+      </footer>
+
       {/* Detail Modal */}
       <RecipeDetailModal
         recipe={selectedRecipe}
         open={!!selectedRecipe}
         onOpenChange={(open) => !open && setSelectedRecipe(null)}
+        scale={scale}
+        initialCapital={initialCapitalNumber}
       />
     </div>
   );

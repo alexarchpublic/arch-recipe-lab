@@ -49,16 +49,20 @@ export type Database = {
       recipes: {
         Row: {
           annualized_return: number | null
+          algorithm: string
+          algorithm_inputs: Json
           asset: string
           asset_accumulated: string | null
-          backtesting_period: string
+          backtesting_period: string | null
+          buy_hold_pnl_percent: number | null
           best_for: string | null
+          display_number: number | null
           cagr: number | null
           cash_profit: number | null
           created_at: string
-          entry_trade: string
-          exit_to_entry_proportion: number
-          exit_trade: string
+          entry_trade: string | null
+          exit_to_entry_proportion: number | null
+          exit_trade: string | null
           focus: string
           goal: string
           id: string
@@ -67,22 +71,26 @@ export type Database = {
           net_profit: string | null
           sell_above_cost_basis: boolean | null
           strategy_type: string
-          time_frame: string
+          time_frame: string | null
           time_horizon: string
           updated_at: string
         }
         Insert: {
           annualized_return?: number | null
+          algorithm: string
+          algorithm_inputs?: Json
           asset: string
           asset_accumulated?: string | null
-          backtesting_period: string
+          backtesting_period?: string | null
+          buy_hold_pnl_percent?: number | null
           best_for?: string | null
+          display_number?: number | null
           cagr?: number | null
           cash_profit?: number | null
           created_at?: string
-          entry_trade: string
-          exit_to_entry_proportion: number
-          exit_trade: string
+          entry_trade?: string | null
+          exit_to_entry_proportion?: number | null
+          exit_trade?: string | null
           focus: string
           goal: string
           id?: string
@@ -91,22 +99,26 @@ export type Database = {
           net_profit?: string | null
           sell_above_cost_basis?: boolean | null
           strategy_type: string
-          time_frame: string
+          time_frame?: string | null
           time_horizon: string
           updated_at?: string
         }
         Update: {
           annualized_return?: number | null
+          algorithm?: string
+          algorithm_inputs?: Json
           asset?: string
           asset_accumulated?: string | null
-          backtesting_period?: string
+          backtesting_period?: string | null
+          buy_hold_pnl_percent?: number | null
           best_for?: string | null
+          display_number?: number | null
           cagr?: number | null
           cash_profit?: number | null
           created_at?: string
-          entry_trade?: string
-          exit_to_entry_proportion?: number
-          exit_trade?: string
+          entry_trade?: string | null
+          exit_to_entry_proportion?: number | null
+          exit_trade?: string | null
           focus?: string
           goal?: string
           id?: string
@@ -115,7 +127,7 @@ export type Database = {
           net_profit?: string | null
           sell_above_cost_basis?: boolean | null
           strategy_type?: string
-          time_frame?: string
+          time_frame?: string | null
           time_horizon?: string
           updated_at?: string
         }
