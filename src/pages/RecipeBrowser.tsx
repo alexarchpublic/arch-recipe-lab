@@ -38,6 +38,7 @@ interface Recipe {
   annualized_return: number | null;
   best_for: string | null;
   display_number?: number | null;
+  created_at?: string;
   archived_at?: string | null;
   screenshots?: Array<{
     id: string;
@@ -46,14 +47,14 @@ interface Recipe {
   }>;
 }
 
-type SortOption = 'cagr-desc' | 'cagr-asc' | 'cash-profit-desc' | 'cash-profit-asc' | 'asset-accumulated-desc' | 'asset-accumulated-asc' | 'net-profit-desc' | 'net-profit-asc' | 'pnl-desc' | 'pnl-asc';
+type SortOption = 'latest' | 'cagr-desc' | 'cagr-asc' | 'cash-profit-desc' | 'cash-profit-asc' | 'asset-accumulated-desc' | 'asset-accumulated-asc' | 'net-profit-desc' | 'net-profit-asc' | 'pnl-desc' | 'pnl-asc';
 
 export default function RecipeBrowser() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [sortBy, setSortBy] = useState<SortOption>('cagr-desc');
+  const [sortBy, setSortBy] = useState<SortOption>('latest');
   const { initialCapital, setInitialCapital } = usePortfolio();
   // Keep the raw input as a string so empty state doesn't coerce to 0
   const [initialCapitalInput, setInitialCapitalInput] = useState<string>(initialCapital.toString());
@@ -272,6 +273,12 @@ export default function RecipeBrowser() {
       let comparison = 0;
       
       switch (sortBy) {
+        case 'latest': {
+          const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+          comparison = bTime - aTime;
+          break;
+        }
         case 'cagr-desc': {
           const aVal = getSortValue(a, 'cagr');
           const bVal = getSortValue(b, 'cagr');
@@ -407,6 +414,7 @@ export default function RecipeBrowser() {
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="latest">Latest</SelectItem>
                 <SelectItem value="cagr-desc">CAGR (High to Low)</SelectItem>
                 <SelectItem value="cagr-asc">CAGR (Low to High)</SelectItem>
                 <SelectItem value="cash-profit-desc">Cash Profit (High to Low)</SelectItem>
