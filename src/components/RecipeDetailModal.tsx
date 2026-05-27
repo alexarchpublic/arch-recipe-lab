@@ -8,11 +8,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
-import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar, Image as ImageIcon, Wallet, Coins, BarChart3, Scale } from "lucide-react";
+import { TrendingUp, DollarSign, Clock, Target, ArrowUpDown, Calendar, Image as ImageIcon, Wallet, Coins, BarChart3, Scale, Link2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { scaleRecipeFreeText, scaleAlgorithmInputs } from "@/utils/recipeScaling";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { parseCurrencyFromString } from "@/lib/portfolio";
+import { getRecipeShareUrl } from "@/lib/recipeShare";
+import { useToast } from "@/hooks/use-toast";
 import {
   formatSignedPercent,
   getBuyHoldPnlPercent,
@@ -82,6 +84,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   const [currentSlide, setCurrentSlide] = useState(0);
   const [api, setApi] = useState<CarouselApi>();
   const { isInPortfolio, toggleRecipe } = usePortfolio();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!api) {
@@ -155,17 +158,50 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   // Parse asset quantity for display
   const scaledAssetQty = assetQty !== null ? +(assetQty * scaleFactor) : null;
 
+  const handleCopyShareLink = async () => {
+    if (typeof recipe.display_number !== "number") return;
+
+    const url = getRecipeShareUrl(recipe.display_number);
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied",
+        description: "Recipe link copied to clipboard.",
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Could not copy link",
+        description: "Copy the URL from your browser address bar instead.",
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="texture-overlay">
         <DialogHeader>
-          <DialogTitle className="text-2xl pr-8 flex items-center gap-3">
-            <span className="font-bold">{recipe.goal}</span>
-            {typeof recipe.display_number === 'number' && (
-              <Badge className="text-base py-1 px-2">#{recipe.display_number}</Badge>
+          <div className="flex items-start justify-between gap-3 pr-8">
+            <DialogTitle className="text-2xl flex items-center gap-3">
+              <span className="font-bold">{recipe.goal}</span>
+              {typeof recipe.display_number === "number" && (
+                <Badge className="text-base py-1 px-2">#{recipe.display_number}</Badge>
+              )}
+            </DialogTitle>
+            {typeof recipe.display_number === "number" && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-2"
+                onClick={handleCopyShareLink}
+              >
+                <Link2 className="h-4 w-4" />
+                Copy link
+              </Button>
             )}
-          </DialogTitle>
+          </div>
           <DialogDescription className="flex flex-wrap gap-2 pt-2">
             <Badge variant="outline">{recipe.asset}</Badge>
             <Badge className={getFocusColor(recipe.focus)}>{recipe.focus}</Badge>

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, SlidersHorizontal, LogIn } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { parseCurrencyFromString, parseAssetQuantityFromText } from "@/lib/portfolio";
 import { getDisplayCagr, getStrategyPnlPercent } from "@/utils/recipeMetrics";
@@ -67,6 +67,10 @@ export default function RecipeBrowser() {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { displayNumber: displayNumberParam } = useParams();
+  const linkedDisplayNumber = displayNumberParam
+    ? parseInt(displayNumberParam, 10)
+    : null;
 
   const formatCurrency = (value: number): string => {
     if (!Number.isFinite(value) || value <= 0) return '';
@@ -105,6 +109,23 @@ export default function RecipeBrowser() {
   useEffect(() => {
     fetchRecipes();
   }, []);
+
+  useEffect(() => {
+    if (!linkedDisplayNumber || loading || recipes.length === 0) return;
+
+    const recipe = recipes.find((r) => r.display_number === linkedDisplayNumber);
+    if (recipe) {
+      setSelectedRecipe(recipe);
+      return;
+    }
+
+    toast({
+      variant: "destructive",
+      title: "Recipe not found",
+      description: `Recipe #${linkedDisplayNumber} could not be found.`,
+    });
+    navigate("/", { replace: true });
+  }, [linkedDisplayNumber, loading, recipes, navigate, toast]);
 
   const fetchRecipes = async () => {
     try {
@@ -557,7 +578,14 @@ export default function RecipeBrowser() {
       <RecipeDetailModal
         recipe={selectedRecipe}
         open={!!selectedRecipe}
-        onOpenChange={(open) => !open && setSelectedRecipe(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedRecipe(null);
+            if (linkedDisplayNumber) {
+              navigate("/", { replace: true });
+            }
+          }
+        }}
         scale={scale}
         initialCapital={initialCapitalNumber}
       />
