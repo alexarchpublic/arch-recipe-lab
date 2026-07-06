@@ -52,6 +52,7 @@ export type Database = {
           algorithm: string
           algorithm_inputs: Json
           asset: string
+          asset_class: string
           asset_accumulated: string | null
           backtesting_period: string | null
           buy_hold_pnl_percent: number | null
@@ -80,6 +81,7 @@ export type Database = {
           algorithm: string
           algorithm_inputs?: Json
           asset: string
+          asset_class?: string
           asset_accumulated?: string | null
           backtesting_period?: string | null
           buy_hold_pnl_percent?: number | null
@@ -108,6 +110,7 @@ export type Database = {
           algorithm?: string
           algorithm_inputs?: Json
           asset?: string
+          asset_class?: string
           asset_accumulated?: string | null
           backtesting_period?: string | null
           buy_hold_pnl_percent?: number | null
