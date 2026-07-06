@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { computeCagr, resolveBuyHoldPnlPercentForSave } from "@/utils/recipeMetrics";
 import { CRYPTO_ASSETS } from "@/lib/algorithms";
+import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 const TICKER_REGEX = /^[A-Z.-]{1,10}$/;
 
@@ -262,6 +263,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
     try {
       const payload = {
         ...data,
+        algorithm: data.algorithm ?? "Market Wave",
         asset: data.asset.trim().toUpperCase(),
         cagr: computeCagr(data) ?? null,
         buy_hold_pnl_percent: resolveBuyHoldPnlPercentForSave(
@@ -275,7 +277,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
         // Update existing recipe
         const { data: updatedRecipe, error } = await supabase
           .from('recipes')
-          .update(payload)
+          .update(payload as TablesUpdate<"recipes">)
           .eq('id', recipe.id)
           .select('id')
           .single();
@@ -286,7 +288,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
         // Create new recipe
         const { data: newRecipe, error } = await supabase
           .from('recipes')
-          .insert(payload)
+          .insert(payload as TablesInsert<"recipes">)
           .select('id')
           .single();
 

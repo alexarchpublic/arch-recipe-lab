@@ -51,6 +51,7 @@ export type Database = {
           annualized_return: number | null
           algorithm: string
           algorithm_inputs: Json
+          archived_at: string | null
           asset: string
           asset_class: string
           asset_accumulated: string | null
@@ -80,6 +81,7 @@ export type Database = {
           annualized_return?: number | null
           algorithm: string
           algorithm_inputs?: Json
+          archived_at?: string | null
           asset: string
           asset_class?: string
           asset_accumulated?: string | null
@@ -109,6 +111,7 @@ export type Database = {
           annualized_return?: number | null
           algorithm?: string
           algorithm_inputs?: Json
+          archived_at?: string | null
           asset?: string
           asset_class?: string
           asset_accumulated?: string | null

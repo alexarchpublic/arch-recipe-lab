@@ -334,16 +334,18 @@ export default function RecipeBrowser() {
           if (recipe.cash_profit === null || recipe.cash_profit === undefined) return 0;
           value = Math.round(recipe.cash_profit * scaleFactor);
           break;
-        case 'asset-accumulated':
+        case 'asset-accumulated': {
           const assetQty = parseAssetQuantityFromText(recipe.asset_accumulated, recipe.asset);
           if (assetQty === null) return 0;
           value = assetQty * scaleFactor;
           break;
-        case 'net-profit':
+        }
+        case 'net-profit': {
           const netProfit = parseCurrencyFromString(recipe.net_profit);
           if (netProfit === null) return 0;
           value = Math.round(netProfit * scaleFactor);
           break;
+        }
         case 'pnl':
           value = getStrategyPnlPercent(recipe) ?? 0;
           break;
