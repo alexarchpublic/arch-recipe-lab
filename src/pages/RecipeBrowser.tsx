@@ -13,11 +13,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { parseCurrencyFromString, parseAssetQuantityFromText } from "@/lib/portfolio";
 import { getDisplayCagr, getStrategyPnlPercent } from "@/utils/recipeMetrics";
+import {
+  ASSET_CLASS_ORDER,
+  DEFAULT_ASSET_CLASSES,
+  LEGACY_ALGORITHMS,
+} from "@/lib/algorithms";
 
 interface Recipe {
   id: string;
   name: string;
   asset: string;
+  asset_class?: string;
   time_horizon: string;
   strategy_type: string;
   algorithm?: string;
@@ -59,6 +65,7 @@ export default function RecipeBrowser() {
   // Keep the raw input as a string so empty state doesn't coerce to 0
   const [initialCapitalInput, setInitialCapitalInput] = useState<string>(initialCapital.toString());
   const [filters, setFilters] = useState<Filters>({
+    assetClasses: [...DEFAULT_ASSET_CLASSES],
     assets: [],
     focuses: [],
     timeHorizons: [],
@@ -177,11 +184,26 @@ export default function RecipeBrowser() {
     }
   };
 
+  const getRecipeAssetClass = (recipe: Recipe) => recipe.asset_class ?? "Crypto";
+
+  const classFilteredRecipes = useMemo(() => {
+    if (filters.assetClasses.length === 0) return recipes;
+    return recipes.filter((r) => filters.assetClasses.includes(getRecipeAssetClass(r)));
+  }, [recipes, filters.assetClasses]);
+
   // Get unique values for filters
-  const availableAssets = useMemo(() => 
-    [...new Set(recipes.map(r => r.asset))].sort(),
-    [recipes]
+  const availableAssets = useMemo(
+    () => [...new Set(classFilteredRecipes.map((r) => r.asset))].sort(),
+    [classFilteredRecipes],
   );
+
+  useEffect(() => {
+    setFilters((prev) => {
+      const prunedAssets = prev.assets.filter((asset) => availableAssets.includes(asset));
+      if (prunedAssets.length === prev.assets.length) return prev;
+      return { ...prev, assets: prunedAssets };
+    });
+  }, [availableAssets]);
   
   const availableFocuses = useMemo(() => 
     [...new Set(recipes.map(r => r.focus))].sort(),
@@ -189,27 +211,71 @@ export default function RecipeBrowser() {
   );
   
   const availableAlgorithms = useMemo(() => {
-    // Known algorithm values from the schema in preferred order
-    const knownAlgorithms = ['Intelligence Algorithm', 'Arbitrage Algorithm', 'Oracle Protocol', 'Market Wave'];
-    
-    // Get algorithms from recipes that exist
+    const knownNonLegacy = [
+      "Intelligence Algorithm",
+      "Arbitrage Algorithm",
+      "Market Wave",
+    ];
+
     const recipeAlgorithms = recipes
-      .map(r => r.algorithm)
-      .filter((a): a is string => !!a && typeof a === 'string');
-    
-    // Combine known algorithms with recipe algorithms, remove duplicates
-    // Preserve order: start with known algorithms, then add any additional ones from recipes
-    const allAlgorithms = [...new Set([...knownAlgorithms, ...recipeAlgorithms])];
-    
-    // Sort alphabetically for consistency
-    return allAlgorithms.sort();
+      .map((r) => r.algorithm)
+      .filter((a): a is string => !!a && typeof a === "string");
+
+    const nonLegacyFromRecipes = recipeAlgorithms.filter(
+      (a) => !LEGACY_ALGORITHMS.includes(a),
+    );
+    const legacyFromRecipes = recipeAlgorithms.filter((a) =>
+      LEGACY_ALGORITHMS.includes(a),
+    );
+
+    const nonLegacy = [
+      ...new Set([...knownNonLegacy, ...nonLegacyFromRecipes]),
+    ].filter((a) => !LEGACY_ALGORITHMS.includes(a));
+
+    const legacy = [
+      ...new Set([...LEGACY_ALGORITHMS, ...legacyFromRecipes]),
+    ].filter((a) => LEGACY_ALGORITHMS.includes(a));
+
+    return [...nonLegacy, ...legacy];
   }, [recipes]);
   
   // Removed time frame and strategy type filters from UI
 
+  const visiblePoolRecipes = useMemo(
+    () =>
+      recipes.filter((r) => {
+        const passesAssetClass =
+          filters.assetClasses.length === 0 ||
+          filters.assetClasses.includes(getRecipeAssetClass(r));
+        const passesLegacy =
+          !r.algorithm ||
+          !LEGACY_ALGORITHMS.includes(r.algorithm) ||
+          filters.algorithms.includes(r.algorithm);
+        return passesAssetClass && passesLegacy;
+      }),
+    [recipes, filters.assetClasses, filters.algorithms],
+  );
+
   // Filter and sort recipes
   const filteredAndSortedRecipes = useMemo(() => {
-    let filtered = recipes.filter(recipe => {
+    const filtered = recipes.filter(recipe => {
+      // Asset class filter (empty = all classes)
+      if (
+        filters.assetClasses.length > 0 &&
+        !filters.assetClasses.includes(getRecipeAssetClass(recipe))
+      ) {
+        return false;
+      }
+
+      // Legacy exclusion unless algorithm explicitly selected
+      if (
+        recipe.algorithm &&
+        LEGACY_ALGORITHMS.includes(recipe.algorithm) &&
+        !filters.algorithms.includes(recipe.algorithm)
+      ) {
+        return false;
+      }
+
       // Text search
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -295,9 +361,14 @@ export default function RecipeBrowser() {
       
       switch (sortBy) {
         case 'latest': {
-          const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-          const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-          comparison = bTime - aTime;
+          const aClass = ASSET_CLASS_ORDER[getRecipeAssetClass(a)] ?? 99;
+          const bClass = ASSET_CLASS_ORDER[getRecipeAssetClass(b)] ?? 99;
+          comparison = aClass - bClass;
+          if (comparison === 0) {
+            const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+            comparison = bTime - aTime;
+          }
           break;
         }
         case 'cagr-desc': {
@@ -384,7 +455,7 @@ export default function RecipeBrowser() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl md:text-3xl font-semibold text-white">Recipe Lab</h1>
-              <p className="text-sm text-white/90 mt-1">Arch Public Crypto Algorithm Recipe Browser</p>
+              <p className="text-sm text-white/90 mt-1">Arch Public Algorithm Recipe Browser</p>
             </div>
             <a href="https://archpublic.com" target="_blank" rel="noreferrer">
               <img src="/APLogo.png" alt="Arch Public" className="h-8 w-auto" />
@@ -542,7 +613,7 @@ export default function RecipeBrowser() {
             ) : (
               <>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Showing {filteredAndSortedRecipes.length} of {recipes.length} recipes
+                  Showing {filteredAndSortedRecipes.length} of {visiblePoolRecipes.length} recipes
                 </p>
                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredAndSortedRecipes.map(recipe => (

@@ -31,6 +31,7 @@ interface Recipe {
   id: string;
   name: string;
   asset: string;
+  asset_class?: string;
   time_horizon: string;
   strategy_type: string;
   display_number?: number | null;

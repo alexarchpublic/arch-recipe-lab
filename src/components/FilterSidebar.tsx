@@ -1,18 +1,23 @@
-import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ASSET_CLASSES, DEFAULT_ASSET_CLASSES, getAlgorithmLabel } from "@/lib/algorithms";
 
 export interface Filters {
+  assetClasses: string[];
   assets: string[];
   focuses: string[];
   timeHorizons: string[];
   algorithms: string[];
   minCAGR: number;
 }
+
+const isDefaultAssetClassSelection = (assetClasses: string[]) =>
+  assetClasses.length === DEFAULT_ASSET_CLASSES.length &&
+  DEFAULT_ASSET_CLASSES.every((c) => assetClasses.includes(c));
 
 interface FilterSidebarProps {
   filters: Filters;
@@ -34,7 +39,7 @@ export const FilterSidebar = ({
   onClose,
 }: FilterSidebarProps) => {
   const handleArrayFilterChange = (
-    key: keyof Pick<Filters, 'assets' | 'focuses' | 'timeHorizons' | 'algorithms'>,
+    key: keyof Pick<Filters, 'assetClasses' | 'assets' | 'focuses' | 'timeHorizons' | 'algorithms'>,
     value: string,
     checked: boolean
   ) => {
@@ -47,6 +52,7 @@ export const FilterSidebar = ({
 
   const clearAllFilters = () => {
     onFiltersChange({
+      assetClasses: [...DEFAULT_ASSET_CLASSES],
       assets: [],
       focuses: [],
       timeHorizons: [],
@@ -56,6 +62,7 @@ export const FilterSidebar = ({
   };
 
   const hasActiveFilters = 
+    !isDefaultAssetClassSelection(filters.assetClasses) ||
     filters.assets.length > 0 ||
     filters.focuses.length > 0 ||
     filters.timeHorizons.length > 0 ||
@@ -82,6 +89,32 @@ export const FilterSidebar = ({
               <X className="h-4 w-4" />
             </Button>
           )}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Asset Class Filter */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Asset Class</Label>
+        <div className="space-y-2">
+          {ASSET_CLASSES.map((assetClass) => (
+            <div key={assetClass} className="flex items-center space-x-2">
+              <Checkbox
+                id={`asset-class-${assetClass}`}
+                checked={filters.assetClasses.includes(assetClass)}
+                onCheckedChange={(checked) =>
+                  handleArrayFilterChange('assetClasses', assetClass, checked as boolean)
+                }
+              />
+              <label
+                htmlFor={`asset-class-${assetClass}`}
+                className="text-sm cursor-pointer hover:text-primary transition-colors"
+              >
+                {assetClass}
+              </label>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -183,7 +216,7 @@ export const FilterSidebar = ({
                   htmlFor={`algorithm-${algorithm}`}
                   className="text-sm cursor-pointer hover:text-primary transition-colors"
                 >
-                  {algorithm}
+                  {getAlgorithmLabel(algorithm)}
                 </label>
               </div>
             ))
