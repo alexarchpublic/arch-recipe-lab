@@ -26,6 +26,7 @@ import {
 } from "@/utils/recipeMetrics";
 import { Button } from "@/components/ui/button";
 import { MetricTileGrid } from "@/components/MetricTileGrid";
+import { isEquitiesOrEtfClass, isLegacyAlgorithm } from "@/lib/algorithms";
 
 interface Recipe {
   id: string;
@@ -205,6 +206,9 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
           </div>
           <DialogDescription className="flex flex-wrap gap-2 pt-2">
             <Badge variant="outline">{recipe.asset}</Badge>
+            {recipe.asset_class && (
+              <Badge variant="outline">{recipe.asset_class}</Badge>
+            )}
             <Badge className={getFocusColor(recipe.focus)}>{recipe.focus}</Badge>
             <Badge variant="outline">{recipe.time_horizon === 'STH' ? 'Short Term' : 'Long Term'}</Badge>
             <Badge variant="outline">{recipe.strategy_type}</Badge>
@@ -411,7 +415,12 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
               {recipe.algorithm && (
                 <div className="grid grid-cols-[140px_1fr] gap-2 items-start">
                   <span className="text-sm font-medium text-muted-foreground">Algorithm:</span>
-                  <span className="text-sm">{recipe.algorithm}</span>
+                  <span className="text-sm flex items-center gap-2 flex-wrap">
+                    {recipe.algorithm}
+                    {isLegacyAlgorithm(recipe.algorithm) && (
+                      <Badge variant="outline" className="text-xs border-muted-foreground/40">Legacy</Badge>
+                    )}
+                  </span>
                 </div>
               )}
 
@@ -628,7 +637,8 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 <>
                   {/* User Initial Capital */}
                   {(typeof scaledAlgorithmInputs?.userInitialCapital?.startingCash === 'number'
-                    || typeof scaledAlgorithmInputs?.userInitialCapital?.startingCryptoQty === 'number') && (
+                    || typeof scaledAlgorithmInputs?.userInitialCapital?.startingCryptoQty === 'number'
+                    || typeof scaledAlgorithmInputs?.userInitialCapital?.startingQty === 'number') && (
                     <div className="text-sm font-semibold mt-2">User Initial Capital</div>
                   )}
                   {typeof scaledAlgorithmInputs?.userInitialCapital?.startingCash === 'number' && (
@@ -641,6 +651,12 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Starting Crypto Qty:</span>
                       <span className="text-sm">{scaledAlgorithmInputs?.userInitialCapital?.startingCryptoQty} {recipe.asset}</span>
+                    </div>
+                  )}
+                  {typeof scaledAlgorithmInputs?.userInitialCapital?.startingQty === 'number' && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Starting Share Qty:</span>
+                      <span className="text-sm">{scaledAlgorithmInputs?.userInitialCapital?.startingQty} {recipe.asset}</span>
                     </div>
                   )}
 
@@ -661,6 +677,26 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
 
                   {/* Trade Size */}
                   <div className="text-sm font-semibold mt-2">Trade Size</div>
+                  {scaledAlgorithmInputs?.tradeSize?.sharesEnabled && (
+                    <>
+                      <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                        <span className="text-sm font-medium text-muted-foreground">Shares Trade Size:</span>
+                        <span className="text-sm">Yes</span>
+                      </div>
+                      {typeof scaledAlgorithmInputs?.tradeSize?.entryShares === 'number' && (
+                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                          <span className="text-sm font-medium text-muted-foreground">Entry Trade Size (shares):</span>
+                          <span className="text-sm">{scaledAlgorithmInputs?.tradeSize?.entryShares}</span>
+                        </div>
+                      )}
+                      {typeof scaledAlgorithmInputs?.tradeSize?.exitShares === 'number' && (
+                        <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                          <span className="text-sm font-medium text-muted-foreground">Exit Trade Size (shares):</span>
+                          <span className="text-sm">{scaledAlgorithmInputs?.tradeSize?.exitShares}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
                   {scaledAlgorithmInputs?.tradeSize?.fixedEnabled && (
                     <>
                       <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
@@ -701,13 +737,22 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                       )}
                     </>
                   )}
+                  {scaledAlgorithmInputs?.tradeSize?.roundDownWholeShares && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Round Down to Whole Shares:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
 
                   {/* Market Wave */}
                   <div className="text-sm font-semibold mt-2">Market Wave</div>
                   {typeof scaledAlgorithmInputs?.marketWave?.scope === 'number' && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
                       <span className="text-sm font-medium text-muted-foreground">Scope:</span>
-                      <span className="text-sm">{scaledAlgorithmInputs?.marketWave?.scope} (0.5=micro, 10=macro)</span>
+                      <span className="text-sm">
+                        {scaledAlgorithmInputs?.marketWave?.scope}{' '}
+                        ({isEquitiesOrEtfClass(recipe.asset_class) ? '0.5=micro, 20=macro' : '0.5=micro, 10=macro'})
+                      </span>
                     </div>
                   )}
                   {scaledAlgorithmInputs?.marketWave?.onlySellAbove && (
@@ -754,9 +799,37 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   )}
 
                   {/* Trend Filter */}
-                  {(scaledAlgorithmInputs?.trendFilter?.buyOnUpTrend
+                  {(scaledAlgorithmInputs?.trendFilter?.buyInDownTrend
+                    || scaledAlgorithmInputs?.trendFilter?.buyInUpTrend
+                    || scaledAlgorithmInputs?.trendFilter?.sellInDownTrend
+                    || scaledAlgorithmInputs?.trendFilter?.sellInUpTrend
+                    || scaledAlgorithmInputs?.trendFilter?.buyOnUpTrend
                     || scaledAlgorithmInputs?.trendFilter?.sellOnDownTrend) && (
                     <div className="text-sm font-semibold mt-2">Trend Filter</div>
+                  )}
+                  {scaledAlgorithmInputs?.trendFilter?.buyInDownTrend && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Buy in Down Trend:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
+                  {scaledAlgorithmInputs?.trendFilter?.buyInUpTrend && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Buy in Up Trend:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
+                  {scaledAlgorithmInputs?.trendFilter?.sellInDownTrend && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Sell in Down Trend:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
+                  )}
+                  {scaledAlgorithmInputs?.trendFilter?.sellInUpTrend && (
+                    <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Sell in Up Trend:</span>
+                      <span className="text-sm">Yes</span>
+                    </div>
                   )}
                   {scaledAlgorithmInputs?.trendFilter?.buyOnUpTrend && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">

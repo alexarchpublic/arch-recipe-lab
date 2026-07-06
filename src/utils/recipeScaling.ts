@@ -100,6 +100,27 @@ export function scaleAlgorithmInputs(algorithm_inputs: any, scaleFactor: number,
     if (typeof scaled.userInitialCapital.startingCryptoQty === 'number') {
       scaled.userInitialCapital.startingCryptoQty = scaled.userInitialCapital.startingCryptoQty * scaleFactor;
     }
+    if (typeof scaled.userInitialCapital.startingQty === 'number') {
+      scaled.userInitialCapital.startingQty = Math.max(
+        1,
+        Math.floor(scaled.userInitialCapital.startingQty * scaleFactor),
+      );
+    }
+  }
+
+  if (typeof scaled.tradeSize === 'object' && scaled.tradeSize !== null) {
+    if (typeof scaled.tradeSize.entryShares === 'number') {
+      scaled.tradeSize.entryShares = Math.max(
+        1,
+        Math.floor(scaled.tradeSize.entryShares * scaleFactor),
+      );
+    }
+    if (typeof scaled.tradeSize.exitShares === 'number') {
+      scaled.tradeSize.exitShares = Math.max(
+        1,
+        Math.floor(scaled.tradeSize.exitShares * scaleFactor),
+      );
+    }
   }
 
   // Scale properties.initialCapital and properties.orderSize (for Intelligence Algorithm and Oracle Protocol)

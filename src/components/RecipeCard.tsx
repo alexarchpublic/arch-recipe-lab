@@ -14,6 +14,7 @@ import {
 } from "@/utils/recipeMetrics";
 import { TrendingUp, DollarSign, Target, Image as ImageIcon, Wallet, Coins, BarChart3, Scale } from "lucide-react";
 import { MetricTileGrid } from "@/components/MetricTileGrid";
+import { getAssetBadgeColor, isLegacyAlgorithm } from "@/lib/algorithms";
 
 interface Recipe {
   id: string;
@@ -64,18 +65,7 @@ const getFocusColor = (focus: string) => {
   }
 };
 
-const assetHexBySymbol: Record<string, string> = {
-  // Recognizable brand-adjacent colors
-  BTC: '#f7931a',     // Bitcoin orange
-  ETH: '#627eea',     // Ethereum blue/purple
-  SOL: '#14f195',     // Solana green
-  XRP: '#23292f',     // XRP black-ish
-  SUI: '#2F80ED',     // Sui blue
-};
-
 export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
-  const { isInPortfolio, toggleRecipe } = usePortfolio();
-
   const returnValue = getDisplayCagr(recipe);
   const scaleFactor = Number.isFinite(scale) ? (scale as number) : 1;
   // Parse asset accumulated numeric qty and net profit dollars
@@ -99,8 +89,6 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   
   const pnlPercent = getStrategyPnlPercent(recipe);
   const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
-  
-  const inPortfolio = isInPortfolio(recipe.id);
   
   return (
     <Card 
@@ -141,10 +129,15 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
         <div className="flex flex-wrap gap-2">
           <Badge
             className="text-white"
-            style={{ backgroundColor: assetHexBySymbol[recipe.asset] || '#6b7280' }}
+            style={{ backgroundColor: getAssetBadgeColor(recipe.asset, recipe.asset_class) }}
           >
             {recipe.asset}
           </Badge>
+          {recipe.asset_class && (
+            <Badge variant="outline" className="border-muted-foreground/30">
+              {recipe.asset_class}
+            </Badge>
+          )}
           <Badge className={getFocusColor(recipe.focus)}>
             {recipe.focus}
           </Badge>
@@ -226,7 +219,12 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
               <Target className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Algorithm</p>
-                <p className="text-sm font-semibold">{recipe.algorithm}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold">{recipe.algorithm}</p>
+                  {isLegacyAlgorithm(recipe.algorithm) && (
+                    <Badge variant="outline" className="text-xs border-muted-foreground/40">Legacy</Badge>
+                  )}
+                </div>
               </div>
             </div>
           )}

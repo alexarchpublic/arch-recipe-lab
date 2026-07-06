@@ -18,6 +18,7 @@ import {
   getStrategyPnlPercent,
   isMarketWaveAlgorithm,
 } from "@/utils/recipeMetrics";
+import { getAssetBadgeColor, isLegacyAlgorithm } from "@/lib/algorithms";
 
 interface Recipe {
   id: string;
@@ -67,17 +68,6 @@ const getFocusColor = (focus: string) => {
     default:
       return 'bg-muted text-muted-foreground';
   }
-};
-
-const getAssetColor = (asset: string) => {
-  const colors: Record<string, string> = {
-    'BTC': 'bg-orange-500 text-white',
-    'ETH': 'bg-purple-500 text-white',
-    'SOL': 'bg-violet-500 text-white',
-    'XRP': 'bg-blue-500 text-white',
-    'SUI': 'bg-cyan-500 text-white',
-  };
-  return colors[asset] || 'bg-muted text-muted-foreground';
 };
 
 export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecipeCardProps) {
@@ -214,15 +204,26 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Badge className={getAssetColor(recipe.asset)}>
+          <Badge
+            className="text-white"
+            style={{ backgroundColor: getAssetBadgeColor(recipe.asset, recipe.asset_class) }}
+          >
             {recipe.asset}
           </Badge>
+          {recipe.asset_class && (
+            <Badge variant="outline" className="border-muted-foreground/30">
+              {recipe.asset_class}
+            </Badge>
+          )}
           <Badge className={getFocusColor(recipe.focus)}>
             {recipe.focus}
           </Badge>
           <Badge variant="outline" className="border-muted-foreground/30">
             {recipe.time_horizon}
           </Badge>
+          {isLegacyAlgorithm(recipe.algorithm) && (
+            <Badge variant="outline" className="border-muted-foreground/40">Legacy</Badge>
+          )}
         </div>
       </CardHeader>
       
@@ -300,7 +301,12 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
               <Target className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Algorithm</p>
-                <p className="text-sm font-semibold">{recipe.algorithm}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold">{recipe.algorithm}</p>
+                  {isLegacyAlgorithm(recipe.algorithm) && (
+                    <Badge variant="outline" className="text-xs border-muted-foreground/40">Legacy</Badge>
+                  )}
+                </div>
               </div>
             </div>
           )}
