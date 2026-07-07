@@ -1278,39 +1278,6 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                     </div>
                   </div>
 
-                  {/* Benchmark */}
-                  <div className="space-y-3">
-                    <h5 className="font-medium">Benchmark</h5>
-                    <div className="space-y-2 max-w-xs">
-                      <Label>Buy &amp; Hold PnL (%)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        defaultValue={recipe?.algorithm_inputs?.buyHoldPnlPercent}
-                        {...register('algorithm_inputs.buyHoldPnlPercent' as any, { valueAsNumber: true })}
-                        placeholder="e.g., 42.5"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="mwShowBuyHoldBenchmark"
-                          defaultChecked={recipe?.algorithm_inputs?.benchmark?.showBuyHold !== false}
-                          onCheckedChange={(checked) => setValue('algorithm_inputs.benchmark.showBuyHold' as any, !!checked)}
-                        />
-                        <Label htmlFor="mwShowBuyHoldBenchmark">Show Buy &amp; Hold Benchmark</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="mwShowDcaBenchmark"
-                          defaultChecked={!!recipe?.algorithm_inputs?.benchmark?.showDca}
-                          onCheckedChange={(checked) => setValue('algorithm_inputs.benchmark.showDca' as any, !!checked)}
-                        />
-                        <Label htmlFor="mwShowDcaBenchmark">Show DCA Benchmark</Label>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Trend Filter */}
                   <div className="space-y-3">
                     <h5 className="font-medium">Trend Filter</h5>
@@ -1600,51 +1567,6 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                     </div>
                   </div>
 
-                  {/* Benchmark */}
-                  <div className="space-y-3">
-                    <h5 className="font-medium">Benchmark</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-                      <div className="space-y-2">
-                        <Label>Buy &amp; Hold PnL (%)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          defaultValue={recipe?.algorithm_inputs?.buyHoldPnlPercent}
-                          {...register('algorithm_inputs.buyHoldPnlPercent' as any, { valueAsNumber: true })}
-                          placeholder="e.g., 42.5"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>DCA PnL (%)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          defaultValue={recipe?.algorithm_inputs?.dcaPnlPercent}
-                          {...register('algorithm_inputs.dcaPnlPercent' as any, { valueAsNumber: true })}
-                          placeholder="e.g., 18.2"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="eqMwShowBuyHoldBenchmark"
-                          defaultChecked={recipe?.algorithm_inputs?.benchmark?.showBuyHold !== false}
-                          onCheckedChange={(checked) => setValue('algorithm_inputs.benchmark.showBuyHold' as any, !!checked)}
-                        />
-                        <Label htmlFor="eqMwShowBuyHoldBenchmark">Show Buy &amp; Hold Benchmark</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="eqMwShowDcaBenchmark"
-                          defaultChecked={!!recipe?.algorithm_inputs?.benchmark?.showDca}
-                          onCheckedChange={(checked) => setValue('algorithm_inputs.benchmark.showDca' as any, !!checked)}
-                        />
-                        <Label htmlFor="eqMwShowDcaBenchmark">Show DCA Benchmark</Label>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Trend Filter */}
                   <div className="space-y-3">
                     <h5 className="font-medium">Trend Filter</h5>
@@ -1820,6 +1742,54 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                 </div>
               </div>
             </div>
+
+            {selectedAlgorithm === 'Market Wave' && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Benchmark</h3>
+                <div className={`grid grid-cols-1 gap-4 ${isEquitiesOrEtf ? 'md:grid-cols-2 max-w-2xl' : 'max-w-xs'}`}>
+                  <div className="space-y-2">
+                    <Label>Buy &amp; Hold PnL (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      defaultValue={recipe?.algorithm_inputs?.buyHoldPnlPercent}
+                      {...register('algorithm_inputs.buyHoldPnlPercent' as any, { valueAsNumber: true })}
+                      placeholder="e.g., 42.5"
+                    />
+                  </div>
+                  {isEquitiesOrEtf && (
+                    <div className="space-y-2">
+                      <Label>DCA PnL (%)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        defaultValue={recipe?.algorithm_inputs?.dcaPnlPercent}
+                        {...register('algorithm_inputs.dcaPnlPercent' as any, { valueAsNumber: true })}
+                        placeholder="e.g., 18.2"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="showBuyHoldBenchmark"
+                      defaultChecked={recipe?.algorithm_inputs?.benchmark?.showBuyHold !== false}
+                      onCheckedChange={(checked) => setValue('algorithm_inputs.benchmark.showBuyHold' as any, !!checked)}
+                    />
+                    <Label htmlFor="showBuyHoldBenchmark">Show Buy &amp; Hold Benchmark</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="showDcaBenchmark"
+                      defaultChecked={!!recipe?.algorithm_inputs?.benchmark?.showDca}
+                      onCheckedChange={(checked) => setValue('algorithm_inputs.benchmark.showDca' as any, !!checked)}
+                    />
+                    <Label htmlFor="showDcaBenchmark">Show DCA Benchmark</Label>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Screenshots */}
             <div className="space-y-4">
