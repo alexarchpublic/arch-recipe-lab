@@ -41,7 +41,6 @@ const recipeSchema = z.object({
   asset_class: z.enum(["Equities", "ETFs", "Crypto"]).default("Equities"),
   asset: z.string().min(1, "Asset is required"),
   time_horizon: z.enum(["STH", "LTH"]),
-  strategy_type: z.string().min(1, "Strategy type is required"),
   focus: z.enum(["Cash Yielding", "Balanced", "Accumulation"]),
   goal: z.string().min(1, "Goal is required"),
   entry_trade: z.string().min(1, "Entry trade is required"),
@@ -57,7 +56,6 @@ const recipeSchema = z.object({
   asset_accumulated: z.string().optional(),
   net_profit: z.string().optional(),
   cagr: z.number().optional(),
-  best_for: z.string().optional(),
   // New algorithm fields
   algorithm: z.enum(["Intelligence Algorithm","Arbitrage Algorithm","Oracle Protocol","Market Wave"]).default("Market Wave"),
   algorithm_inputs: z.any().optional(),
@@ -265,6 +263,8 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
         ...data,
         algorithm: data.algorithm ?? "Market Wave",
         asset: data.asset.trim().toUpperCase(),
+        strategy_type: isEditMode ? recipe.strategy_type : (data.algorithm ?? "Market Wave"),
+        best_for: isEditMode ? (recipe.best_for ?? null) : null,
         cagr: computeCagr(data) ?? null,
         buy_hold_pnl_percent: resolveBuyHoldPnlPercentForSave(
           data.algorithm,
@@ -451,18 +451,6 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                     <p className="text-sm text-destructive">{errors.focus.message}</p>
                   )}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="strategy_type">Strategy Type *</Label>
-                <Input
-                  id="strategy_type"
-                  {...register("strategy_type")}
-                  placeholder="e.g., Daily Arbitrage, 6 hour Arbitrage"
-                />
-                {errors.strategy_type && (
-                  <p className="text-sm text-destructive">{errors.strategy_type.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -1830,16 +1818,6 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                     placeholder="e.g., $20,455 (87% from BTC growth, 13% cash)"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="best_for">Best For</Label>
-                <Textarea
-                  id="best_for"
-                  {...register("best_for")}
-                  placeholder="Describe who this recipe is best suited for..."
-                  rows={2}
-                />
               </div>
             </div>
 
