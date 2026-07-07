@@ -15,6 +15,7 @@ import {
   formatSignedPercent,
   getDisplayCagr,
   getPnlVsBuyHoldDelta,
+  getPnlVsDcaDelta,
   getStrategyPnlPercent,
   isMarketWaveAlgorithm,
 } from "@/utils/recipeMetrics";
@@ -101,6 +102,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
 
   const pnlPercent = getStrategyPnlPercent(recipe);
   const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
+  const pnlVsDcaDelta = getPnlVsDcaDelta(recipe);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -247,6 +249,18 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
                 <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
                 <p className={`text-sm font-semibold ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
                   {formatSignedPercent(pnlVsBuyHoldDelta)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isMarketWaveAlgorithm(recipe) && pnlVsDcaDelta !== null && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+              <Scale className={`h-4 w-4 ${pnlVsDcaDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
+              <div>
+                <p className="text-xs text-muted-foreground">vs DCA</p>
+                <p className={`text-sm font-semibold ${pnlVsDcaDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                  {formatSignedPercent(pnlVsDcaDelta)}
                 </p>
               </div>
             </div>

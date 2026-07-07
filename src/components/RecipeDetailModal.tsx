@@ -18,11 +18,15 @@ import { useToast } from "@/hooks/use-toast";
 import {
   formatSignedPercent,
   getBuyHoldPnlPercent,
+  getDcaPnlPercent,
   getDisplayCagr,
   getPnlVsBuyHoldDelta,
+  getPnlVsDcaDelta,
   getPortfolioValues,
   getStrategyPnlPercent,
   isMarketWaveAlgorithm,
+  shouldShowBuyHoldBenchmark,
+  shouldShowDcaBenchmark,
 } from "@/utils/recipeMetrics";
 import { Button } from "@/components/ui/button";
 import { MetricTileGrid } from "@/components/MetricTileGrid";
@@ -39,6 +43,7 @@ interface Recipe {
   algorithm?: string;
   algorithm_inputs?: any;
   buy_hold_pnl_percent?: number | null;
+  dca_pnl_percent?: number | null;
   focus: string;
   goal: string;
   entry_trade: string;
@@ -154,7 +159,9 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   const scaledNetProfitNumber = netProfitNumber !== null ? Math.round(netProfitNumber * scaleFactor) : null;
   const pnlPercent = getStrategyPnlPercent(recipe);
   const buyHoldPnlPercent = getBuyHoldPnlPercent(recipe);
+  const dcaPnlPercent = getDcaPnlPercent(recipe);
   const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
+  const pnlVsDcaDelta = getPnlVsDcaDelta(recipe);
   const portfolioValues = getPortfolioValues(recipe, scaleFactor, scaledInitialCapital);
 
   // Parse asset quantity for display
@@ -368,12 +375,22 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 </div>
               )}
 
-              {isMarketWaveAlgorithm(recipe) && buyHoldPnlPercent !== null && (
+              {isMarketWaveAlgorithm(recipe) && shouldShowBuyHoldBenchmark(recipe) && buyHoldPnlPercent !== null && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-xs text-muted-foreground">Buy &amp; Hold PnL %</p>
                     <p className="text-sm font-semibold">{formatSignedPercent(buyHoldPnlPercent)}</p>
+                  </div>
+                </div>
+              )}
+
+              {isMarketWaveAlgorithm(recipe) && shouldShowDcaBenchmark(recipe) && dcaPnlPercent !== null && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">DCA PnL %</p>
+                    <p className="text-sm font-semibold">{formatSignedPercent(dcaPnlPercent)}</p>
                   </div>
                 </div>
               )}
@@ -385,6 +402,18 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                     <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
                     <p className={`text-sm font-semibold ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
                       {formatSignedPercent(pnlVsBuyHoldDelta)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {isMarketWaveAlgorithm(recipe) && pnlVsDcaDelta !== null && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
+                  <Scale className={`h-4 w-4 ${pnlVsDcaDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
+                  <div>
+                    <p className="text-xs text-muted-foreground">vs DCA</p>
+                    <p className={`text-sm font-semibold ${pnlVsDcaDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                      {formatSignedPercent(pnlVsDcaDelta)}
                     </p>
                   </div>
                 </div>

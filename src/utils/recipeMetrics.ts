@@ -4,6 +4,7 @@ export interface RecipeMetricsInput {
   algorithm?: string | null;
   algorithm_inputs?: unknown;
   buy_hold_pnl_percent?: number | null;
+  dca_pnl_percent?: number | null;
   initial_capital?: number | null;
   net_profit?: string | null;
   cagr?: number | null;
@@ -139,12 +140,75 @@ export function resolveBuyHoldPnlPercentForSave(
   return getBuyHoldPnlPercent({ algorithm, algorithm_inputs });
 }
 
+/** Market Wave: admin-entered DCA PnL (%). */
+export function getDcaPnlPercent(recipe: RecipeMetricsInput): number | null {
+  if (!isMarketWaveAlgorithm(recipe)) return null;
+
+  const fromColumn = parsePercentValue(recipe.dca_pnl_percent);
+  if (fromColumn !== null) return fromColumn;
+
+  const ai = normalizeAlgorithmInputs(recipe.algorithm_inputs);
+  if (!ai) return null;
+
+  return (
+    parsePercentValue(ai.dcaPnlPercent) ??
+    parsePercentValue(ai.dca_pnl_percent) ??
+    parsePercentValue((ai.benchmark as Record<string, unknown> | undefined)?.dcaPnlPercent)
+  );
+}
+
+/** Persisted value for Market Wave recipes (column + algorithm_inputs). */
+export function resolveDcaPnlPercentForSave(
+  algorithm: string | undefined,
+  algorithm_inputs: unknown,
+): number | null {
+  if (algorithm?.trim() !== "Market Wave") return null;
+  return getDcaPnlPercent({ algorithm, algorithm_inputs });
+}
+
+function getBenchmarkDisplayFlags(recipe: RecipeMetricsInput): {
+  showBuyHold: boolean;
+  showDca: boolean;
+} {
+  const ai = normalizeAlgorithmInputs(recipe.algorithm_inputs);
+  const benchmark = ai?.benchmark as Record<string, unknown> | undefined;
+
+  const showBuyHold =
+    benchmark?.showBuyHold === false || ai?.showBuyHoldBenchmark === false
+      ? false
+      : true;
+  const showDca =
+    benchmark?.showDca === true || ai?.showDcaBenchmark === true;
+
+  return { showBuyHold, showDca };
+}
+
+export function shouldShowBuyHoldBenchmark(recipe: RecipeMetricsInput): boolean {
+  if (!isMarketWaveAlgorithm(recipe)) return false;
+  return getBenchmarkDisplayFlags(recipe).showBuyHold;
+}
+
+export function shouldShowDcaBenchmark(recipe: RecipeMetricsInput): boolean {
+  if (!isMarketWaveAlgorithm(recipe)) return false;
+  return getBenchmarkDisplayFlags(recipe).showDca;
+}
+
 /** Strategy PnL % minus buy & hold PnL % (positive = strategy outperformed). */
 export function getPnlVsBuyHoldDelta(recipe: RecipeMetricsInput): number | null {
+  if (!shouldShowBuyHoldBenchmark(recipe)) return null;
   const strategy = getStrategyPnlPercent(recipe);
   const buyHold = getBuyHoldPnlPercent(recipe);
   if (strategy === null || buyHold === null) return null;
   return strategy - buyHold;
+}
+
+/** Strategy PnL % minus DCA PnL % (positive = strategy outperformed). */
+export function getPnlVsDcaDelta(recipe: RecipeMetricsInput): number | null {
+  if (!shouldShowDcaBenchmark(recipe)) return null;
+  const strategy = getStrategyPnlPercent(recipe);
+  const dca = getDcaPnlPercent(recipe);
+  if (strategy === null || dca === null) return null;
+  return strategy - dca;
 }
 
 export function getPortfolioValues(
