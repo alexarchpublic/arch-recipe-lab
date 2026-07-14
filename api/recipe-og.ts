@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 export const config = { runtime: "edge" };
 
 const PRODUCTION_SITE_URL = "https://recipes.archpublic.com";
-const DEFAULT_OG_IMAGE = `${PRODUCTION_SITE_URL}/APLogo.png`;
+const DEFAULT_OG_IMAGE = `${PRODUCTION_SITE_URL}/og-image.png`;
 
 function escapeHtml(value: string): string {
   return value
@@ -34,11 +34,13 @@ function buildOgHtml(options: {
   <meta property="og:type" content="article" />
   <meta property="og:url" content="${escapeHtml(pageUrl)}" />
   <meta property="og:image" content="${escapeHtml(ogImage)}" />
+  <meta property="og:image:alt" content="${escapeHtml(title)}" />
   <meta property="og:site_name" content="Arch Public Recipe Lab" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${escapeHtml(title)}" />
   <meta name="twitter:description" content="${escapeHtml(description)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
+  <meta name="twitter:image:alt" content="${escapeHtml(title)}" />
   <link rel="canonical" href="${escapeHtml(pageUrl)}" />
 </head>
 <body>
