@@ -5,7 +5,7 @@ export const config = { runtime: "edge" };
 const PRODUCTION_SITE_URL = "https://recipes.archpublic.com";
 const TITLE = "Arch Public Recipe Lab";
 const DESCRIPTION =
-  "Browse and filter crypto trading algorithm recipes with backtested results. Build portfolios and export to TradingView.";
+  "Browse and filter crypto, ETF, and equity trading algorithm recipes with backtested results. Build portfolios and export to TradingView.";
 
 function escapeHtml(value: string): string {
   return value
