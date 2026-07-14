@@ -1,9 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
+import { getLatestRecipeCardOgImage } from "../lib/latestRecipeOgImage";
 
 export const config = { runtime: "edge" };
 
 const PRODUCTION_SITE_URL = "https://recipes.archpublic.com";
-const DEFAULT_OG_IMAGE = `${PRODUCTION_SITE_URL}/og-image.png`;
 
 function escapeHtml(value: string): string {
   return value
@@ -102,7 +102,8 @@ export default async function handler(request: Request): Promise<Response> {
   const screenshots = [...(recipe.recipe_screenshots ?? [])].sort(
     (a, b) => a.display_order - b.display_order,
   );
-  const ogImage = screenshots[0]?.image_url ?? DEFAULT_OG_IMAGE;
+  const ogImage =
+    screenshots[0]?.image_url ?? (await getLatestRecipeCardOgImage());
 
   const title =
     typeof recipe.display_number === "number"

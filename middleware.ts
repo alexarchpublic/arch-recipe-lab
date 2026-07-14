@@ -5,14 +5,22 @@ const SOCIAL_PREVIEW_BOT =
 
 export default function middleware(request: Request) {
   const userAgent = request.headers.get("user-agent") ?? "";
-  const { pathname } = new URL(request.url);
-  const match = pathname.match(/^\/recipe\/(\d+)$/);
+  if (!SOCIAL_PREVIEW_BOT.test(userAgent)) {
+    return;
+  }
 
-  if (match && SOCIAL_PREVIEW_BOT.test(userAgent)) {
+  const { pathname } = new URL(request.url);
+
+  if (pathname === "/" || pathname === "") {
+    return rewrite(new URL("/api/site-og", request.url));
+  }
+
+  const match = pathname.match(/^\/recipe\/(\d+)$/);
+  if (match) {
     return rewrite(new URL(`/api/recipe-og?id=${match[1]}`, request.url));
   }
 }
 
 export const config = {
-  matcher: ["/recipe/:displayNumber"],
+  matcher: ["/", "/recipe/:displayNumber"],
 };
