@@ -111,61 +111,41 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   }, [api]);
   
   if (!recipe) return null;
-  // Helpers
-  const parseCurrencyFromString = (text?: string | null): number | null => {
-    if (!text) return null;
-    const match = String(text).replace(/[^0-9.,-]/g, "").replace(/,/g, "");
-    const num = parseFloat(match);
-    return Number.isFinite(num) ? num : null;
-  };
 
   const scaledInitialCapital = (initialCapital ?? recipe.initial_capital) ?? null;
-  const returnValue = getDisplayCagr(recipe, { initialCapital: scaledInitialCapital });
-  const scaledEntryTrade = recipe.entry_trade ? (scaleRecipeFreeText(recipe.entry_trade, scale) as string) : '';
-  const scaledExitTrade = recipe.exit_trade ? (scaleRecipeFreeText(recipe.exit_trade, scale) as string) : '';
+  // CAGR is invariant to display scale — compute from recipe base capital + unscaled profit
+  const returnValue = getDisplayCagr(recipe);
+  const scaleFactor = Number.isFinite(scale) ? scale : 1;
+  const scaledEntryTrade = recipe.entry_trade ? (scaleRecipeFreeText(recipe.entry_trade, scaleFactor) as string) : '';
+  const scaledExitTrade = recipe.exit_trade ? (scaleRecipeFreeText(recipe.exit_trade, scaleFactor) as string) : '';
   const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
-    ? Math.round((recipe.cash_profit as number) * (Number.isFinite(scale) ? scale : 1))
-    : null;
-  const scaledAssetAccumulated = recipe.asset_accumulated
-    ? scaleRecipeFreeText(recipe.asset_accumulated, scale)
-    : null;
-  const scaledNetProfitRaw = recipe.net_profit
-    ? scaleRecipeFreeText(recipe.net_profit, scale)
+    ? Math.round((recipe.cash_profit as number) * scaleFactor)
     : null;
 
   // Scale algorithm inputs based on initial capital scaling
-  const scaledAlgorithmInputs = recipe.algorithm_inputs 
-    ? scaleAlgorithmInputs(recipe.algorithm_inputs, scale, recipe.algorithm)
+  const scaledAlgorithmInputs = recipe.algorithm_inputs
+    ? scaleAlgorithmInputs(recipe.algorithm_inputs, scaleFactor, recipe.algorithm)
     : recipe.algorithm_inputs;
 
-  // Parse numeric asset quantity and format as "<qty> <ASSET>"
+  // Parse from authored (unscaled) values, then multiply once — matches RecipeCard
   const parseAssetQuantity = (text?: string | null): number | null => {
     if (!text) return null;
-    // Try to find a number followed by optional space and asset ticker, or number in parentheses
     const qtyMatch = String(text).match(/\b([0-9]+(?:\.[0-9]+)?)\s*(?:[A-Z]{2,6})?\b/);
     if (!qtyMatch) return null;
     const qty = parseFloat(qtyMatch[1]);
     return Number.isFinite(qty) ? qty : null;
   };
-  const assetQty = parseAssetQuantity(scaledAssetAccumulated as any);
-  const assetAccumulatedDisplay = assetQty !== null ? `${assetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${recipe.asset}` : null;
-
-  // Format Net Profit as dollars
-  const netProfitNumber = parseCurrencyFromString(scaledNetProfitRaw as any);
-  const netProfitDisplay = netProfitNumber !== null ? `$${netProfitNumber.toLocaleString()}` : (scaledNetProfitRaw as any);
-
-  // Calculate PnL %
-  const scaleFactor = Number.isFinite(scale) ? scale : 1;
+  const assetQty = parseAssetQuantity(recipe.asset_accumulated);
+  const scaledAssetQty = assetQty !== null ? +(assetQty * scaleFactor) : null;
+  const netProfitNumber = parseCurrencyFromString(recipe.net_profit);
   const scaledNetProfitNumber = netProfitNumber !== null ? Math.round(netProfitNumber * scaleFactor) : null;
+
   const pnlPercent = getStrategyPnlPercent(recipe);
   const buyHoldPnlPercent = getBuyHoldPnlPercent(recipe);
   const dcaPnlPercent = getDcaPnlPercent(recipe);
   const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
   const pnlVsDcaDelta = getPnlVsDcaDelta(recipe);
   const portfolioValues = getPortfolioValues(recipe, scaleFactor, scaledInitialCapital);
-
-  // Parse asset quantity for display
-  const scaledAssetQty = assetQty !== null ? +(assetQty * scaleFactor) : null;
 
   const handleCopyShareLink = async () => {
     if (typeof recipe.display_number !== "number") return;

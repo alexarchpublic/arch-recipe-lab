@@ -18,23 +18,14 @@ export function scaleMoneyInText(text: string, scale: number): string {
   });
 }
 
-// Scales asset quantities like "(0.92 BTC @ $104,000)" or "(0.92 BTC)"
+// Scales asset quantities like "10 AAPL", "(0.92 BTC)", or "0.5 BTC @ $..."
 export function scaleAssetQuantityInText(text: string, scale: number): string {
   if (!text) return text;
-  // Inside parentheses with optional price part
-  let updated = text.replace(/\(([^)]*)\)/g, (full, inner) => {
-    const replacedInner = inner.replace(/(\d+(?:\.\d+)?)\s([A-Za-z]{2,10})(?=(?:\s*@)|$)/g, (m, qty, sym) => {
-      const scaledQty = Number(qty) * scale;
-      return `${trimTrailingZeros(scaledQty)} ${sym}`;
-    });
-    return `(${replacedInner})`;
-  });
-  // Also handle cases without parentheses, e.g., "0.5 BTC @ $..."
-  updated = updated.replace(/(\d+(?:\.\d+)?)\s([A-Za-z]{2,10})\s*@/g, (m, qty, sym) => {
+  // Single pass over "qty SYMBOL" so plain tickers (Equities/ETFs) and crypto forms all scale once
+  return text.replace(/(\d+(?:\.\d+)?)\s+([A-Za-z]{2,10})\b/g, (_m, qty, sym) => {
     const scaledQty = Number(qty) * scale;
-    return `${trimTrailingZeros(scaledQty)} ${sym} @`;
+    return `${trimTrailingZeros(scaledQty)} ${sym}`;
   });
-  return updated;
 }
 
 function trimTrailingZeros(n: number): string {
@@ -49,10 +40,12 @@ export function scaleRecipeFreeText(text: string | null | undefined, scale: numb
   return withAssets;
 }
 
+export const RECIPE_BASE_CAPITAL = 100000;
+
+/** Display scale vs authored base ($100k). Invalid/missing capital → 1 (no scale). */
 export function getScale(initialCapital: number | null | undefined): number {
-  const base = 100000;
-  if (!initialCapital || initialCapital <= 0) return 0;
-  return initialCapital / base;
+  if (!initialCapital || initialCapital <= 0 || !Number.isFinite(initialCapital)) return 1;
+  return initialCapital / RECIPE_BASE_CAPITAL;
 }
 
 /**
@@ -101,8 +94,9 @@ export function scaleAlgorithmInputs(algorithm_inputs: any, scaleFactor: number,
       scaled.userInitialCapital.startingCryptoQty = scaled.userInitialCapital.startingCryptoQty * scaleFactor;
     }
     if (typeof scaled.userInitialCapital.startingQty === 'number') {
+      // Whole shares: floor after scale; allow 0 (do not clamp to 1).
       scaled.userInitialCapital.startingQty = Math.max(
-        1,
+        0,
         Math.floor(scaled.userInitialCapital.startingQty * scaleFactor),
       );
     }
@@ -111,13 +105,13 @@ export function scaleAlgorithmInputs(algorithm_inputs: any, scaleFactor: number,
   if (typeof scaled.tradeSize === 'object' && scaled.tradeSize !== null) {
     if (typeof scaled.tradeSize.entryShares === 'number') {
       scaled.tradeSize.entryShares = Math.max(
-        1,
+        0,
         Math.floor(scaled.tradeSize.entryShares * scaleFactor),
       );
     }
     if (typeof scaled.tradeSize.exitShares === 'number') {
       scaled.tradeSize.exitShares = Math.max(
-        1,
+        0,
         Math.floor(scaled.tradeSize.exitShares * scaleFactor),
       );
     }

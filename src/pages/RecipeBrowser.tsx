@@ -13,6 +13,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { parseCurrencyFromString, parseAssetQuantityFromText } from "@/lib/portfolio";
 import { getDisplayCagr, getStrategyPnlPercent } from "@/utils/recipeMetrics";
+import { getScale } from "@/utils/recipeScaling";
 import {
   ASSET_CLASS_ORDER,
   DEFAULT_ASSET_CLASSES,
@@ -107,11 +108,7 @@ export default function RecipeBrowser() {
     return initialCapital;
   }, [initialCapital]);
 
-  const scale = useMemo(() => {
-    const base = 100000;
-    if (!initialCapitalNumber || initialCapitalNumber <= 0) return 1;
-    return initialCapitalNumber / base;
-  }, [initialCapitalNumber]);
+  const scale = useMemo(() => getScale(initialCapitalNumber), [initialCapitalNumber]);
 
   useEffect(() => {
     fetchRecipes();

@@ -217,14 +217,24 @@ export function getPortfolioValues(
   initialCapitalOverride?: number | null,
 ): { beginning: number | null; ending: number | null } {
   const scaleFactor = Number.isFinite(scale) ? scale : 1;
-  const baseBegin =
-    initialCapitalOverride ?? recipe.initial_capital ?? null;
   const netProfit = parseCurrencyFromString(recipe.net_profit);
-  if (baseBegin === null || baseBegin === undefined || netProfit === null) {
+  const hasOverride =
+    initialCapitalOverride !== null &&
+    initialCapitalOverride !== undefined &&
+    Number.isFinite(initialCapitalOverride);
+
+  // Override is the user's display capital already — do not multiply by scale again.
+  // Without override, scale the recipe's authored base capital.
+  const beginning = hasOverride
+    ? Math.round(initialCapitalOverride as number)
+    : recipe.initial_capital != null && Number.isFinite(recipe.initial_capital)
+      ? Math.round(recipe.initial_capital * scaleFactor)
+      : null;
+
+  if (beginning === null || netProfit === null) {
     return { beginning: null, ending: null };
   }
-  const beginning = Math.round(baseBegin * scaleFactor);
-  const ending = Math.round((baseBegin + netProfit) * scaleFactor);
+  const ending = Math.round(beginning + netProfit * scaleFactor);
   return { beginning, ending };
 }
 
