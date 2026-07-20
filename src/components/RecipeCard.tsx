@@ -6,6 +6,7 @@ import { Heart } from "lucide-react";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { parseCurrencyFromString } from "@/lib/portfolio";
 import {
+  formatPercent,
   formatSignedPercent,
   getDisplayCagr,
   getPnlVsBuyHoldDelta,
@@ -177,9 +178,9 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
             <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
               <TrendingUp className={`h-4 w-4 ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`} />
               <div>
-                <p className="text-xs text-muted-foreground">PnL %</p>
+                <p className="text-xs text-muted-foreground">PnL</p>
                 <p className={`text-sm font-semibold ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                  {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(1)}%
+                  {formatSignedPercent(pnlPercent)}
                 </p>
               </div>
             </div>
@@ -214,7 +215,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
               <BarChart3 className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">CAGR</p>
-                <p className="text-sm font-semibold text-primary">{returnValue.toFixed(1)}%</p>
+                <p className="text-sm font-semibold text-primary">{formatPercent(returnValue)}</p>
               </div>
             </div>
           )}

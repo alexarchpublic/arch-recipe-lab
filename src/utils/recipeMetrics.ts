@@ -242,3 +242,8 @@ export function formatSignedPercent(value: number, decimals = 1): string {
   const sign = value >= 0 ? "+" : "";
   return `${sign}${value.toFixed(decimals)}%`;
 }
+
+/** Unsigned percent for display (e.g. CAGR). Always includes the % sign. */
+export function formatPercent(value: number, decimals = 1): string {
+  return `${value.toFixed(decimals)}%`;
+}

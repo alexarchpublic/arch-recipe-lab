@@ -16,6 +16,7 @@ import { parseCurrencyFromString } from "@/lib/portfolio";
 import { getRecipeShareUrl } from "@/lib/recipeShare";
 import { useToast } from "@/hooks/use-toast";
 import {
+  formatPercent,
   formatSignedPercent,
   getBuyHoldPnlPercent,
   getDcaPnlPercent,
@@ -306,7 +307,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   <BarChart3 className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-xs text-muted-foreground">CAGR</p>
-                    <p className="text-sm font-semibold text-primary">{returnValue.toFixed(1)}%</p>
+                    <p className="text-sm font-semibold text-primary">{formatPercent(returnValue)}</p>
                   </div>
                 </div>
               )}
@@ -347,7 +348,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
                   <TrendingUp className={`h-4 w-4 ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`} />
                   <div>
-                    <p className="text-xs text-muted-foreground">Strategy PnL %</p>
+                    <p className="text-xs text-muted-foreground">Strategy PnL</p>
                     <p className={`text-sm font-semibold ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`}>
                       {formatSignedPercent(pnlPercent)}
                     </p>
@@ -359,7 +360,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Buy &amp; Hold PnL %</p>
+                    <p className="text-xs text-muted-foreground">Buy &amp; Hold PnL</p>
                     <p className="text-sm font-semibold">{formatSignedPercent(buyHoldPnlPercent)}</p>
                   </div>
                 </div>
@@ -369,7 +370,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-xs text-muted-foreground">DCA PnL %</p>
+                    <p className="text-xs text-muted-foreground">DCA PnL</p>
                     <p className="text-sm font-semibold">{formatSignedPercent(dcaPnlPercent)}</p>
                   </div>
                 </div>
@@ -507,15 +508,15 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   <div className="text-sm font-semibold mt-2">Inputs</div>
                   {/* Thresholds */}
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
+                    <span className="text-sm font-medium text-muted-foreground">Long Threshold:</span>
                     {typeof scaledAlgorithmInputs?.longThreshold?.percent === 'number' && (
-                      <span className="text-sm">{scaledAlgorithmInputs?.longThreshold?.percent}</span>
+                      <span className="text-sm">{formatPercent(scaledAlgorithmInputs.longThreshold.percent)}</span>
                     )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Exit Threshold (%):</span>
+                    <span className="text-sm font-medium text-muted-foreground">Exit Threshold:</span>
                     {typeof scaledAlgorithmInputs?.exitThreshold?.percent === 'number' && (
-                      <span className="text-sm">{scaledAlgorithmInputs?.exitThreshold?.percent}</span>
+                      <span className="text-sm">{formatPercent(scaledAlgorithmInputs.exitThreshold.percent)}</span>
                     )}
                   </div>
                   {/* Cost Basis Section - subsection under Inputs */}
@@ -554,15 +555,15 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   <div className="text-sm font-semibold mt-2">Inputs</div>
                   {/* Thresholds */}
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
+                    <span className="text-sm font-medium text-muted-foreground">Long Threshold:</span>
                     {typeof scaledAlgorithmInputs?.longThreshold?.percent === 'number' && (
-                      <span className="text-sm">{scaledAlgorithmInputs?.longThreshold?.percent}</span>
+                      <span className="text-sm">{formatPercent(scaledAlgorithmInputs.longThreshold.percent)}</span>
                     )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Exit Threshold (%):</span>
+                    <span className="text-sm font-medium text-muted-foreground">Exit Threshold:</span>
                     {typeof scaledAlgorithmInputs?.exitThreshold?.percent === 'number' && (
-                      <span className="text-sm">{scaledAlgorithmInputs?.exitThreshold?.percent}</span>
+                      <span className="text-sm">{formatPercent(scaledAlgorithmInputs.exitThreshold.percent)}</span>
                     )}
                   </div>
                   {/* Cost Basis Section - subsection under Inputs */}
@@ -574,8 +575,8 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   )}
                   {typeof scaledAlgorithmInputs?.costBasis?.sellProfitThreshold === 'number' && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                      <span className="text-sm font-medium text-muted-foreground">Sell Profit Threshold (%):</span>
-                      <span className="text-sm">{scaledAlgorithmInputs?.costBasis?.sellProfitThreshold}</span>
+                      <span className="text-sm font-medium text-muted-foreground">Sell Profit Threshold:</span>
+                      <span className="text-sm">{formatPercent(scaledAlgorithmInputs.costBasis.sellProfitThreshold)}</span>
                     </div>
                   )}
                   {scaledAlgorithmInputs?.costBasis?.buyBelowOnly && (
@@ -592,9 +593,13 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                     )}
                   </div>
                   <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Entry/Exit %:</span>
+                    <span className="text-sm font-medium text-muted-foreground">Entry/Exit:</span>
                     {(typeof scaledAlgorithmInputs?.tradeSize?.entryPercent === 'number' || typeof scaledAlgorithmInputs?.tradeSize?.exitPercent === 'number') && (
-                      <span className="text-sm">{scaledAlgorithmInputs?.tradeSize?.entryPercent} / {scaledAlgorithmInputs?.tradeSize?.exitPercent}</span>
+                      <span className="text-sm">
+                        {typeof scaledAlgorithmInputs?.tradeSize?.entryPercent === 'number' ? formatPercent(scaledAlgorithmInputs.tradeSize.entryPercent) : '—'}
+                        {' / '}
+                        {typeof scaledAlgorithmInputs?.tradeSize?.exitPercent === 'number' ? formatPercent(scaledAlgorithmInputs.tradeSize.exitPercent) : '—'}
+                      </span>
                     )}
                   </div>
                   {scaledAlgorithmInputs?.tradeSize?.useFixedAsMin && (
@@ -673,14 +678,14 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   <div className="text-sm font-semibold mt-2">Order Entry &amp; Exit Rules</div>
                   {scaledAlgorithmInputs?.longThreshold?.enabled && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                      <span className="text-sm font-medium text-muted-foreground">Long Threshold (%):</span>
-                      <span className="text-sm">{typeof scaledAlgorithmInputs?.longThreshold?.percent === 'number' ? scaledAlgorithmInputs?.longThreshold?.percent : '—'}</span>
+                      <span className="text-sm font-medium text-muted-foreground">Long Threshold:</span>
+                      <span className="text-sm">{typeof scaledAlgorithmInputs?.longThreshold?.percent === 'number' ? formatPercent(scaledAlgorithmInputs.longThreshold.percent) : '—'}</span>
                     </div>
                   )}
                   {scaledAlgorithmInputs?.exitThreshold?.enabled && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                      <span className="text-sm font-medium text-muted-foreground">Exit Threshold (%):</span>
-                      <span className="text-sm">{typeof scaledAlgorithmInputs?.exitThreshold?.percent === 'number' ? scaledAlgorithmInputs?.exitThreshold?.percent : '—'}</span>
+                      <span className="text-sm font-medium text-muted-foreground">Exit Threshold:</span>
+                      <span className="text-sm">{typeof scaledAlgorithmInputs?.exitThreshold?.percent === 'number' ? formatPercent(scaledAlgorithmInputs.exitThreshold.percent) : '—'}</span>
                     </div>
                   )}
 
@@ -734,14 +739,14 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                       </div>
                       {typeof scaledAlgorithmInputs?.tradeSize?.entryPercent === 'number' && (
                         <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                          <span className="text-sm font-medium text-muted-foreground">Entry Trade Size (%):</span>
-                          <span className="text-sm">{scaledAlgorithmInputs?.tradeSize?.entryPercent}%</span>
+                          <span className="text-sm font-medium text-muted-foreground">Entry Trade Size:</span>
+                          <span className="text-sm">{formatPercent(scaledAlgorithmInputs.tradeSize.entryPercent)}</span>
                         </div>
                       )}
                       {typeof scaledAlgorithmInputs?.tradeSize?.exitPercent === 'number' && (
                         <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                          <span className="text-sm font-medium text-muted-foreground">Exit Trade Size (%):</span>
-                          <span className="text-sm">{scaledAlgorithmInputs?.tradeSize?.exitPercent}%</span>
+                          <span className="text-sm font-medium text-muted-foreground">Exit Trade Size:</span>
+                          <span className="text-sm">{formatPercent(scaledAlgorithmInputs.tradeSize.exitPercent)}</span>
                         </div>
                       )}
                     </>
@@ -778,14 +783,14 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                   )}
                   {typeof scaledAlgorithmInputs?.marketWave?.sellBuffer === 'number' && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                      <span className="text-sm font-medium text-muted-foreground">Sell Buffer (%):</span>
-                      <span className="text-sm">{scaledAlgorithmInputs?.marketWave?.sellBuffer}</span>
+                      <span className="text-sm font-medium text-muted-foreground">Sell Buffer:</span>
+                      <span className="text-sm">{formatPercent(scaledAlgorithmInputs.marketWave.sellBuffer)}</span>
                     </div>
                   )}
                   {typeof scaledAlgorithmInputs?.marketWave?.buyBuffer === 'number' && (
                     <div className="grid grid-cols-[180px_1fr] gap-2 items-start">
-                      <span className="text-sm font-medium text-muted-foreground">Buy Buffer (%):</span>
-                      <span className="text-sm">{scaledAlgorithmInputs?.marketWave?.buyBuffer}</span>
+                      <span className="text-sm font-medium text-muted-foreground">Buy Buffer:</span>
+                      <span className="text-sm">{formatPercent(scaledAlgorithmInputs.marketWave.buyBuffer)}</span>
                     </div>
                   )}
 

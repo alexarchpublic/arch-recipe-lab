@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCurrencyFromString } from "@/lib/portfolio";
 import {
+  formatPercent,
   formatSignedPercent,
   getDisplayCagr,
   getPnlVsBuyHoldDelta,
@@ -237,7 +238,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
               <TrendingUp className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">CAGR</p>
-                <p className="text-sm font-semibold text-primary">{returnValue.toFixed(1)}%</p>
+                <p className="text-sm font-semibold text-primary">{formatPercent(returnValue)}</p>
               </div>
             </div>
           )}
@@ -302,9 +303,9 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
             <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
               <TrendingUp className={`h-4 w-4 ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`} />
               <div>
-                <p className="text-xs text-muted-foreground">PnL %</p>
+                <p className="text-xs text-muted-foreground">PnL</p>
                 <p className={`text-sm font-semibold ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                  {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(1)}%
+                  {formatSignedPercent(pnlPercent)}
                 </p>
               </div>
             </div>
