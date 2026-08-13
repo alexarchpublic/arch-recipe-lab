@@ -18,7 +18,10 @@ export const MAX_IMAGES_PER_RECIPE = 5;
  * Validates an image file
  */
 export function validateImage(file: File): ImageValidationError | null {
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  const allowedExtensions = ["jpeg", "jpg", "png", "webp"];
+  const typeOk = ALLOWED_TYPES.includes(file.type) || (!file.type && !!extension && allowedExtensions.includes(extension));
+  if (!typeOk) {
     return {
       message: `Invalid file type. Allowed types: ${ALLOWED_TYPES.join(', ')}`
     };

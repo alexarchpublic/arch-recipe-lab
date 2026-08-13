@@ -149,7 +149,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
         lines.push(`  End Date: ${formatDate(scaledInputs.dates.end)}`);
       }
     } else if (recipe.algorithm === 'Market Wave') {
-      const isCryptoAsset = CRYPTO_ASSETS.includes(recipe.assetSymbol);
+      const isCryptoAsset = CRYPTO_ASSETS.includes(recipe.assetSymbol as (typeof CRYPTO_ASSETS)[number]);
       lines.push('Market Wave Parameters:');
       // User Initial Capital
       if (scaledInputs.userInitialCapital) {

@@ -27,10 +27,18 @@ import {
   GripVertical, 
   AlertCircle,
   Loader2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Sparkles
 } from "lucide-react";
 import { computeCagr, resolveBuyHoldPnlPercentForSave, resolveDcaPnlPercentForSave } from "@/utils/recipeMetrics";
 import { CRYPTO_ASSETS } from "@/lib/algorithms";
+import { parseRecipeScreenshotsFromFiles } from "@/lib/parseRecipeScreenshotsClient";
+import {
+  RECIPE_SCREENSHOT_KINDS,
+  RECIPE_SCREENSHOT_LABELS,
+  REQUIRED_SCREENSHOT_COUNT,
+  type ImportedRecipeDraft,
+} from "@/lib/recipeScreenshotImport";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 const TICKER_REGEX = /^[A-Z.-]{1,10}$/;
@@ -92,6 +100,7 @@ interface RecipeScreenshot {
   image_url: string;
   display_order: number;
   file?: File;
+  label?: string;
 }
 
 interface RecipeFormProps {
@@ -100,17 +109,61 @@ interface RecipeFormProps {
   onCancel: () => void;
 }
 
-export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
+interface RecipeFormBodyProps extends RecipeFormProps {
+  importedScreenshotFiles?: File[] | null;
+  onScreenshotImport?: (draft: ImportedRecipeDraft, files: File[]) => void;
+}
+
+function screenshotsFromFiles(files: File[]): RecipeScreenshot[] {
+  return files.map((file, index) => ({
+    id: `temp_import_${Date.now()}_${index}`,
+    image_url: URL.createObjectURL(file),
+    display_order: index,
+    file,
+    label: RECIPE_SCREENSHOT_LABELS[RECIPE_SCREENSHOT_KINDS[index]] ?? `Screenshot ${index + 1}`,
+  }));
+}
+
+export function RecipeForm(props: RecipeFormProps) {
+  const [importNonce, setImportNonce] = useState(0);
+  const [importedRecipe, setImportedRecipe] = useState<ImportedRecipeDraft | null>(null);
+  const [importedFiles, setImportedFiles] = useState<File[] | null>(null);
+
+  return (
+    <RecipeFormBody
+      key={importNonce}
+      {...props}
+      recipe={importedRecipe ?? props.recipe}
+      importedScreenshotFiles={importedFiles}
+      onScreenshotImport={(draft, files) => {
+        setImportedRecipe(draft);
+        setImportedFiles(files);
+        setImportNonce((n) => n + 1);
+      }}
+    />
+  );
+}
+
+function RecipeFormBody({
+  recipe,
+  onSuccess,
+  onCancel,
+  importedScreenshotFiles,
+  onScreenshotImport,
+}: RecipeFormBodyProps) {
   const [loading, setLoading] = useState(false);
-  const [screenshots, setScreenshots] = useState<RecipeScreenshot[]>([]);
+  const [screenshots, setScreenshots] = useState<RecipeScreenshot[]>(() =>
+    importedScreenshotFiles?.length ? screenshotsFromFiles(importedScreenshotFiles) : [],
+  );
   const [deletedScreenshots, setDeletedScreenshots] = useState<
     Array<{ id: string; image_url: string }>
   >([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [parsingScreenshots, setParsingScreenshots] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const { toast } = useToast();
 
-  const isEditMode = !!recipe;
+  const isEditMode = Boolean(recipe?.id);
 
   const {
     register,
@@ -161,7 +214,43 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
     }
   };
 
-  const handleImageUpload = async (files: FileList) => {
+  const importFromScreenshots = async (files: File[]) => {
+    setParsingScreenshots(true);
+    try {
+      for (const file of files) {
+        const validationError = validateImage(file);
+        if (validationError) {
+          throw new Error(validationError.message);
+        }
+      }
+      const result = await parseRecipeScreenshotsFromFiles(files);
+      toast({
+        title: "Recipe filled from screenshots",
+        description: result.warnings.length
+          ? result.warnings.join(" ")
+          : "Review the fields, then click Create Recipe.",
+      });
+      onScreenshotImport?.(result.recipe, result.orderedFiles);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Could not read screenshots",
+        description: error.message || "Failed to import recipe from screenshots",
+      });
+    } finally {
+      setParsingScreenshots(false);
+    }
+  };
+
+  const handleImageUpload = async (fileList: FileList | File[]) => {
+    if (parsingScreenshots) return;
+    const files = Array.from(fileList);
+
+    if (!isEditMode && screenshots.length === 0 && files.length === REQUIRED_SCREENSHOT_COUNT) {
+      await importFromScreenshots(files);
+      return;
+    }
+
     if (screenshots.length + files.length > MAX_IMAGES_PER_RECIPE) {
       toast({
         variant: "destructive",
@@ -333,6 +422,126 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
     }
   };
 
+  const renderScreenshotsSection = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <h3 className="text-lg font-semibold">Screenshots</h3>
+        {!isEditMode && (
+          <Badge variant="secondary" className="gap-1">
+            <Sparkles className="h-3 w-3" />
+            Auto-fill
+          </Badge>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        <div
+          className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
+            isDragOver
+              ? "border-primary bg-primary/5"
+              : "border-muted-foreground/25"
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <div className="text-center">
+            {parsingScreenshots ? (
+              <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+            ) : (
+              <ImageIcon
+                className={`mx-auto h-12 w-12 transition-colors ${
+                  isDragOver ? "text-primary" : "text-muted-foreground"
+                }`}
+              />
+            )}
+            <div className="mt-4">
+              <Label htmlFor="image-upload" className="cursor-pointer">
+                <span
+                  className={`mt-2 block text-sm font-medium transition-colors ${
+                    isDragOver ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  {parsingScreenshots
+                    ? "Reading screenshots…"
+                    : isDragOver
+                      ? "Drop images here"
+                      : isEditMode
+                        ? "Upload screenshots"
+                        : "Drop 4 screenshots to auto-fill"}
+                </span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {isEditMode
+                    ? `PNG, JPG, WEBP up to 5MB each (max ${MAX_IMAGES_PER_RECIPE} images)`
+                    : "Chart, Settings, Stats, and DCA — any order. PNG, JPG, or WEBP up to 5MB each."}
+                </span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {isEditMode
+                    ? "Or drag and drop images here"
+                    : "We'll classify them, fill every field, and attach Chart first as the card thumbnail."}
+                </span>
+              </Label>
+              <Input
+                id="image-upload"
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
+                className="hidden"
+                disabled={uploadingImages || parsingScreenshots}
+              />
+            </div>
+          </div>
+        </div>
+
+        {screenshots.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">
+              Uploaded Screenshots ({screenshots.length}/{MAX_IMAGES_PER_RECIPE})
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {screenshots.map((screenshot, index) => (
+                <div key={screenshot.id} className="relative group">
+                  <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                    <img
+                      src={screenshot.image_url}
+                      alt={screenshot.label || `Screenshot ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removeScreenshot(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="absolute top-2 left-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {screenshot.label || index + 1}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {(uploadingImages || parsingScreenshots) && (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="ml-2 text-sm text-muted-foreground">
+              {parsingScreenshots ? "Reading chart, settings, stats, and DCA…" : "Uploading images..."}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <Card>
@@ -341,11 +550,12 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
           <CardDescription>
             {isEditMode 
               ? 'Update the recipe details and screenshots' 
-              : 'Fill in the recipe details and upload screenshots'}
+              : 'Drop 4 screenshots (chart, settings, stats, DCA) to auto-fill, or enter details manually'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {!isEditMode && renderScreenshotsSection()}
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Basic Information</h3>
@@ -1782,7 +1992,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="showDcaBenchmark"
-                      defaultChecked={!!recipe?.algorithm_inputs?.benchmark?.showDca}
+                      defaultChecked={!!recipe?.algorithm_inputs?.benchmark?.showDca || !!recipe?.algorithm_inputs?.showDcaBenchmark}
                       onCheckedChange={(checked) => setValue('algorithm_inputs.benchmark.showDca' as any, !!checked)}
                     />
                     <Label htmlFor="showDcaBenchmark">Show DCA Benchmark</Label>
@@ -1791,101 +2001,14 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
               </div>
             )}
 
-            {/* Screenshots */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Screenshots</h3>
-              
-              <div className="space-y-4">
-                <div 
-                  className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
-                    isDragOver 
-                      ? 'border-primary bg-primary/5' 
-                      : 'border-muted-foreground/25'
-                  }`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  <div className="text-center">
-                    <ImageIcon className={`mx-auto h-12 w-12 transition-colors ${
-                      isDragOver ? 'text-primary' : 'text-muted-foreground'
-                    }`} />
-                    <div className="mt-4">
-                      <Label htmlFor="image-upload" className="cursor-pointer">
-                        <span className={`mt-2 block text-sm font-medium transition-colors ${
-                          isDragOver ? 'text-primary' : 'text-muted-foreground'
-                        }`}>
-                          {isDragOver ? 'Drop images here' : 'Upload screenshots'}
-                        </span>
-                        <span className="mt-1 block text-xs text-muted-foreground">
-                          PNG, JPG, WEBP up to 5MB each (max {MAX_IMAGES_PER_RECIPE} images)
-                        </span>
-                        <span className="mt-1 block text-xs text-muted-foreground">
-                          Or drag and drop images here
-                        </span>
-                      </Label>
-                      <Input
-                        id="image-upload"
-                        type="file"
-                        multiple
-                        accept="image/png,image/jpeg,image/jpg,image/webp"
-                        onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
-                        className="hidden"
-                        disabled={uploadingImages}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {screenshots.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Uploaded Screenshots ({screenshots.length}/{MAX_IMAGES_PER_RECIPE})</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {screenshots.map((screenshot, index) => (
-                        <div key={screenshot.id} className="relative group">
-                          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                            <img
-                              src={screenshot.image_url}
-                              alt={`Screenshot ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => removeScreenshot(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <div className="absolute top-2 left-2">
-                            <Badge variant="secondary" className="text-xs">
-                              {index + 1}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {uploadingImages && (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    <span className="ml-2 text-sm text-muted-foreground">Uploading images...</span>
-                  </div>
-                )}
-              </div>
-            </div>
+            {isEditMode && renderScreenshotsSection()}
 
             {/* Form Actions */}
             <div className="flex justify-end space-x-4 pt-6 border-t">
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || parsingScreenshots}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

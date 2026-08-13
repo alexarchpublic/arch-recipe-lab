@@ -79,6 +79,9 @@ Create a `.env.local` file in the project root with the following keys (ask your
 ```
 VITE_SUPABASE_URL=<your-supabase-project-url>
 VITE_SUPABASE_PUBLISHABLE_KEY=<your-supabase-anon-public-key>
+OPENAI_API_KEY=<your-openai-key>
 ```
+
+`OPENAI_API_KEY` is required for the admin screenshot auto-fill pipeline (drop 4 images: chart, settings, stats, DCA). You can set `ANTHROPIC_API_KEY` instead; OpenAI is used when both are present.
 
 On Vercel, add the same keys under Project → Settings → Environment Variables for both Preview and Production.
