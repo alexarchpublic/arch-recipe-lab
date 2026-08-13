@@ -3,11 +3,11 @@ import {
   RECIPE_SCREENSHOT_EXTRACTION_PROMPT,
   buildRecipeFromExtraction,
   classifyKindsFromFilenames,
-  type RecipeScreenshotExtraction,
-} from "../lib/recipeScreenshotImport";
+} from "../lib/recipeScreenshotImport.bundle.js";
+import type { RecipeScreenshotExtraction } from "../lib/recipeScreenshotImport";
 
 export const config = {
-  runtime: "edge",
+  runtime: "nodejs",
   maxDuration: 60,
 };
 
@@ -145,7 +145,7 @@ async function extractWithAnthropic(images: IncomingImage[]): Promise<string> {
       },
       body: JSON.stringify({
         model,
-        max_tokens: 4000,
+        max_tokens: 3000,
         temperature: 0,
         messages: [{ role: "user", content }],
       }),
@@ -198,10 +198,16 @@ export default async function handler(request: Request): Promise<Response> {
     let raw = "";
     let lastError: unknown;
     try {
-      raw = (await extractWithOpenAI(images)) || (await extractWithAnthropic(images));
+      if (process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
+        raw = await extractWithAnthropic(images);
+      } else {
+        raw = (await extractWithOpenAI(images)) || (await extractWithAnthropic(images));
+      }
     } catch (error) {
       lastError = error;
-      raw = await extractWithAnthropic(images);
+      if (process.env.ANTHROPIC_API_KEY && process.env.OPENAI_API_KEY) {
+        raw = await extractWithAnthropic(images);
+      }
     }
     if (!raw) {
       throw lastError instanceof Error ? lastError : new Error("Vision provider returned an empty result");

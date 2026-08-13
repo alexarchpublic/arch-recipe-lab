@@ -6,8 +6,8 @@ import {
   type ScreenshotImportResult,
 } from "@/lib/recipeScreenshotImport";
 
-const MAX_VISION_EDGE = 1600;
-const MIN_VISION_WIDTH = 720;
+const MAX_VISION_EDGE = 1280;
+const MIN_VISION_WIDTH = 640;
 
 export interface PreparedScreenshot {
   filename: string;
@@ -54,7 +54,7 @@ export async function prepareScreenshotForVision(file: File): Promise<PreparedSc
   }
   ctx.drawImage(image, 0, 0, width, height);
 
-  const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
   const comma = dataUrl.indexOf(",");
   return {
     filename: file.name || "screenshot.jpg",

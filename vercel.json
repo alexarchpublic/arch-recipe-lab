@@ -1,4 +1,10 @@
 {
+  "functions": {
+    "api/parse-recipe-screenshots.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
   "rewrites": [
     {
       "source": "/auth",
