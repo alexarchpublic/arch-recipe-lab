@@ -103,6 +103,13 @@ async function extractWithOpenAI(images: IncomingImage[]): Promise<string> {
   return payload.choices?.[0]?.message?.content ?? "";
 }
 
+const ANTHROPIC_VISION_MODELS = [
+  process.env.ANTHROPIC_VISION_MODEL,
+  "claude-sonnet-4-6",
+  "claude-sonnet-4-5",
+  "claude-haiku-4-5",
+].filter((model, index, all): model is string => !!model && all.indexOf(model) === index);
+
 async function extractWithAnthropic(images: IncomingImage[]): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return "";
@@ -119,35 +126,45 @@ async function extractWithAnthropic(images: IncomingImage[]): Promise<string> {
       type: "image",
       source: {
         type: "base64",
-        media_type: image.mimeType || "image/jpeg",
+        media_type: image.mimeType && image.mimeType.startsWith("image/")
+          ? image.mimeType
+          : "image/jpeg",
         data: image.data,
       },
     });
   });
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.ANTHROPIC_VISION_MODEL || "claude-sonnet-4-20250514",
-      max_tokens: 4000,
-      temperature: 0,
-      messages: [{ role: "user", content }],
-    }),
-  });
+  let lastError = "Anthropic vision failed";
+  for (const model of ANTHROPIC_VISION_MODELS) {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 4000,
+        temperature: 0,
+        messages: [{ role: "user", content }],
+      }),
+    });
 
-  if (!response.ok) {
+    if (response.ok) {
+      const payload = await response.json();
+      const textBlock = (payload.content ?? []).find((block: { type?: string }) => block.type === "text");
+      return textBlock?.text ?? "";
+    }
+
     const errText = await response.text();
-    throw new Error(`Anthropic vision failed (${response.status}): ${errText.slice(0, 400)}`);
+    lastError = `Anthropic vision failed (${response.status}, model ${model}): ${errText.slice(0, 300)}`;
+    if (response.status !== 404) {
+      throw new Error(lastError);
+    }
   }
 
-  const payload = await response.json();
-  const textBlock = (payload.content ?? []).find((block: { type?: string }) => block.type === "text");
-  return textBlock?.text ?? "";
+  throw new Error(lastError);
 }
 
 export default async function handler(request: Request): Promise<Response> {
