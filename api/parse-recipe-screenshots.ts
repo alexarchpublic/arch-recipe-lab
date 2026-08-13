@@ -4,10 +4,10 @@ import {
   buildRecipeFromExtraction,
   classifyKindsFromFilenames,
   type RecipeScreenshotExtraction,
-} from "../src/lib/recipeScreenshotImport";
+} from "../lib/recipeScreenshotImport";
 
 export const config = {
-  runtime: "nodejs",
+  runtime: "edge",
   maxDuration: 60,
 };
 
@@ -150,12 +150,15 @@ async function extractWithAnthropic(images: IncomingImage[]): Promise<string> {
   return textBlock?.text ?? "";
 }
 
-async function runParse(authHeader: string | null, body: unknown): Promise<Response> {
-  const authRequest = new Request("https://recipe-lab.local/api/parse-recipe-screenshots", {
-    method: "POST",
-    headers: authHeader ? { Authorization: authHeader } : undefined,
-  });
-  const authError = await requireAdmin(authRequest);
+export default async function handler(request: Request): Promise<Response> {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204 });
+  }
+  if (request.method !== "POST") {
+    return json(405, { error: "Method not allowed" });
+  }
+
+  const authError = await requireAdmin(request);
   if (authError) return authError;
 
   if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
@@ -165,86 +168,42 @@ async function runParse(authHeader: string | null, body: unknown): Promise<Respo
     });
   }
 
-  const images = ((body as { images?: IncomingImage[] })?.images ?? []) as IncomingImage[];
-  if (!Array.isArray(images) || images.length !== REQUIRED_COUNT) {
-    return json(400, { error: "Send exactly 4 screenshots: chart, settings, stats, and DCA" });
-  }
-  if (images.some((image) => !image?.data)) {
-    return json(400, { error: "Each screenshot must include image data" });
-  }
-
-  let raw = "";
-  let lastError: unknown;
   try {
-    raw = (await extractWithOpenAI(images)) || (await extractWithAnthropic(images));
-  } catch (error) {
-    lastError = error;
-    raw = await extractWithAnthropic(images);
-  }
-  if (!raw) {
-    throw lastError instanceof Error ? lastError : new Error("Vision provider returned an empty result");
-  }
-
-  const extraction = extractJsonObject(raw);
-  const filenameKinds = classifyKindsFromFilenames(
-    images.map((image, index) => image.filename || `image-${index + 1}`),
-  );
-  if (filenameKinds && Array.isArray(extraction.imageKinds)) {
-    const unique = new Set(extraction.imageKinds);
-    if (unique.size !== REQUIRED_COUNT) {
-      extraction.imageKinds = filenameKinds;
+    const body = await request.json();
+    const images = (body?.images ?? []) as IncomingImage[];
+    if (!Array.isArray(images) || images.length !== REQUIRED_COUNT) {
+      return json(400, { error: "Send exactly 4 screenshots: chart, settings, stats, and DCA" });
     }
-  }
+    if (images.some((image) => !image?.data)) {
+      return json(400, { error: "Each screenshot must include image data" });
+    }
 
-  const result = buildRecipeFromExtraction(extraction);
-  return json(200, result);
-}
+    let raw = "";
+    let lastError: unknown;
+    try {
+      raw = (await extractWithOpenAI(images)) || (await extractWithAnthropic(images));
+    } catch (error) {
+      lastError = error;
+      raw = await extractWithAnthropic(images);
+    }
+    if (!raw) {
+      throw lastError instanceof Error ? lastError : new Error("Vision provider returned an empty result");
+    }
 
-export default async function handler(
-  req: Request | { method?: string; headers: Record<string, string | string[] | undefined>; body?: unknown },
-  res?: { status: (code: number) => { json: (body: unknown) => void } },
-): Promise<Response | void> {
-  const method = req instanceof Request ? req.method : req.method;
-  const authHeader =
-    req instanceof Request
-      ? req.headers.get("authorization")
-      : typeof req.headers.authorization === "string"
-        ? req.headers.authorization
-        : Array.isArray(req.headers.authorization)
-          ? req.headers.authorization[0]
-          : null;
-
-  try {
-    if (method === "OPTIONS") {
-      if (res) {
-        res.status(204).json(null);
-        return;
+    const extraction = extractJsonObject(raw);
+    const filenameKinds = classifyKindsFromFilenames(
+      images.map((image, index) => image.filename || `image-${index + 1}`),
+    );
+    if (filenameKinds && Array.isArray(extraction.imageKinds)) {
+      const unique = new Set(extraction.imageKinds);
+      if (unique.size !== REQUIRED_COUNT) {
+        extraction.imageKinds = filenameKinds;
       }
-      return new Response(null, { status: 204 });
-    }
-    if (method !== "POST") {
-      const denied = json(405, { error: "Method not allowed" });
-      if (res) {
-        res.status(405).json({ error: "Method not allowed" });
-        return;
-      }
-      return denied;
     }
 
-    const body = req instanceof Request ? await req.json() : req.body;
-    const response = await runParse(authHeader, body);
-    if (res) {
-      const payload = await response.json();
-      res.status(response.status).json(payload);
-      return;
-    }
-    return response;
+    return json(200, buildRecipeFromExtraction(extraction));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to parse recipe screenshots";
-    if (res) {
-      res.status(500).json({ error: message });
-      return;
-    }
     return json(500, { error: message });
   }
 }
