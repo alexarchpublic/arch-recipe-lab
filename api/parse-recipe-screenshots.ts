@@ -19,11 +19,34 @@ type IncomingImage = {
   data?: string;
 };
 
-function json(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
+type NodeReq = {
+  method?: string;
+  headers: Record<string, string | string[] | undefined>;
+  body?: unknown;
+};
+
+type NodeRes = {
+  status: (code: number) => NodeRes;
+  json: (body: unknown) => void;
+};
+
+type JsonResult = { status: number; body: unknown };
+
+function headerValue(
+  headers: Headers | Record<string, string | string[] | undefined>,
+  name: string,
+): string {
+  if (headers && typeof (headers as Headers).get === "function") {
+    return (headers as Headers).get(name) || "";
+  }
+  const map = headers as Record<string, string | string[] | undefined>;
+  const raw = map[name] ?? map[name.toLowerCase()];
+  if (Array.isArray(raw)) return raw[0] || "";
+  return raw || "";
+}
+
+function isFetchRequest(req: Request | NodeReq): req is Request {
+  return typeof Request !== "undefined" && req instanceof Request;
 }
 
 function extractJsonObject(text: string): RecipeScreenshotExtraction {
@@ -38,22 +61,21 @@ function extractJsonObject(text: string): RecipeScreenshotExtraction {
   return JSON.parse(raw.slice(start, end + 1)) as RecipeScreenshotExtraction;
 }
 
-async function requireAdmin(request: Request): Promise<Response | null> {
-  const auth = request.headers.get("authorization") || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!token) return json(401, { error: "Missing auth token" });
+async function requireAdmin(authHeader: string): Promise<JsonResult | null> {
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+  if (!token) return { status: 401, body: { error: "Missing auth token" } };
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!supabaseUrl || !supabaseKey) {
-    return json(500, { error: "Server configuration error" });
+    return { status: 500, body: { error: "Server configuration error" } };
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
   const { data, error } = await supabase.auth.getUser(token);
   const email = data.user?.email?.toLowerCase() ?? "";
   if (error || !email.endsWith("@archpublic.com")) {
-    return json(403, { error: "Admin access required" });
+    return { status: 403, body: { error: "Admin access required" } };
   }
   return null;
 }
@@ -167,66 +189,94 @@ async function extractWithAnthropic(images: IncomingImage[]): Promise<string> {
   throw new Error(lastError);
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204 });
-  }
-  if (request.method !== "POST") {
-    return json(405, { error: "Method not allowed" });
-  }
-
-  const authError = await requireAdmin(request);
+async function parseScreenshots(authHeader: string, rawBody: unknown): Promise<JsonResult> {
+  const authError = await requireAdmin(authHeader);
   if (authError) return authError;
 
   if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
-    return json(503, {
-      error:
-        "Screenshot import needs OPENAI_API_KEY or ANTHROPIC_API_KEY on the server (Vercel env, and local .env for npm run dev).",
-    });
+    return {
+      status: 503,
+      body: {
+        error:
+          "Screenshot import needs OPENAI_API_KEY or ANTHROPIC_API_KEY on the server (Vercel env, and local .env for npm run dev).",
+      },
+    };
   }
 
+  const body = typeof rawBody === "string" ? JSON.parse(rawBody) : rawBody;
+  const images = ((body as { images?: IncomingImage[] } | null)?.images ?? []) as IncomingImage[];
+  if (!Array.isArray(images) || images.length !== REQUIRED_COUNT) {
+    return { status: 400, body: { error: "Send exactly 4 screenshots: chart, settings, stats, and DCA" } };
+  }
+  if (images.some((image) => !image?.data)) {
+    return { status: 400, body: { error: "Each screenshot must include image data" } };
+  }
+
+  let raw = "";
+  let lastError: unknown;
   try {
-    const body = await request.json();
-    const images = (body?.images ?? []) as IncomingImage[];
-    if (!Array.isArray(images) || images.length !== REQUIRED_COUNT) {
-      return json(400, { error: "Send exactly 4 screenshots: chart, settings, stats, and DCA" });
+    if (process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
+      raw = await extractWithAnthropic(images);
+    } else {
+      raw = (await extractWithOpenAI(images)) || (await extractWithAnthropic(images));
     }
-    if (images.some((image) => !image?.data)) {
-      return json(400, { error: "Each screenshot must include image data" });
+  } catch (error) {
+    lastError = error;
+    if (process.env.ANTHROPIC_API_KEY && process.env.OPENAI_API_KEY) {
+      raw = await extractWithAnthropic(images);
+    }
+  }
+  if (!raw) {
+    throw lastError instanceof Error ? lastError : new Error("Vision provider returned an empty result");
+  }
+
+  const extraction = extractJsonObject(raw);
+  const filenameKinds = classifyKindsFromFilenames(
+    images.map((image, index) => image.filename || `image-${index + 1}`),
+  );
+  if (filenameKinds && Array.isArray(extraction.imageKinds)) {
+    const unique = new Set(extraction.imageKinds);
+    if (unique.size !== REQUIRED_COUNT) {
+      extraction.imageKinds = filenameKinds;
+    }
+  }
+
+  return { status: 200, body: buildRecipeFromExtraction(extraction) };
+}
+
+export default async function handler(
+  req: Request | NodeReq,
+  res?: NodeRes,
+): Promise<Response | void> {
+  const fetchReq = isFetchRequest(req);
+  const method = fetchReq ? req.method : req.method;
+  const authHeader = fetchReq
+    ? req.headers.get("authorization") || ""
+    : headerValue(req.headers, "authorization");
+
+  const reply = async (result: JsonResult) => {
+    if (res && typeof res.status === "function") {
+      res.status(result.status).json(result.body);
+      return;
+    }
+    return new Response(JSON.stringify(result.body), {
+      status: result.status,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+
+  try {
+    if (method === "OPTIONS") {
+      return reply({ status: 204, body: null });
+    }
+    if (method !== "POST") {
+      return reply({ status: 405, body: { error: "Method not allowed" } });
     }
 
-    let raw = "";
-    let lastError: unknown;
-    try {
-      if (process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
-        raw = await extractWithAnthropic(images);
-      } else {
-        raw = (await extractWithOpenAI(images)) || (await extractWithAnthropic(images));
-      }
-    } catch (error) {
-      lastError = error;
-      if (process.env.ANTHROPIC_API_KEY && process.env.OPENAI_API_KEY) {
-        raw = await extractWithAnthropic(images);
-      }
-    }
-    if (!raw) {
-      throw lastError instanceof Error ? lastError : new Error("Vision provider returned an empty result");
-    }
-
-    const extraction = extractJsonObject(raw);
-    const filenameKinds = classifyKindsFromFilenames(
-      images.map((image, index) => image.filename || `image-${index + 1}`),
-    );
-    if (filenameKinds && Array.isArray(extraction.imageKinds)) {
-      const unique = new Set(extraction.imageKinds);
-      if (unique.size !== REQUIRED_COUNT) {
-        extraction.imageKinds = filenameKinds;
-      }
-    }
-
-    return json(200, buildRecipeFromExtraction(extraction));
+    const rawBody = fetchReq ? await req.json() : req.body;
+    return reply(await parseScreenshots(authHeader, rawBody));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to parse recipe screenshots";
-    return json(500, { error: message });
+    return reply({ status: 500, body: { error: message } });
   }
 }
