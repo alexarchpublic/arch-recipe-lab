@@ -239,8 +239,14 @@ export function getPortfolioValues(
 }
 
 export function formatSignedPercent(value: number, decimals = 1): string {
-  const sign = value >= 0 ? "+" : "";
-  return `${sign}${value.toFixed(decimals)}%`;
+  const abs = Math.abs(value).toFixed(decimals);
+  if (value < 0) return `−${abs}%`;
+  return `+${abs}%`;
+}
+
+export function formatSignedCurrency(value: number): string {
+  const abs = `$${Math.abs(Math.round(value)).toLocaleString()}`;
+  return value < 0 ? `−${abs}` : abs;
 }
 
 /** Unsigned percent for display (e.g. CAGR). Always includes the % sign. */

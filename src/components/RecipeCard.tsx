@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart } from "lucide-react";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { parseCurrencyFromString } from "@/lib/portfolio";
 import {
   formatPercent,
+  formatSignedCurrency,
   formatSignedPercent,
   getDisplayCagr,
   getPnlVsBuyHoldDelta,
@@ -14,9 +14,10 @@ import {
   getStrategyPnlPercent,
   isMarketWaveAlgorithm,
 } from "@/utils/recipeMetrics";
-import { TrendingUp, DollarSign, Target, Image as ImageIcon, Wallet, Coins, BarChart3, Scale } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 import { MetricTileGrid } from "@/components/MetricTileGrid";
-import { getAssetBadgeColor, isLegacyAlgorithm } from "@/lib/algorithms";
+import { StatTile, deltaTone, signedTone } from "@/components/StatTile";
+import { isLegacyAlgorithm } from "@/lib/algorithms";
 
 interface Recipe {
   id: string;
@@ -55,23 +56,22 @@ interface RecipeCardProps {
   onClick: () => void;
 }
 
-const getFocusColor = (focus: string) => {
+const getFocusPill = (focus: string) => {
   switch (focus) {
-    case 'Cash Yielding':
-      return 'bg-accent text-accent-foreground';
-    case 'Accumulation':
-      return 'bg-primary text-primary-foreground';
-    case 'Balanced':
-      return 'bg-secondary text-secondary-foreground';
+    case "Cash Yielding":
+      return "bg-primary text-primary-foreground";
+    case "Accumulation":
+      return "bg-navy text-white";
+    case "Balanced":
+      return "bg-muted text-foreground border-border";
     default:
-      return 'bg-muted text-muted-foreground';
+      return "bg-muted text-muted-foreground";
   }
 };
 
 export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   const returnValue = getDisplayCagr(recipe);
   const scaleFactor = Number.isFinite(scale) ? (scale as number) : 1;
-  // Parse asset accumulated numeric qty and net profit dollars
   const parseAssetQuantity = (text?: string | null): number | null => {
     if (!text) return null;
     const match = String(text).match(/\b([0-9]+(?:\.[0-9]+)?)\s*(?:[A-Z]{2,6})?\b/);
@@ -83,34 +83,33 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   const netProfitNumber = parseCurrencyFromString(recipe.net_profit);
   const scaledAssetQty = assetQty !== null ? +(assetQty * scaleFactor) : null;
   const scaledNetProfitNumber = netProfitNumber !== null ? Math.round(netProfitNumber * scaleFactor) : null;
-  const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0 
-    ? recipe.screenshots[0].image_url 
+  const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0
+    ? recipe.screenshots[0].image_url
     : null;
   const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
     ? Math.round((recipe.cash_profit as number) * (Number.isFinite(scale) ? scale : 1))
     : null;
-  
+
   const pnlPercent = getStrategyPnlPercent(recipe);
   const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
   const pnlVsDcaDelta = getPnlVsDcaDelta(recipe);
-  
+
   return (
-    <Card 
-      className="group h-full flex flex-col cursor-pointer transition-all duration-300 hover:shadow-card-hover hover:scale-[1.02] bg-gradient-card border-border/50 texture-overlay"
+    <Card
+      className="group flex h-full cursor-pointer flex-col overflow-hidden border-border bg-card shadow-sm transition-[border-color,box-shadow,transform] duration-150 ease-out hover:-translate-y-px hover:border-border-strong hover:shadow-md"
       onClick={onClick}
     >
-      {/* Thumbnail */}
-      <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
+      <div className="aspect-video overflow-hidden bg-navy">
         {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
             alt={`${recipe.name} thumbnail`}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="h-full w-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+          <div className="flex h-full w-full items-center justify-center text-white/50">
             <div className="text-center">
-              <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <ImageIcon className="mx-auto mb-2 h-12 w-12 opacity-50" />
               <p className="text-sm">No screenshot</p>
             </div>
           </div>
@@ -118,135 +117,88 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
       </div>
 
       <CardHeader className="space-y-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-1.5 flex-1 min-w-0">
-            {typeof recipe.display_number === 'number' && (
-              <div className="bg-primary text-primary-foreground text-base font-bold px-3 leading-tight flex items-center justify-center flex-shrink-0 whitespace-nowrap" style={{ height: 'calc(1.125rem * 1.25)', lineHeight: 'calc(1.125rem * 1.25)' }}>
-                #{recipe.display_number}
-              </div>
-            )}
-            <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors flex-1 min-w-0 flex items-center">
-              {recipe.goal}
-            </CardTitle>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge
-            className="text-white"
-            style={{ backgroundColor: getAssetBadgeColor(recipe.asset, recipe.asset_class) }}
-          >
-            {recipe.asset}
-          </Badge>
-          {recipe.asset_class && (
-            <Badge variant="outline" className="border-muted-foreground/30">
-              {recipe.asset_class}
-            </Badge>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {typeof recipe.display_number === "number" && (
+            <Badge variant="chip">#{recipe.display_number}</Badge>
           )}
-          <Badge className={getFocusColor(recipe.focus)}>
-            {recipe.focus}
-          </Badge>
-          <Badge variant="outline" className="border-muted-foreground/30">
+          <Badge variant="chip">{recipe.asset}</Badge>
+          <Badge className={getFocusPill(recipe.focus)}>{recipe.focus}</Badge>
+          <Badge variant="outline" className="rounded-full">
             {recipe.time_horizon}
           </Badge>
         </div>
+        <CardTitle className="text-balance text-lg font-extrabold leading-snug tracking-[-0.02em] text-foreground">
+          {recipe.goal}
+        </CardTitle>
       </CardHeader>
-      
-      <CardContent className="relative z-10 space-y-4 flex-1">
-        
+
+      <CardContent className="flex-1 space-y-4">
         <MetricTileGrid>
           {scaledNetProfitNumber !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-              <Wallet className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-xs text-muted-foreground">Net Profit</p>
-                <p className="text-sm font-semibold">${scaledNetProfitNumber.toLocaleString()}</p>
-              </div>
-            </div>
+            <StatTile
+              label="Net profit"
+              value={formatSignedCurrency(scaledNetProfitNumber)}
+              tone={signedTone(scaledNetProfitNumber)}
+            />
           )}
 
           {scaledCashProfit !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-              <DollarSign className="h-4 w-4 text-accent" />
-              <div>
-                <p className="text-xs text-muted-foreground">Cash Profit</p>
-                <p className="text-sm font-semibold text-foreground">${scaledCashProfit.toLocaleString()}</p>
-              </div>
-            </div>
+            <StatTile label="Cash profit" value={formatSignedCurrency(scaledCashProfit)} />
           )}
 
           {pnlPercent !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-              <TrendingUp className={`h-4 w-4 ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`} />
-              <div>
-                <p className="text-xs text-muted-foreground">PnL</p>
-                <p className={`text-sm font-semibold ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                  {formatSignedPercent(pnlPercent)}
-                </p>
-              </div>
-            </div>
+            <StatTile
+              label="PnL"
+              value={formatSignedPercent(pnlPercent)}
+              tone={deltaTone(pnlPercent)}
+            />
           )}
 
           {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-              <Scale className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
-              <div>
-                <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
-                <p className={`text-sm font-semibold ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                  {formatSignedPercent(pnlVsBuyHoldDelta)}
-                </p>
-              </div>
-            </div>
+            <StatTile
+              label="vs Buy & Hold"
+              value={formatSignedPercent(pnlVsBuyHoldDelta)}
+              tone={deltaTone(pnlVsBuyHoldDelta)}
+            />
           )}
 
           {isMarketWaveAlgorithm(recipe) && pnlVsDcaDelta !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-              <Scale className={`h-4 w-4 ${pnlVsDcaDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
-              <div>
-                <p className="text-xs text-muted-foreground">vs DCA</p>
-                <p className={`text-sm font-semibold ${pnlVsDcaDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                  {formatSignedPercent(pnlVsDcaDelta)}
-                </p>
-              </div>
-            </div>
+            <StatTile
+              label="vs DCA"
+              value={formatSignedPercent(pnlVsDcaDelta)}
+              tone={deltaTone(pnlVsDcaDelta)}
+            />
           )}
 
           {returnValue !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200">
-              <BarChart3 className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-xs text-muted-foreground">CAGR</p>
-                <p className="text-sm font-semibold text-primary">{formatPercent(returnValue)}</p>
-              </div>
-            </div>
+            <StatTile label="CAGR" value={formatPercent(returnValue)} />
           )}
 
           {scaledAssetQty !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200 col-span-2">
-              <Coins className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Asset Accumulated</p>
-                <p className="text-sm font-semibold">{scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} {recipe.asset}</p>
-              </div>
-            </div>
+            <StatTile
+              label="Asset accumulated"
+              value={`${scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${recipe.asset}`}
+              fullWidth
+            />
           )}
 
           {recipe.algorithm && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-100 border border-gray-200 col-span-2">
-              <Target className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Algorithm</p>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-semibold">{recipe.algorithm}</p>
+            <StatTile
+              label="Algorithm"
+              value={
+                <span className="inline-flex flex-wrap items-center gap-2">
+                  <span>{recipe.algorithm}</span>
                   {isLegacyAlgorithm(recipe.algorithm) && (
-                    <Badge variant="outline" className="text-xs border-muted-foreground/40">Legacy</Badge>
+                    <Badge variant="outline" className="text-xs">Legacy</Badge>
                   )}
-                </div>
-              </div>
-            </div>
+                </span>
+              }
+              fullWidth
+            />
           )}
         </MetricTileGrid>
       </CardContent>
-      
+
       <CardFooter className="pt-0">
         <AddToPortfolioButton recipe={recipe} />
       </CardFooter>
@@ -261,8 +213,8 @@ function AddToPortfolioButton({ recipe }: { recipe: any }) {
   return (
     <Button
       className={
-        "w-full transition-colors " +
-        (flash || added ? "bg-green-600 hover:bg-green-600 text-white" : "")
+        "w-full " +
+        (flash || added ? "bg-gain text-white hover:bg-gain hover:brightness-100" : "")
       }
       variant={added ? "secondary" : "outline"}
       onClick={(e) => {
@@ -285,7 +237,7 @@ function AddToPortfolioButton({ recipe }: { recipe: any }) {
         setTimeout(() => setFlash(false), 1500);
       }}
     >
-      {added ? "Added" : "Add To Portfolio"}
+      {added ? "Added" : "Add to portfolio"}
     </Button>
   );
 }

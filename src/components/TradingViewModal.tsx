@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { scaleAlgorithmInputs } from "@/utils/recipeScaling";
 import { computeScaledMetricsForRecipe, DEFAULT_BASE_CAPITAL } from "@/lib/portfolio";
-import { CRYPTO_ASSETS, getAssetBadgeColor, isLegacyAlgorithm } from "@/lib/algorithms";
+import { CRYPTO_ASSETS, isLegacyAlgorithm } from "@/lib/algorithms";
 
 interface TradingViewModalProps {
   open: boolean;
@@ -427,7 +427,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Copy To TradingView</DialogTitle>
+          <DialogTitle>Copy to TradingView</DialogTitle>
           <DialogDescription className="space-y-2">
             <div>
               Algorithm parameters and scaled input values for each recipe in your portfolio.
@@ -459,18 +459,14 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         {typeof recipe.display_number === 'number' && (
-                          <Badge variant="default" className="text-base font-bold px-3 py-1">#{recipe.display_number}</Badge>
+                          <Badge variant="chip">#{recipe.display_number}</Badge>
                         )}
-                        <h3 className="text-lg font-semibold">
+                        <h3 className="text-lg font-extrabold tracking-[-0.02em]">
                           {typeof recipe.display_number === 'number' 
                             ? `Recipe #${recipe.display_number}` 
-                            : `Recipe Name: ${recipe.title}`}
+                            : `Recipe name: ${recipe.title}`}
                         </h3>
-                        <Badge 
-                          variant="outline"
-                          className="text-white"
-                          style={{ backgroundColor: getAssetBadgeColor(recipe.assetSymbol), borderColor: getAssetBadgeColor(recipe.assetSymbol) }}
-                        >
+                        <Badge variant="chip">
                           {recipe.assetSymbol}
                         </Badge>
                         {recipe.algorithm && (

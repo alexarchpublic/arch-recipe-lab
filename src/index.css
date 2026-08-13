@@ -2,97 +2,96 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Arch Public design tokens. Colors are HSL channels for Tailwind/shadcn. */
 
 @layer base {
   :root {
-    /* Clean, Apple-inspired color palette */
-    /* Very light gray background: #f5f5f7 */
-    --background: 0 0% 96%;
-    /* Dark gray foreground: #1d1d1f */
-    --foreground: 0 0% 12%;
+    /* Surfaces */
+    --background: 225 18% 96%; /* #F3F4F7 bg-sunken */
+    --foreground: 224 41% 7%; /* #0B0F1A fg */
 
-    /* Pure white cards */
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 12%;
+    --card: 0 0% 100%; /* #FFFFFF surface */
+    --card-foreground: 224 41% 7%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 12%;
+    --popover-foreground: 224 41% 7%;
 
-    /* Subtle Apple blue primary: #0071e3 */
-    --primary: 210 100% 45%;
+    /* Action / primary */
+    --primary: 227 71% 49%; /* #244BD8 action */
     --primary-foreground: 0 0% 100%;
-    
-    /* Subtle blue accent */
-    --accent: 210 100% 45%;
+
+    --accent: 227 71% 49%;
     --accent-foreground: 0 0% 100%;
 
-    /* Light gray secondary */
-    --secondary: 0 0% 97%;
-    --secondary-foreground: 0 0% 12%;
+    --secondary: 240 14% 98%; /* #FAFAFB bg-muted */
+    --secondary-foreground: 224 41% 7%;
 
-    /* Very light gray muted */
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 240 14% 98%;
+    --muted-foreground: 223 12% 47%; /* #6B7387 fg-3 */
 
-    --destructive: 0 84% 60%;
+    --destructive: 358 75% 59%; /* #E5484D loss-500 */
     --destructive-foreground: 0 0% 100%;
 
-    /* Light gray borders */
-    --border: 0 0% 82%;
+    --border: 222 23% 91%; /* #E4E7EE */
+    --border-strong: 220 18% 84%; /* #CFD4DE */
+    --tile-border: 220 20% 94%; /* #EDEFF3 */
     --input: 0 0% 100%;
-    --ring: 210 100% 45%;
+    --ring: 227 71% 49%;
 
-    --radius: 0.75rem;
-    
-    /* Subtle gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(210 100% 45%), hsl(210 100% 40%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 99%));
-    
-    /* Subtle shadows */
-    --shadow-card: 0 2px 8px -2px hsl(0 0% 0% / 0.08), 0 1px 4px -1px hsl(0 0% 0% / 0.04);
-    --shadow-card-hover: 0 4px 12px -2px hsl(0 0% 0% / 0.12), 0 2px 6px -1px hsl(0 0% 0% / 0.06);
-    
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --navy: 231 77% 19%; /* #0B1656 */
+    --chip: 226 45% 91%; /* #DDE2F2 navy-100 */
+    --gain: 156 71% 42%; /* #1FB87A gain-500 */
+    --warn: 37 91% 55%; /* #F5A524 warn-500 */
+
+    --radius: 1rem; /* 16px cards */
+    --r-lg: 16px;
+    --r-md: 10px;
+    --r-sm: 6px;
+
+    --shadow-sm: 0 1px 2px hsl(231 77% 19% / 0.06);
+    --shadow-md: 0 4px 12px hsl(231 77% 19% / 0.1), 0 1px 3px hsl(231 77% 19% / 0.06);
+    --shadow-lg: 0 16px 40px hsl(231 77% 19% / 0.16), 0 4px 12px hsl(231 77% 19% / 0.08);
+
+    --scrim: 231 77% 19%;
+
+    --transition-fast: 150ms ease-out;
   }
 
   .dark {
-    /* Dark mode: clean dark theme */
-    --background: 0 0% 8%;
-    --foreground: 0 0% 98%;
+    --background: 224 41% 7%;
+    --foreground: 225 18% 96%;
 
-    --card: 0 0% 12%;
-    --card-foreground: 0 0% 98%;
+    --card: 231 40% 12%;
+    --card-foreground: 225 18% 96%;
 
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 231 40% 12%;
+    --popover-foreground: 225 18% 96%;
 
-    --primary: 210 100% 55%;
+    --primary: 227 71% 62%;
     --primary-foreground: 0 0% 100%;
 
-    --accent: 210 100% 55%;
+    --accent: 227 71% 62%;
     --accent-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 231 30% 14%;
+    --secondary-foreground: 225 18% 96%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 231 30% 14%;
+    --muted-foreground: 223 12% 65%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 358 75% 59%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 15%;
-    --ring: 210 100% 55%;
-    
-    --gradient-hero: linear-gradient(135deg, hsl(210 100% 55%), hsl(210 100% 50%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 12%), hsl(0 0% 10%));
-    --shadow-card: 0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -1px hsl(0 0% 0% / 0.3);
-    --shadow-card-hover: 0 10px 15px -3px hsl(0 0% 0% / 0.5), 0 4px 6px -2px hsl(0 0% 0% / 0.4);
+    --border: 231 25% 22%;
+    --border-strong: 231 20% 32%;
+    --tile-border: 231 25% 20%;
+    --input: 231 30% 14%;
+    --ring: 227 71% 62%;
+
+    --navy: 231 77% 19%;
+    --chip: 231 30% 22%;
+    --gain: 156 71% 48%;
+    --warn: 37 91% 55%;
   }
 }
 
@@ -101,30 +100,35 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    font-family: Mulish, system-ui, sans-serif;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-weight: 500;
+  }
+
+  h1, h2, h3 {
+    letter-spacing: -0.02em;
+    font-weight: 800;
   }
 }
 
-/* Texture overlay system using SVG noise filter */
-@layer utilities {
-  .texture-overlay {
-    position: relative;
+@layer components {
+  .param-grid .grid > span:last-child {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
   }
+}
 
-  .texture-overlay::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    opacity: 0.1;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 200px 200px;
-    mix-blend-mode: overlay;
-    z-index: 0;
+@layer utilities {
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+    line-height: 1.3;
   }
 }

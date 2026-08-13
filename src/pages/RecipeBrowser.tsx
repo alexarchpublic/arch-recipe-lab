@@ -449,12 +449,12 @@ export default function RecipeBrowser() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10" style={{ backgroundColor: '#244bd8' }}>
+      <header className="sticky top-0 z-10 border-b border-white/[0.08] bg-navy">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-semibold text-white">Recipe Lab</h1>
-              <p className="text-sm text-white/90 mt-1">Arch Public Algorithm Recipe Browser</p>
+              <h1 className="text-2xl font-extrabold tracking-[-0.02em] text-white md:text-3xl">Recipe Lab</h1>
+              <p className="mt-1 text-sm text-white/80">Arch Public algorithm recipe browser</p>
             </div>
             <a href="https://archpublic.com" target="_blank" rel="noreferrer">
               <img src="/APLogo.png" alt="Arch Public" className="h-8 w-auto" />
@@ -465,8 +465,8 @@ export default function RecipeBrowser() {
 
       <div className="container mx-auto px-4 py-6">
         {/* Get started */}
-        <div className="mb-6 p-4 rounded-lg border border-border bg-white texture-overlay">
-          <h2 className="text-base font-semibold mb-2">Get started</h2>
+        <div className="mb-6 rounded-lg border border-border bg-card p-4 shadow-sm">
+          <h2 className="mb-2 text-base font-extrabold tracking-[-0.02em]">Get started</h2>
           <p className="text-sm text-muted-foreground">
             Search and filter recipes by asset, focus, or time horizon. Set your Initial
             Capital to instantly scale every dollar amount from the $100,000 baseline.
@@ -501,21 +501,21 @@ export default function RecipeBrowser() {
           
           <div className="flex gap-2">
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="w-[200px] bg-white">
+              <SelectTrigger className="w-[200px] bg-card">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="latest">Latest</SelectItem>
-                <SelectItem value="cagr-desc">CAGR (High to Low)</SelectItem>
-                <SelectItem value="cagr-asc">CAGR (Low to High)</SelectItem>
-                <SelectItem value="cash-profit-desc">Cash Profit (High to Low)</SelectItem>
-                <SelectItem value="cash-profit-asc">Cash Profit (Low to High)</SelectItem>
-                <SelectItem value="asset-accumulated-desc">Asset Accumulated (High to Low)</SelectItem>
-                <SelectItem value="asset-accumulated-asc">Asset Accumulated (Low to High)</SelectItem>
-                <SelectItem value="net-profit-desc">Net Profit (High to Low)</SelectItem>
-                <SelectItem value="net-profit-asc">Net Profit (Low to High)</SelectItem>
-                <SelectItem value="pnl-desc">PnL (High to Low)</SelectItem>
-                <SelectItem value="pnl-asc">PnL (Low to High)</SelectItem>
+                <SelectItem value="cagr-desc">CAGR (high to low)</SelectItem>
+                <SelectItem value="cagr-asc">CAGR (low to high)</SelectItem>
+                <SelectItem value="cash-profit-desc">Cash profit (high to low)</SelectItem>
+                <SelectItem value="cash-profit-asc">Cash profit (low to high)</SelectItem>
+                <SelectItem value="asset-accumulated-desc">Asset accumulated (high to low)</SelectItem>
+                <SelectItem value="asset-accumulated-asc">Asset accumulated (low to high)</SelectItem>
+                <SelectItem value="net-profit-desc">Net profit (high to low)</SelectItem>
+                <SelectItem value="net-profit-asc">Net profit (low to high)</SelectItem>
+                <SelectItem value="pnl-desc">PnL (high to low)</SelectItem>
+                <SelectItem value="pnl-asc">PnL (low to high)</SelectItem>
               </SelectContent>
             </Select>
 
@@ -529,8 +529,8 @@ export default function RecipeBrowser() {
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] overflow-y-auto">
                 {/* Capital Controls (Mobile within Filters) */}
-                <div className="mt-2 mb-4 p-4 rounded-lg border border-border bg-white texture-overlay">
-                  <p className="text-sm font-semibold mb-2">Initial Capital</p>
+                <div className="mb-4 mt-2 rounded-lg border border-border bg-card p-4 shadow-sm">
+                  <p className="eyebrow mb-2">Initial capital</p>
                   <Input
                     type="text"
                     value={initialCapitalInput}
@@ -543,6 +543,7 @@ export default function RecipeBrowser() {
                     }}
                     placeholder="$100,000"
                     min={0}
+                    className="font-mono tabular-nums"
                   />
                   <p className="text-xs text-muted-foreground mt-2">
                     Recipes are authored at $100,000. Displayed values are scaled.
@@ -567,8 +568,8 @@ export default function RecipeBrowser() {
           <aside className="hidden lg:block w-80 flex-shrink-0">
             <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
               {/* Capital Controls (Desktop above Filters) */}
-              <div className="mb-4 p-4 rounded-lg border border-border bg-white texture-overlay">
-                <p className="text-sm font-semibold mb-2">Initial Capital</p>
+              <div className="mb-4 rounded-lg border border-border bg-card p-4 shadow-sm">
+                <p className="eyebrow mb-2">Initial capital</p>
                 <Input
                   type="text"
                   value={initialCapitalInput}
@@ -581,6 +582,7 @@ export default function RecipeBrowser() {
                   }}
                   placeholder="$100,000"
                   min={0}
+                  className="font-mono tabular-nums"
                 />
                 <p className="text-xs text-muted-foreground mt-2">
                   Recipes are authored at $100,000. Displayed values are scaled.
@@ -602,7 +604,7 @@ export default function RecipeBrowser() {
             {loading ? (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="h-80 bg-muted animate-pulse rounded-lg" />
+                  <div key={i} className="h-80 animate-pulse rounded-lg bg-muted" />
                 ))}
               </div>
             ) : filteredAndSortedRecipes.length === 0 ? (
@@ -631,7 +633,7 @@ export default function RecipeBrowser() {
       </div>
 
       {/* Footer with Admin button */}
-      <footer className="border-t border-border/50 mt-8 py-4">
+      <footer className="mt-8 border-t border-border py-4">
         <div className="container mx-auto px-4 flex justify-end">
           <Button 
             variant="secondary" 

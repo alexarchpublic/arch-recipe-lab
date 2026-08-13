@@ -14,17 +14,21 @@ export const ETF_TICKERS = [
 ] as const;
 export const LEGACY_ALGORITHMS = ["Oracle Protocol"];
 
+/** Navy-100 chip fill; decorative per-asset brand colors are not used. */
+export const ASSET_CHIP_COLOR = "#DDE2F2";
+export const ASSET_CHIP_FOREGROUND = "#0B1656";
+
 export const ASSET_CLASS_COLORS: Record<string, string> = {
-  Equities: "#0f766e",
-  ETFs: "#7c3aed",
+  Equities: ASSET_CHIP_COLOR,
+  ETFs: ASSET_CHIP_COLOR,
 };
 
 export const CRYPTO_ASSET_COLORS: Record<string, string> = {
-  BTC: "#f7931a",
-  ETH: "#627eea",
-  SOL: "#14f195",
-  XRP: "#23292f",
-  SUI: "#2F80ED",
+  BTC: ASSET_CHIP_COLOR,
+  ETH: ASSET_CHIP_COLOR,
+  SOL: ASSET_CHIP_COLOR,
+  XRP: ASSET_CHIP_COLOR,
+  SUI: ASSET_CHIP_COLOR,
 };
 
 export const getAlgorithmLabel = (algorithm: string) =>
@@ -33,11 +37,8 @@ export const getAlgorithmLabel = (algorithm: string) =>
 export const isLegacyAlgorithm = (algorithm?: string | null) =>
   !!algorithm && LEGACY_ALGORITHMS.includes(algorithm);
 
-export const getAssetBadgeColor = (asset: string, assetClass?: string | null): string => {
-  if (CRYPTO_ASSET_COLORS[asset]) return CRYPTO_ASSET_COLORS[asset];
-  if (assetClass && ASSET_CLASS_COLORS[assetClass]) return ASSET_CLASS_COLORS[assetClass];
-  return "#6b7280";
-};
+export const getAssetBadgeColor = (_asset?: string, _assetClass?: string | null): string =>
+  ASSET_CHIP_COLOR;
 
 export const isEquitiesOrEtfClass = (assetClass?: string | null) =>
   assetClass === "Equities" || assetClass === "ETFs";

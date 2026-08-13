@@ -111,15 +111,15 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+          <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy">
             Arch Public Recipes
           </h1>
-          <p className="text-muted-foreground mt-2">Admin Panel</p>
+          <p className="text-muted-foreground mt-2">Admin</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>{isSignUp ? 'Create Account' : 'Sign In'}</CardTitle>
+            <CardTitle>{isSignUp ? 'Create account' : 'Sign in'}</CardTitle>
             <CardDescription>
               {isSignUp 
                 ? 'Create an admin account to manage recipes (requires @archpublic.com email)' 
@@ -161,7 +161,7 @@ export default function Auth() {
                     Please wait
                   </>
                 ) : (
-                  isSignUp ? 'Create Account' : 'Sign In'
+                    isSignUp ? 'Create account' : 'Sign in'
                 )}
               </Button>
 

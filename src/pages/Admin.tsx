@@ -186,17 +186,17 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-gradient-hero border-b border-primary/20">
+      <header className="border-b border-white/[0.08] bg-navy">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
+          <h1 className="text-2xl font-extrabold tracking-[-0.02em] text-white">Admin</h1>
           <div className="flex items-center gap-4">
             <Button onClick={() => navigate('/')} variant="secondary" className="gap-2">
               <Eye className="h-4 w-4" />
-              View Public Site
+              View public site
             </Button>
             <Button variant="secondary" onClick={handleSignOut} className="gap-2">
               <LogOut className="h-4 w-4" />
-              Sign Out
+              Sign out
             </Button>
           </div>
         </div>
@@ -233,7 +233,7 @@ export default function Admin() {
           </div>
           <Button onClick={handleCreateRecipe} className="gap-2">
             <Plus className="h-4 w-4" />
-            Create Recipe
+            Create recipe
           </Button>
         </div>
 
