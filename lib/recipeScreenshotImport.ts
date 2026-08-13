@@ -152,11 +152,6 @@ function formatUsd(value: number, digits = 0): string {
   })}`;
 }
 
-function formatQty(value: number): string {
-  if (Number.isInteger(value)) return value.toLocaleString("en-US");
-  return value.toLocaleString("en-US", { maximumFractionDigits: 8 });
-}
-
 function formatMonthYear(year?: number, month?: number): string | null {
   if (!year || !month || month < 1 || month > 12) return null;
   return `${MONTHS[month - 1]} ${year}`;
@@ -583,22 +578,12 @@ export function buildRecipeFromExtraction(
 
   const trades = tradeLabels(algorithm_inputs);
   const tfShort = timeFrameShort(timeFrame);
-  const currentShares = pickNumber(stats.currentShares) ?? 0;
-  const currentSharesValue = pickNumber(stats.currentSharesValue);
-  const lastPrice =
-    pickNumber(extraction.lastPrice) ??
-    (currentShares > 0 && currentSharesValue != null ? currentSharesValue / currentShares : pickNumber(stats.avgCostBasis));
+  const currentShares = pickNumber(stats.currentShares);
   const totalPnl = pickNumber(stats.totalPnl);
   const realized = pickNumber(stats.realizedProfit);
 
-  let asset_accumulated: string | undefined;
-  if (currentSharesValue != null && currentShares > 0) {
-    asset_accumulated = lastPrice != null
-      ? `${formatUsd(Math.round(currentSharesValue))} (${formatQty(currentShares)} ${ticker} @ ${formatUsd(lastPrice, 2)})`
-      : `${formatUsd(Math.round(currentSharesValue))} (${formatQty(currentShares)} ${ticker})`;
-  } else if (currentShares > 0) {
-    asset_accumulated = `${formatQty(currentShares)} ${ticker}`;
-  }
+  const asset_accumulated =
+    currentShares != null ? `${currentShares} ${ticker}` : undefined;
 
   const recipe: ImportedRecipeDraft = {
     name: `[${ticker}] ${horizon} ${tfShort} ${style}`,
