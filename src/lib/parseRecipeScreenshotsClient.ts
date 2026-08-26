@@ -1,8 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import {
-  RECIPE_SCREENSHOT_KINDS,
-  REQUIRED_SCREENSHOT_COUNT,
-  type RecipeScreenshotKind,
+  isImportableScreenshotCount,
+  orderFilesByKinds,
   type ScreenshotImportResult,
 } from "@/lib/recipeScreenshotImport";
 
@@ -66,8 +65,8 @@ export async function prepareScreenshotForVision(file: File): Promise<PreparedSc
 export async function parseRecipeScreenshotsFromFiles(files: File[]): Promise<ScreenshotImportResult & {
   orderedFiles: File[];
 }> {
-  if (files.length !== REQUIRED_SCREENSHOT_COUNT) {
-    throw new Error(`Drop exactly ${REQUIRED_SCREENSHOT_COUNT} screenshots: chart, settings, stats, and DCA`);
+  if (!isImportableScreenshotCount(files.length)) {
+    throw new Error("Drop 3 screenshots (chart, settings, stats) or 4 to include DCA");
   }
 
   const { data: sessionData } = await supabase.auth.getSession();
@@ -96,11 +95,7 @@ export async function parseRecipeScreenshotsFromFiles(files: File[]): Promise<Sc
   }
 
   const result = payload as ScreenshotImportResult;
-  const orderedFiles = RECIPE_SCREENSHOT_KINDS.map((kind: RecipeScreenshotKind) => {
-    const index = result.orderedKinds.indexOf(kind);
-    if (index < 0) throw new Error(`Missing ${kind} screenshot`);
-    return files[index];
-  });
+  const orderedFiles = orderFilesByKinds(files, result.orderedKinds);
 
   return { ...result, orderedFiles };
 }

@@ -11,7 +11,8 @@ export const config = {
   maxDuration: 60,
 };
 
-const REQUIRED_COUNT = 4;
+const MIN_COUNT = 3;
+const MAX_COUNT = 4;
 
 type IncomingImage = {
   filename?: string;
@@ -205,8 +206,8 @@ async function parseScreenshots(authHeader: string, rawBody: unknown): Promise<J
 
   const body = typeof rawBody === "string" ? JSON.parse(rawBody) : rawBody;
   const images = ((body as { images?: IncomingImage[] } | null)?.images ?? []) as IncomingImage[];
-  if (!Array.isArray(images) || images.length !== REQUIRED_COUNT) {
-    return { status: 400, body: { error: "Send exactly 4 screenshots: chart, settings, stats, and DCA" } };
+  if (!Array.isArray(images) || images.length < MIN_COUNT || images.length > MAX_COUNT) {
+    return { status: 400, body: { error: "Send 3 screenshots (chart, settings, stats) or 4 to include DCA" } };
   }
   if (images.some((image) => !image?.data)) {
     return { status: 400, body: { error: "Each screenshot must include image data" } };
@@ -234,11 +235,13 @@ async function parseScreenshots(authHeader: string, rawBody: unknown): Promise<J
   const filenameKinds = classifyKindsFromFilenames(
     images.map((image, index) => image.filename || `image-${index + 1}`),
   );
-  if (filenameKinds && Array.isArray(extraction.imageKinds)) {
-    const unique = new Set(extraction.imageKinds);
-    if (unique.size !== REQUIRED_COUNT) {
-      extraction.imageKinds = filenameKinds;
-    }
+  const kinds = extraction.imageKinds;
+  const unique = Array.isArray(kinds) ? new Set(kinds) : new Set();
+  if (
+    filenameKinds &&
+    (!Array.isArray(kinds) || kinds.length !== images.length || unique.size !== images.length)
+  ) {
+    extraction.imageKinds = filenameKinds;
   }
 
   return { status: 200, body: buildRecipeFromExtraction(extraction) };

@@ -10,7 +10,9 @@ const ETF_TICKERS = [
   "VNQ", "VNQI",
 ] as const;
 
-export const RECIPE_SCREENSHOT_KINDS = ["chart", "settings", "stats", "dca"] as const;
+export const CORE_SCREENSHOT_KINDS = ["chart", "settings", "stats"] as const;
+export const RECIPE_SCREENSHOT_KINDS = [...CORE_SCREENSHOT_KINDS, "dca"] as const;
+export type CoreScreenshotKind = (typeof CORE_SCREENSHOT_KINDS)[number];
 export type RecipeScreenshotKind = (typeof RECIPE_SCREENSHOT_KINDS)[number];
 
 export const RECIPE_SCREENSHOT_LABELS: Record<RecipeScreenshotKind, string> = {
@@ -20,7 +22,13 @@ export const RECIPE_SCREENSHOT_LABELS: Record<RecipeScreenshotKind, string> = {
   dca: "DCA",
 };
 
-export const REQUIRED_SCREENSHOT_COUNT = RECIPE_SCREENSHOT_KINDS.length;
+export const MIN_IMPORT_SCREENSHOT_COUNT = CORE_SCREENSHOT_KINDS.length;
+export const MAX_IMPORT_SCREENSHOT_COUNT = RECIPE_SCREENSHOT_KINDS.length;
+export const REQUIRED_SCREENSHOT_COUNT = MAX_IMPORT_SCREENSHOT_COUNT;
+
+export function isImportableScreenshotCount(count: number): boolean {
+  return count >= MIN_IMPORT_SCREENSHOT_COUNT && count <= MAX_IMPORT_SCREENSHOT_COUNT;
+}
 
 export type AssetClass = "Equities" | "ETFs" | "Crypto";
 export type TimeHorizon = "STH" | "LTH";
@@ -289,7 +297,7 @@ export function parseMarketWaveChartParams(text: string): Record<string, unknown
 }
 
 export function classifyKindsFromFilenames(filenames: string[]): RecipeScreenshotKind[] | null {
-  if (filenames.length !== REQUIRED_SCREENSHOT_COUNT) return null;
+  if (!isImportableScreenshotCount(filenames.length)) return null;
   const kinds: Array<RecipeScreenshotKind | null> = filenames.map((name) => {
     const lower = name.toLowerCase();
     if (lower.includes("dca")) return "dca";
@@ -298,11 +306,13 @@ export function classifyKindsFromFilenames(filenames: string[]): RecipeScreensho
     if (lower.includes("stat")) return "stats";
     return null;
   });
+  if (!kinds.every(Boolean)) return null;
   const unique = new Set(kinds);
-  if (kinds.every(Boolean) && unique.size === REQUIRED_SCREENSHOT_COUNT) {
-    return kinds as RecipeScreenshotKind[];
-  }
-  return null;
+  if (unique.size !== kinds.length) return null;
+  if (CORE_SCREENSHOT_KINDS.some((kind) => !unique.has(kind))) return null;
+  if (filenames.length === MIN_IMPORT_SCREENSHOT_COUNT && unique.has("dca")) return null;
+  if (filenames.length === MAX_IMPORT_SCREENSHOT_COUNT && !unique.has("dca")) return null;
+  return kinds as RecipeScreenshotKind[];
 }
 
 function tradeLabels(inputs: Record<string, unknown>): { entry: string; exit: string; proportion: number } {
@@ -337,13 +347,13 @@ function tradeLabels(inputs: Record<string, unknown>): { entry: string; exit: st
   return { entry: "See parameters", exit: "See parameters", proportion: 0 };
 }
 
-export const RECIPE_SCREENSHOT_EXTRACTION_PROMPT = `You extract Arch Public Market Wave recipe fields from exactly 4 screenshots: chart, settings, stats, and DCA. Images may arrive in any order. Classify each image, then read every visible number and checkbox.
+export const RECIPE_SCREENSHOT_EXTRACTION_PROMPT = `You extract Arch Public Market Wave recipe fields from 3 or 4 screenshots. Chart, settings, and stats are required. DCA is optional. Images may arrive in any order. Classify each image, then read every visible number and checkbox.
 
 Screenshot kinds:
 - chart: TradingView candlestick chart. Header has ticker, timeframe (e.g. 1h), and an indicator line like "ARCH: Market Wave Equities" followed by a long numeric parameter list, color scheme, and DCA interval (e.g. Monthly).
 - settings: TradingView indicator settings panel (USER INITIAL CAPITAL, ORDER ENTRY & EXIT RULES, TRADE SIZE, MARKET WAVE, STATIC MARKET PRICE FILTER, TREND FILTER, START DATE / TIME, END DATE, BACKTESTING, DCA Benchmark). Checkboxes matter. A green/checked box is true; empty is false. Only one or more of Shares / Fixed / Percentage Trade Size may be checked.
 - stats: DATA WINDOW - CORE PORTFOLIO and BENCHMARKS (Initial Cash, Current Shares, Realized/Unrealized/Total P&L, Buy & Hold ROI %, Strategy ROI %, etc.).
-- dca: DATA WINDOW with DCA Benchmark ROI %, Strategy vs DCA %, DCA pot/slice metrics.
+- dca (optional): DATA WINDOW with DCA Benchmark ROI %, Strategy vs DCA %, DCA pot/slice metrics. Omit this kind when no DCA screenshot is in the set.
 
 Chart numeric parameter order after the indicator name (ignore commas in thousands):
 startingCash, startingQty, longThreshold%, exitThreshold%, entryShares, exitShares, entryFixed$, exitFixed$, entryPercent, exitPercent, scope, sellBuffer%, buyBuffer%, staticSellAbove, staticBuyBelow, startYear, startMonth, startDay, startHour, startMinute, endYear, endMonth, endDay.
@@ -351,7 +361,7 @@ Then optional text: ribbon colors and DCA interval.
 
 Return ONLY JSON with this shape:
 {
-  "imageKinds": ["chart"|"settings"|"stats"|"dca", ... exactly 4, one of each, in the SAME order as the input images],
+  "imageKinds": ["chart"|"settings"|"stats"|"dca", ... one per input image, in the SAME order as the input images],
   "ticker": "IREN",
   "assetName": "IREN LIMITED",
   "assetClass": "Equities"|"ETFs"|"Crypto",
@@ -428,7 +438,8 @@ Return ONLY JSON with this shape:
 
 Rules:
 - Numbers must be JSON numbers, not strings. Preserve negatives.
-- imageKinds MUST contain each of chart, settings, stats, dca exactly once.
+- imageKinds MUST have one entry per input image, in that same order. Always include chart, settings, and stats exactly once. Include dca only when a DCA screenshot is present.
+- If there is no DCA screenshot, set "dca" to {} and dcaInterval to null.
 - Prefer the settings panel for checkbox truth. Prefer the chart parameter string for the numeric series if settings are blurry.
 - If a checkbox is not visible, use false.
 - Ticker is the chart symbol (IREN, AAPL, SPY), not the company long name.
@@ -446,12 +457,13 @@ export function buildRecipeFromExtraction(
   const kinds = extraction.imageKinds ?? [];
   const uniqueKinds = new Set(kinds);
   if (
-    kinds.length !== REQUIRED_SCREENSHOT_COUNT ||
-    uniqueKinds.size !== REQUIRED_SCREENSHOT_COUNT ||
-    RECIPE_SCREENSHOT_KINDS.some((kind) => !uniqueKinds.has(kind))
+    !isImportableScreenshotCount(kinds.length) ||
+    uniqueKinds.size !== kinds.length ||
+    CORE_SCREENSHOT_KINDS.some((kind) => !uniqueKinds.has(kind))
   ) {
-    throw new Error("Could not classify the 4 screenshots as chart, settings, stats, and DCA");
+    throw new Error("Could not classify the screenshots as chart, settings, and stats");
   }
+  const hasDcaScreenshot = uniqueKinds.has("dca");
 
   const settings = extraction.settings ?? {};
   const stats = extraction.stats ?? {};
@@ -499,9 +511,13 @@ export function buildRecipeFromExtraction(
   const sharesEnabled = asBool(settings.sharesEnabled, false);
   const fixedEnabled = asBool(settings.fixedEnabled, false);
   const showDca =
-    asBool(settings.showDcaBenchmark, false) ||
-    asBool(dca.showDcaBenchmark, false) ||
-    dca.dcaBenchmarkRoiPercent != null;
+    hasDcaScreenshot &&
+    (asBool(settings.showDcaBenchmark, false) ||
+      asBool(dca.showDcaBenchmark, false) ||
+      dca.dcaBenchmarkRoiPercent != null);
+  if (!hasDcaScreenshot) {
+    warnings.push("No DCA screenshot; DCA benchmark left blank.");
+  }
 
   const algorithm_inputs: Record<string, unknown> = {
     userInitialCapital: {
@@ -620,7 +636,7 @@ export function buildRecipeFromExtraction(
 }
 
 export function orderFilesByKinds<T>(items: T[], kinds: RecipeScreenshotKind[]): T[] {
-  return RECIPE_SCREENSHOT_KINDS.map((kind) => {
+  return RECIPE_SCREENSHOT_KINDS.filter((kind) => kinds.includes(kind)).map((kind) => {
     const index = kinds.indexOf(kind);
     if (index < 0) throw new Error(`Missing ${kind} screenshot`);
     return items[index];

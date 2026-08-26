@@ -36,7 +36,7 @@ import { parseRecipeScreenshotsFromFiles } from "@/lib/parseRecipeScreenshotsCli
 import {
   RECIPE_SCREENSHOT_KINDS,
   RECIPE_SCREENSHOT_LABELS,
-  REQUIRED_SCREENSHOT_COUNT,
+  isImportableScreenshotCount,
   type ImportedRecipeDraft,
 } from "@/lib/recipeScreenshotImport";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
@@ -246,7 +246,7 @@ function RecipeFormBody({
     if (parsingScreenshots) return;
     const files = Array.from(fileList);
 
-    if (!isEditMode && screenshots.length === 0 && files.length === REQUIRED_SCREENSHOT_COUNT) {
+    if (!isEditMode && screenshots.length === 0 && isImportableScreenshotCount(files.length)) {
       await importFromScreenshots(files);
       return;
     }
@@ -468,17 +468,17 @@ function RecipeFormBody({
                       ? "Drop images here"
                       : isEditMode
                         ? "Upload screenshots"
-                        : "Drop 4 screenshots to auto-fill"}
+                        : "Drop 3 or 4 screenshots to auto-fill"}
                 </span>
                 <span className="mt-1 block text-xs text-muted-foreground">
                   {isEditMode
                     ? `PNG, JPG, WEBP up to 5MB each (max ${MAX_IMAGES_PER_RECIPE} images)`
-                    : "Chart, Settings, Stats, and DCA — any order. PNG, JPG, or WEBP up to 5MB each."}
+                    : "Chart, Settings, and Stats required. DCA optional. PNG, JPG, or WEBP up to 5MB each."}
                 </span>
                 <span className="mt-1 block text-xs text-muted-foreground">
                   {isEditMode
                     ? "Or drag and drop images here"
-                    : "We'll classify them, fill every field, and attach Chart first as the card thumbnail."}
+                    : "We'll classify them, fill every field, and attach Chart first as the card thumbnail. Without DCA, that benchmark stays blank."}
                 </span>
               </Label>
               <Input
@@ -534,7 +534,7 @@ function RecipeFormBody({
           <div className="flex items-center justify-center py-4">
             <Loader2 className="h-6 w-6 animate-spin" />
             <span className="ml-2 text-sm text-muted-foreground">
-              {parsingScreenshots ? "Reading chart, settings, stats, and DCA…" : "Uploading images..."}
+              {parsingScreenshots ? "Reading screenshots…" : "Uploading images..."}
             </span>
           </div>
         )}
@@ -550,7 +550,7 @@ function RecipeFormBody({
           <CardDescription>
             {isEditMode 
               ? 'Update the recipe details and screenshots' 
-              : 'Drop 4 screenshots (chart, settings, stats, DCA) to auto-fill, or enter details manually'}
+              : 'Drop 3 screenshots (chart, settings, stats) to auto-fill, or 4 to include DCA'}
           </CardDescription>
         </CardHeader>
         <CardContent>
