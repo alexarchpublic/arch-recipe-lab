@@ -633,8 +633,11 @@ export default function RecipeBrowser() {
       </div>
 
       {/* Footer with Admin button */}
-      <footer className="mt-8 border-t border-border py-4">
-        <div className="container mx-auto px-4 flex justify-end">
+      <footer className="mt-8 border-t border-border pt-4 pb-24">
+        <div className="container mx-auto px-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
+      Arch Public is a software provider, not a broker-dealer or investment adviser. We never take custody of your assets. Trading involves risk, including loss of principal. Not investment advice. Past and backtested performance does not guarantee future results.
+    </p>
           <Button 
             variant="secondary" 
             onClick={() => navigate('/admin')}
