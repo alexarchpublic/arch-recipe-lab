@@ -72,10 +72,29 @@ async function requireAdmin(authHeader: string): Promise<JsonResult | null> {
     return { status: 500, body: { error: "Server configuration error" } };
   }
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
   const { data, error } = await supabase.auth.getUser(token);
-  const email = data.user?.email?.toLowerCase() ?? "";
-  if (error || !email.endsWith("@archpublic.com")) {
+  if (error || !data.user) {
+    return { status: 403, body: { error: "Admin access required" } };
+  }
+
+  // Same rule as lib/adminAccess.ts, inlined because this function avoids
+  // runtime imports of TypeScript from lib/. The allowlist decides; the old
+  // domain rule applies only while public.is_admin() is not deployed.
+  const email = data.user.email?.trim().toLowerCase() ?? "";
+  const rpc = await supabase.rpc("is_admin");
+  const missingFunction =
+    !!rpc.error &&
+    (rpc.error.code === "PGRST202" ||
+      rpc.error.code === "42883" ||
+      /could not find the function|function .* does not exist/i.test(rpc.error.message ?? ""));
+  const allowed = rpc.error
+    ? missingFunction && email.endsWith("@archpublic.com")
+    : rpc.data === true;
+  if (!allowed) {
     return { status: 403, body: { error: "Admin access required" } };
   }
   return null;

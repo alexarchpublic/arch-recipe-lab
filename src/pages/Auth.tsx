@@ -12,7 +12,6 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -37,59 +36,23 @@ export default function Auth() {
       return;
     }
 
-    if (password.length < 6) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Password must be at least 6 characters",
-      });
-      return;
-    }
-
-    // Validate email domain
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@archpublic\.com$/;
-    if (!emailRegex.test(email)) {
-      toast({
-        variant: "destructive",
-        title: "Access Restricted",
-        description: "Only @archpublic.com email addresses are allowed",
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/admin`
-          }
-        });
+      // Admin accounts are created by invitation only (PRD A1). There is no
+      // sign-up here, and the database refuses accounts not on the admin list.
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        toast({
-          title: "Account created!",
-          description: "You can now sign in with your credentials.",
-        });
-        setIsSignUp(false);
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "Welcome back!",
-          description: "Redirecting to admin panel...",
-        });
-        navigate('/admin');
-      }
+      toast({
+        title: "Welcome back!",
+        description: "Redirecting to admin panel...",
+      });
+      navigate('/admin');
     } catch (error: unknown) {
       const message =
         error instanceof Error
@@ -119,11 +82,9 @@ export default function Auth() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{isSignUp ? 'Create account' : 'Sign in'}</CardTitle>
+            <CardTitle>Sign in</CardTitle>
             <CardDescription>
-              {isSignUp 
-                ? 'Create an admin account to manage recipes (requires @archpublic.com email)' 
-                : 'Sign in to access the admin panel (requires @archpublic.com email)'}
+              Admin access is by invitation. Ask the Strategy Lab owner to add you.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -161,20 +122,8 @@ export default function Auth() {
                     Please wait
                   </>
                 ) : (
-                    isSignUp ? 'Create account' : 'Sign in'
+                    'Sign in'
                 )}
-              </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={() => setIsSignUp(!isSignUp)}
-                disabled={loading}
-              >
-                {isSignUp 
-                  ? 'Already have an account? Sign in' 
-                  : "Don't have an account? Sign up"}
               </Button>
 
               <Button
