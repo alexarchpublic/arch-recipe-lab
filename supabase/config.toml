@@ -1,1 +1,4 @@
-project_id = "latolckbjpwwnjpglgee"
+# Local identifier for the Supabase CLI only. It does not choose a hosted
+# project: link one with `supabase link --project-ref <ref>`.
+# Production: xsoixhltejgyuhedhbdu. Staging: see docs/STAGING.md.
+project_id = "arch-recipe-lab"
