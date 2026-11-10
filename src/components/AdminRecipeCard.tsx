@@ -1,27 +1,33 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart } from "lucide-react";
+import { Heart, Edit, Trash2, Eye, Image as ImageIcon, Archive, ArchiveRestore } from "lucide-react";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { TrendingUp, DollarSign, Target, Edit, Trash2, Eye, Image as ImageIcon, Archive, ArchiveRestore } from "lucide-react";
+import { MetricTileGrid } from "@/components/MetricTileGrid";
+import { StatTile, deltaTone, signedTone } from "@/components/StatTile";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCurrencyFromString } from "@/lib/portfolio";
 import {
+  formatPercent,
+  formatSignedCurrency,
   formatSignedPercent,
   getDisplayCagr,
   getPnlVsBuyHoldDelta,
+  getPnlVsDcaDelta,
   getStrategyPnlPercent,
   isMarketWaveAlgorithm,
 } from "@/utils/recipeMetrics";
+import { isLegacyAlgorithm } from "@/lib/algorithms";
 
 interface Recipe {
   id: string;
   name: string;
   asset: string;
+  asset_class?: string;
   time_horizon: string;
   strategy_type: string;
   algorithm?: string;
@@ -54,28 +60,17 @@ interface AdminRecipeCardProps {
   onView: (recipe: Recipe) => void;
 }
 
-const getFocusColor = (focus: string) => {
+const getFocusPill = (focus: string) => {
   switch (focus) {
-    case 'Cash Yielding':
-      return 'bg-accent text-accent-foreground';
-    case 'Accumulation':
-      return 'bg-primary text-primary-foreground';
-    case 'Balanced':
-      return 'bg-secondary text-secondary-foreground';
+    case "Cash Yielding":
+      return "bg-primary text-primary-foreground";
+    case "Accumulation":
+      return "bg-navy text-white";
+    case "Balanced":
+      return "bg-muted text-foreground border-border";
     default:
-      return 'bg-muted text-muted-foreground';
+      return "bg-muted text-muted-foreground";
   }
-};
-
-const getAssetColor = (asset: string) => {
-  const colors: Record<string, string> = {
-    'BTC': 'bg-orange-500 text-white',
-    'ETH': 'bg-purple-500 text-white',
-    'SOL': 'bg-violet-500 text-white',
-    'XRP': 'bg-blue-500 text-white',
-    'SUI': 'bg-cyan-500 text-white',
-  };
-  return colors[asset] || 'bg-muted text-muted-foreground';
 };
 
 export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecipeCardProps) {
@@ -109,6 +104,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
 
   const pnlPercent = getStrategyPnlPercent(recipe);
   const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
+  const pnlVsDcaDelta = getPnlVsDcaDelta(recipe);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -181,19 +177,21 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
   };
   
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-card border-border/50">
-      {/* Thumbnail */}
-      <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
+    <Card className={cn(
+      "group overflow-hidden border-border bg-card shadow-sm transition-[border-color,box-shadow,transform] duration-150 ease-out hover:-translate-y-px hover:border-border-strong hover:shadow-md",
+      recipe.archived_at && "opacity-75",
+    )}>
+      <div className="aspect-video overflow-hidden bg-navy">
         {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
             alt={`${recipe.name} thumbnail`}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="h-full w-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+          <div className="flex h-full w-full items-center justify-center text-white/50">
             <div className="text-center">
-              <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <ImageIcon className="mx-auto mb-2 h-12 w-12 opacity-50" />
               <p className="text-sm">No screenshot</p>
             </div>
           </div>
@@ -201,108 +199,81 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
       </div>
 
       <CardHeader className="space-y-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
-              {recipe.goal}
-            </CardTitle>
-            {typeof recipe.display_number === 'number' && (
-              <Badge variant="default" className="text-base font-bold px-3 py-1">#{recipe.display_number}</Badge>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge className={getAssetColor(recipe.asset)}>
-            {recipe.asset}
-          </Badge>
-          <Badge className={getFocusColor(recipe.focus)}>
-            {recipe.focus}
-          </Badge>
-          <Badge variant="outline" className="border-muted-foreground/30">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {typeof recipe.display_number === "number" && (
+            <Badge variant="chip">#{recipe.display_number}</Badge>
+          )}
+          <Badge variant="chip">{recipe.asset}</Badge>
+          <Badge className={getFocusPill(recipe.focus)}>{recipe.focus}</Badge>
+          <Badge variant="outline" className="rounded-full">
             {recipe.time_horizon}
           </Badge>
+          {isLegacyAlgorithm(recipe.algorithm) && (
+            <Badge variant="outline">Legacy</Badge>
+          )}
         </div>
+        <CardTitle className="text-balance text-lg font-extrabold leading-snug tracking-[-0.02em]">
+          {recipe.goal}
+        </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
-        
-        <div className="grid grid-cols-2 gap-3">
+        <MetricTileGrid>
           {returnValue !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-xs text-muted-foreground">CAGR</p>
-                <p className="text-sm font-semibold text-primary">{returnValue.toFixed(1)}%</p>
-              </div>
-            </div>
+            <StatTile label="CAGR" value={formatPercent(returnValue)} />
           )}
 
           {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 col-span-2">
-              <TrendingUp className={`h-4 w-4 ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`} />
-              <div>
-                <p className="text-xs text-muted-foreground">vs Buy &amp; Hold</p>
-                <p className={`text-sm font-semibold ${pnlVsBuyHoldDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                  {formatSignedPercent(pnlVsBuyHoldDelta)}
-                </p>
-              </div>
-            </div>
+            <StatTile
+              label="vs Buy & Hold"
+              value={formatSignedPercent(pnlVsBuyHoldDelta)}
+              tone={deltaTone(pnlVsBuyHoldDelta)}
+            />
           )}
-          
+
+          {isMarketWaveAlgorithm(recipe) && pnlVsDcaDelta !== null && (
+            <StatTile
+              label="vs DCA"
+              value={formatSignedPercent(pnlVsDcaDelta)}
+              tone={deltaTone(pnlVsDcaDelta)}
+            />
+          )}
+
           {scaledCashProfit !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-              <DollarSign className="h-4 w-4 text-accent" />
-              <div>
-                <p className="text-xs text-muted-foreground">Cash Profit</p>
-                <p className="text-sm font-semibold text-foreground">
-                  ${scaledCashProfit.toLocaleString()}
-                </p>
-              </div>
-            </div>
+            <StatTile label="Cash profit" value={formatSignedCurrency(scaledCashProfit)} />
           )}
 
           {scaledAssetQty !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-              <Target className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Asset Accumulated</p>
-                <p className="text-sm font-semibold">{scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} {recipe.asset}</p>
-              </div>
-            </div>
+            <StatTile
+              label="Asset accumulated"
+              value={`${scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${recipe.asset}`}
+            />
           )}
 
           {scaledNetProfitNumber !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-              <DollarSign className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-xs text-muted-foreground">Net Profit</p>
-                <p className="text-sm font-semibold">${scaledNetProfitNumber.toLocaleString()}</p>
-              </div>
-            </div>
+            <StatTile
+              label="Net profit"
+              value={formatSignedCurrency(scaledNetProfitNumber)}
+              tone={signedTone(scaledNetProfitNumber)}
+            />
           )}
 
           {pnlPercent !== null && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
-              <TrendingUp className={`h-4 w-4 ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`} />
-              <div>
-                <p className="text-xs text-muted-foreground">PnL %</p>
-                <p className={`text-sm font-semibold ${pnlPercent >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                  {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(1)}%
-                </p>
-              </div>
-            </div>
+            <StatTile
+              label="PnL"
+              value={formatSignedPercent(pnlPercent)}
+              tone={deltaTone(pnlPercent)}
+            />
           )}
 
           {recipe.algorithm && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 col-span-2">
-              <Target className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Algorithm</p>
-                <p className="text-sm font-semibold">{recipe.algorithm}</p>
-              </div>
-            </div>
+            <StatTile
+              label="Algorithm"
+              value={recipe.algorithm}
+              fullWidth
+            />
           )}
-        </div>
+        </MetricTileGrid>
       </CardContent>
       
       <CardFooter className="pt-0">
@@ -333,7 +304,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
             <Button
               variant="ghost"
               size="sm"
-              className={isInPortfolio(recipe.id) ? "h-8 w-8 p-0 text-red-500" : "h-8 w-8 p-0"}
+              className={isInPortfolio(recipe.id) ? "h-8 w-8 p-0 text-destructive hover:text-destructive" : "h-8 w-8 p-0"}
               onClick={() =>
                 toggleRecipe({
                   recipeId: recipe.id,
@@ -350,7 +321,7 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
               }
               aria-label={isInPortfolio(recipe.id) ? "Remove from portfolio" : "Add to portfolio"}
             >
-              <Heart className={isInPortfolio(recipe.id) ? "h-4 w-4 fill-red-500" : "h-4 w-4"} />
+              <Heart className={isInPortfolio(recipe.id) ? "h-4 w-4 fill-destructive" : "h-4 w-4"} />
             </Button>
             <Button
               variant="outline"

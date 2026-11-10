@@ -1,18 +1,22 @@
-import { useState } from "react";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ASSET_CLASSES, DEFAULT_ASSET_CLASSES, getAlgorithmLabel } from "@/lib/algorithms";
 
 export interface Filters {
+  assetClasses: string[];
   assets: string[];
   focuses: string[];
   timeHorizons: string[];
   algorithms: string[];
   minCAGR: number;
 }
+
+const isDefaultAssetClassSelection = (assetClasses: string[]) =>
+  assetClasses.length === DEFAULT_ASSET_CLASSES.length &&
+  DEFAULT_ASSET_CLASSES.every((c) => assetClasses.includes(c));
 
 interface FilterSidebarProps {
   filters: Filters;
@@ -34,7 +38,7 @@ export const FilterSidebar = ({
   onClose,
 }: FilterSidebarProps) => {
   const handleArrayFilterChange = (
-    key: keyof Pick<Filters, 'assets' | 'focuses' | 'timeHorizons' | 'algorithms'>,
+    key: keyof Pick<Filters, 'assetClasses' | 'assets' | 'focuses' | 'timeHorizons' | 'algorithms'>,
     value: string,
     checked: boolean
   ) => {
@@ -47,6 +51,7 @@ export const FilterSidebar = ({
 
   const clearAllFilters = () => {
     onFiltersChange({
+      assetClasses: [...DEFAULT_ASSET_CLASSES],
       assets: [],
       focuses: [],
       timeHorizons: [],
@@ -56,6 +61,7 @@ export const FilterSidebar = ({
   };
 
   const hasActiveFilters = 
+    !isDefaultAssetClassSelection(filters.assetClasses) ||
     filters.assets.length > 0 ||
     filters.focuses.length > 0 ||
     filters.timeHorizons.length > 0 ||
@@ -63,9 +69,9 @@ export const FilterSidebar = ({
     filters.minCAGR > 0;
 
   return (
-    <div className="space-y-6 p-6 bg-card rounded-lg border border-border shadow-card texture-overlay">
+    <div className="space-y-6 rounded-lg border border-border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Filters</h2>
+        <h2 className="text-lg font-extrabold tracking-[-0.02em]">Filters</h2>
         <div className="flex items-center gap-2">
           {hasActiveFilters && (
             <Button 
@@ -74,7 +80,7 @@ export const FilterSidebar = ({
               onClick={clearAllFilters}
               className="h-8 text-xs"
             >
-              Clear All
+              Clear all
             </Button>
           )}
           {onClose && (
@@ -87,9 +93,35 @@ export const FilterSidebar = ({
 
       <Separator />
 
+      {/* Asset Class Filter */}
+      <div className="space-y-3">
+        <p className="eyebrow">Asset class</p>
+        <div className="space-y-2">
+          {ASSET_CLASSES.map((assetClass) => (
+            <div key={assetClass} className="flex items-center space-x-2">
+              <Checkbox
+                id={`asset-class-${assetClass}`}
+                checked={filters.assetClasses.includes(assetClass)}
+                onCheckedChange={(checked) =>
+                  handleArrayFilterChange('assetClasses', assetClass, checked as boolean)
+                }
+              />
+              <label
+                htmlFor={`asset-class-${assetClass}`}
+                className="text-sm cursor-pointer hover:text-primary transition-colors"
+              >
+                {assetClass}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Separator />
+
       {/* Asset Filter */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">Asset</Label>
+        <p className="eyebrow">Asset</p>
         <div className="space-y-2">
           {availableAssets.map(asset => (
             <div key={asset} className="flex items-center space-x-2">
@@ -115,7 +147,7 @@ export const FilterSidebar = ({
 
       {/* Focus Filter */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">Focus</Label>
+        <p className="eyebrow">Focus</p>
         <div className="space-y-2">
           {availableFocuses.map(focus => (
             <div key={focus} className="flex items-center space-x-2">
@@ -141,7 +173,7 @@ export const FilterSidebar = ({
 
       {/* Time Horizon Filter */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">Time Horizon</Label>
+        <p className="eyebrow">Time horizon</p>
         <div className="space-y-2">
           {['STH', 'LTH'].map(horizon => (
             <div key={horizon} className="flex items-center space-x-2">
@@ -156,7 +188,7 @@ export const FilterSidebar = ({
                 htmlFor={`horizon-${horizon}`}
                 className="text-sm cursor-pointer hover:text-primary transition-colors"
               >
-                {horizon === 'STH' ? 'Short Term' : 'Long Term'}
+                {horizon === 'STH' ? 'Short term' : 'Long term'}
               </label>
             </div>
           ))}
@@ -167,7 +199,7 @@ export const FilterSidebar = ({
 
       {/* Algorithm Filter */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">Algorithm</Label>
+        <p className="eyebrow">Algorithm</p>
         <div className="space-y-2">
           {availableAlgorithms && availableAlgorithms.length > 0 ? (
             availableAlgorithms.map(algorithm => (
@@ -183,7 +215,7 @@ export const FilterSidebar = ({
                   htmlFor={`algorithm-${algorithm}`}
                   className="text-sm cursor-pointer hover:text-primary transition-colors"
                 >
-                  {algorithm}
+                  {getAlgorithmLabel(algorithm)}
                 </label>
               </div>
             ))
@@ -200,8 +232,8 @@ export const FilterSidebar = ({
       {/* CAGR Slider */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Minimum CAGR</Label>
-          <span className="text-sm text-muted-foreground">{filters.minCAGR}%</span>
+          <p className="eyebrow">Minimum CAGR</p>
+          <span className="font-mono text-sm tabular-nums text-muted-foreground">{filters.minCAGR}%</span>
         </div>
         <Slider
           value={[filters.minCAGR]}

@@ -19,6 +19,7 @@ interface Recipe {
   id: string;
   name: string;
   asset: string;
+  asset_class?: string;
   time_horizon: string;
   strategy_type: string;
   algorithm?: string;
@@ -29,15 +30,15 @@ interface Recipe {
   exit_trade: string;
   exit_to_entry_proportion: number;
   time_frame: string;
-  backtesting_period?: string;
-  initial_capital?: number | null;
+  backtesting_period: string;
+  initial_capital: number | null;
   cagr: number | null;
   annualized_return: number | null;
   net_profit: string | null;
   cash_profit: number | null;
-  asset_accumulated?: string | null;
-  sell_above_cost_basis?: boolean | null;
-  best_for?: string | null;
+  asset_accumulated: string | null;
+  sell_above_cost_basis: boolean | null;
+  best_for: string | null;
   created_at: string;
   updated_at: string;
   display_number?: number | null;
@@ -185,17 +186,17 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-gradient-hero border-b border-primary/20">
+      <header className="border-b border-white/[0.08] bg-navy">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
+          <h1 className="text-2xl font-extrabold tracking-[-0.02em] text-white">Admin</h1>
           <div className="flex items-center gap-4">
             <Button onClick={() => navigate('/')} variant="secondary" className="gap-2">
               <Eye className="h-4 w-4" />
-              View Public Site
+              View public site
             </Button>
             <Button variant="secondary" onClick={handleSignOut} className="gap-2">
               <LogOut className="h-4 w-4" />
-              Sign Out
+              Sign out
             </Button>
           </div>
         </div>
@@ -232,7 +233,7 @@ export default function Admin() {
           </div>
           <Button onClick={handleCreateRecipe} className="gap-2">
             <Plus className="h-4 w-4" />
-            Create Recipe
+            Create recipe
           </Button>
         </div>
 

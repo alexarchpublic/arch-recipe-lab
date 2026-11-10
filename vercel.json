@@ -1,17 +1,28 @@
 {
+  "functions": {
+    "api/parse-recipe-screenshots.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
   "rewrites": [
     {
       "source": "/auth",
       "destination": "/index.html"
     },
     {
-      "source": "/admin", 
+      "source": "/admin",
       "destination": "/index.html"
     },
     {
-      "source": "/(.*)",
+      "source": "/recipe/:displayNumber",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
 }
+
 

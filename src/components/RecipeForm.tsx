@@ -17,6 +17,7 @@ import {
   uploadRecipeImage, 
   deleteRecipeImage, 
   getRecipeScreenshots,
+  getStoragePathFromPublicUrl,
   validateImage,
   MAX_IMAGES_PER_RECIPE 
 } from "@/lib/imageUpload";
@@ -26,16 +27,28 @@ import {
   GripVertical, 
   AlertCircle,
   Loader2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Sparkles
 } from "lucide-react";
-import { computeCagr, resolveBuyHoldPnlPercentForSave } from "@/utils/recipeMetrics";
+import { computeCagr, resolveBuyHoldPnlPercentForSave, resolveDcaPnlPercentForSave } from "@/utils/recipeMetrics";
+import { CRYPTO_ASSETS } from "@/lib/algorithms";
+import { parseRecipeScreenshotsFromFiles } from "@/lib/parseRecipeScreenshotsClient";
+import {
+  RECIPE_SCREENSHOT_KINDS,
+  RECIPE_SCREENSHOT_LABELS,
+  isImportableScreenshotCount,
+  type ImportedRecipeDraft,
+} from "@/lib/recipeScreenshotImport";
+import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+
+const TICKER_REGEX = /^[A-Z.-]{1,10}$/;
 
 // Form validation schema
 const recipeSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  asset_class: z.enum(["Equities", "ETFs", "Crypto"]).default("Equities"),
   asset: z.string().min(1, "Asset is required"),
   time_horizon: z.enum(["STH", "LTH"]),
-  strategy_type: z.string().min(1, "Strategy type is required"),
   focus: z.enum(["Cash Yielding", "Balanced", "Accumulation"]),
   goal: z.string().min(1, "Goal is required"),
   entry_trade: z.string().min(1, "Entry trade is required"),
@@ -51,10 +64,33 @@ const recipeSchema = z.object({
   asset_accumulated: z.string().optional(),
   net_profit: z.string().optional(),
   cagr: z.number().optional(),
-  best_for: z.string().optional(),
   // New algorithm fields
-  algorithm: z.enum(["Intelligence Algorithm","Arbitrage Algorithm","Oracle Protocol","Market Wave"]).default("Oracle Protocol"),
+  algorithm: z.enum(["Intelligence Algorithm","Arbitrage Algorithm","Oracle Protocol","Market Wave"]).default("Market Wave"),
   algorithm_inputs: z.any().optional(),
+}).superRefine((data, ctx) => {
+  if (data.asset_class !== "Crypto" && data.algorithm !== "Market Wave") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Equities and ETF recipes must use Market Wave",
+      path: ["algorithm"],
+    });
+  }
+  const normalizedAsset = data.asset.trim().toUpperCase();
+  if (data.asset_class === "Crypto") {
+    if (!CRYPTO_ASSETS.includes(normalizedAsset as (typeof CRYPTO_ASSETS)[number])) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select a valid crypto asset",
+        path: ["asset"],
+      });
+    }
+  } else if (!TICKER_REGEX.test(normalizedAsset)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Enter a valid ticker (1–10 letters, dots, or hyphens)",
+      path: ["asset"],
+    });
+  }
 });
 
 type RecipeFormData = z.infer<typeof recipeSchema>;
@@ -64,6 +100,7 @@ interface RecipeScreenshot {
   image_url: string;
   display_order: number;
   file?: File;
+  label?: string;
 }
 
 interface RecipeFormProps {
@@ -72,14 +109,61 @@ interface RecipeFormProps {
   onCancel: () => void;
 }
 
-export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
+interface RecipeFormBodyProps extends RecipeFormProps {
+  importedScreenshotFiles?: File[] | null;
+  onScreenshotImport?: (draft: ImportedRecipeDraft, files: File[]) => void;
+}
+
+function screenshotsFromFiles(files: File[]): RecipeScreenshot[] {
+  return files.map((file, index) => ({
+    id: `temp_import_${Date.now()}_${index}`,
+    image_url: URL.createObjectURL(file),
+    display_order: index,
+    file,
+    label: RECIPE_SCREENSHOT_LABELS[RECIPE_SCREENSHOT_KINDS[index]] ?? `Screenshot ${index + 1}`,
+  }));
+}
+
+export function RecipeForm(props: RecipeFormProps) {
+  const [importNonce, setImportNonce] = useState(0);
+  const [importedRecipe, setImportedRecipe] = useState<ImportedRecipeDraft | null>(null);
+  const [importedFiles, setImportedFiles] = useState<File[] | null>(null);
+
+  return (
+    <RecipeFormBody
+      key={importNonce}
+      {...props}
+      recipe={importedRecipe ?? props.recipe}
+      importedScreenshotFiles={importedFiles}
+      onScreenshotImport={(draft, files) => {
+        setImportedRecipe(draft);
+        setImportedFiles(files);
+        setImportNonce((n) => n + 1);
+      }}
+    />
+  );
+}
+
+function RecipeFormBody({
+  recipe,
+  onSuccess,
+  onCancel,
+  importedScreenshotFiles,
+  onScreenshotImport,
+}: RecipeFormBodyProps) {
   const [loading, setLoading] = useState(false);
-  const [screenshots, setScreenshots] = useState<RecipeScreenshot[]>([]);
+  const [screenshots, setScreenshots] = useState<RecipeScreenshot[]>(() =>
+    importedScreenshotFiles?.length ? screenshotsFromFiles(importedScreenshotFiles) : [],
+  );
+  const [deletedScreenshots, setDeletedScreenshots] = useState<
+    Array<{ id: string; image_url: string }>
+  >([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [parsingScreenshots, setParsingScreenshots] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const { toast } = useToast();
 
-  const isEditMode = !!recipe;
+  const isEditMode = Boolean(recipe?.id);
 
   const {
     register,
@@ -98,12 +182,15 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
       exit_trade: recipe?.exit_trade || 'See parameters',
       time_frame: (recipe?.time_frame as any) || '1 Day',
       backtesting_period: recipe?.backtesting_period || 'N/A',
-      algorithm: recipe?.algorithm || "Oracle Protocol",
+      asset_class: recipe?.asset_class || "Equities",
+      algorithm: recipe?.algorithm || "Market Wave",
       algorithm_inputs: recipe?.algorithm_inputs || {},
       ...recipe
     }
   });
   const selectedAlgorithm = watch("algorithm");
+  const selectedAssetClass = watch("asset_class");
+  const isEquitiesOrEtf = selectedAssetClass === "Equities" || selectedAssetClass === "ETFs";
 
 
   // Load existing screenshots for edit mode
@@ -117,6 +204,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
     try {
       const existingScreenshots = await getRecipeScreenshots(recipeId);
       setScreenshots(existingScreenshots);
+      setDeletedScreenshots([]);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -126,7 +214,43 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
     }
   };
 
-  const handleImageUpload = async (files: FileList) => {
+  const importFromScreenshots = async (files: File[]) => {
+    setParsingScreenshots(true);
+    try {
+      for (const file of files) {
+        const validationError = validateImage(file);
+        if (validationError) {
+          throw new Error(validationError.message);
+        }
+      }
+      const result = await parseRecipeScreenshotsFromFiles(files);
+      toast({
+        title: "Recipe filled from screenshots",
+        description: result.warnings.length
+          ? result.warnings.join(" ")
+          : "Review the fields, then click Create Recipe.",
+      });
+      onScreenshotImport?.(result.recipe, result.orderedFiles);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Could not read screenshots",
+        description: error.message || "Failed to import recipe from screenshots",
+      });
+    } finally {
+      setParsingScreenshots(false);
+    }
+  };
+
+  const handleImageUpload = async (fileList: FileList | File[]) => {
+    if (parsingScreenshots) return;
+    const files = Array.from(fileList);
+
+    if (!isEditMode && screenshots.length === 0 && isImportableScreenshotCount(files.length)) {
+      await importFromScreenshots(files);
+      return;
+    }
+
     if (screenshots.length + files.length > MAX_IMAGES_PER_RECIPE) {
       toast({
         variant: "destructive",
@@ -193,13 +317,17 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
 
   const removeScreenshot = (index: number) => {
     const screenshot = screenshots[index];
-    
-    // Revoke object URL if it's a temporary file
-    if (screenshot.id.startsWith('temp_')) {
+
+    if (screenshot.id.startsWith("temp_")) {
       URL.revokeObjectURL(screenshot.image_url);
+    } else {
+      setDeletedScreenshots((prev) => [
+        ...prev,
+        { id: screenshot.id, image_url: screenshot.image_url },
+      ]);
     }
-    
-    setScreenshots(prev => prev.filter((_, i) => i !== index));
+
+    setScreenshots((prev) => prev.filter((_, i) => i !== index));
   };
 
   const moveScreenshot = (fromIndex: number, toIndex: number) => {
@@ -222,8 +350,16 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
     try {
       const payload = {
         ...data,
+        algorithm: data.algorithm ?? "Market Wave",
+        asset: data.asset.trim().toUpperCase(),
+        strategy_type: isEditMode ? recipe.strategy_type : (data.algorithm ?? "Market Wave"),
+        best_for: isEditMode ? (recipe.best_for ?? null) : null,
         cagr: computeCagr(data) ?? null,
         buy_hold_pnl_percent: resolveBuyHoldPnlPercentForSave(
+          data.algorithm,
+          data.algorithm_inputs,
+        ),
+        dca_pnl_percent: resolveDcaPnlPercentForSave(
           data.algorithm,
           data.algorithm_inputs,
         ),
@@ -234,7 +370,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
         // Update existing recipe
         const { data: updatedRecipe, error } = await supabase
           .from('recipes')
-          .update(payload)
+          .update(payload as TablesUpdate<"recipes">)
           .eq('id', recipe.id)
           .select('id')
           .single();
@@ -245,7 +381,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
         // Create new recipe
         const { data: newRecipe, error } = await supabase
           .from('recipes')
-          .insert(payload)
+          .insert(payload as TablesInsert<"recipes">)
           .select('id')
           .single();
 
@@ -253,12 +389,19 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
         recipeId = newRecipe.id;
       }
 
-      // Upload new images
-      const newImageFiles = screenshots.filter(s => s.file);
-      for (let i = 0; i < newImageFiles.length; i++) {
-        const screenshot = newImageFiles[i];
+      for (const deleted of deletedScreenshots) {
+        const imagePath = getStoragePathFromPublicUrl(deleted.image_url);
+        await deleteRecipeImage(deleted.id, imagePath);
+      }
+
+      const newImageFiles = screenshots.filter((s) => s.file);
+      for (const screenshot of newImageFiles) {
         if (screenshot.file) {
-          await uploadRecipeImage(screenshot.file, recipeId, screenshot.display_order);
+          await uploadRecipeImage(
+            screenshot.file,
+            recipeId,
+            screenshot.display_order,
+          );
         }
       }
 
@@ -279,6 +422,126 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
     }
   };
 
+  const renderScreenshotsSection = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <h3 className="text-lg font-semibold">Screenshots</h3>
+        {!isEditMode && (
+          <Badge variant="secondary" className="gap-1">
+            <Sparkles className="h-3 w-3" />
+            Auto-fill
+          </Badge>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        <div
+          className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
+            isDragOver
+              ? "border-primary bg-primary/5"
+              : "border-muted-foreground/25"
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <div className="text-center">
+            {parsingScreenshots ? (
+              <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+            ) : (
+              <ImageIcon
+                className={`mx-auto h-12 w-12 transition-colors ${
+                  isDragOver ? "text-primary" : "text-muted-foreground"
+                }`}
+              />
+            )}
+            <div className="mt-4">
+              <Label htmlFor="image-upload" className="cursor-pointer">
+                <span
+                  className={`mt-2 block text-sm font-medium transition-colors ${
+                    isDragOver ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  {parsingScreenshots
+                    ? "Reading screenshots…"
+                    : isDragOver
+                      ? "Drop images here"
+                      : isEditMode
+                        ? "Upload screenshots"
+                        : "Drop 3 or 4 screenshots to auto-fill"}
+                </span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {isEditMode
+                    ? `PNG, JPG, WEBP up to 5MB each (max ${MAX_IMAGES_PER_RECIPE} images)`
+                    : "Chart, Settings, and Stats required. DCA optional. PNG, JPG, or WEBP up to 5MB each."}
+                </span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {isEditMode
+                    ? "Or drag and drop images here"
+                    : "We'll classify them, fill every field, and attach Chart first as the card thumbnail. Without DCA, that benchmark stays blank."}
+                </span>
+              </Label>
+              <Input
+                id="image-upload"
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
+                className="hidden"
+                disabled={uploadingImages || parsingScreenshots}
+              />
+            </div>
+          </div>
+        </div>
+
+        {screenshots.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">
+              Uploaded Screenshots ({screenshots.length}/{MAX_IMAGES_PER_RECIPE})
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {screenshots.map((screenshot, index) => (
+                <div key={screenshot.id} className="relative group">
+                  <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                    <img
+                      src={screenshot.image_url}
+                      alt={screenshot.label || `Screenshot ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removeScreenshot(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="absolute top-2 left-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {screenshot.label || index + 1}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {(uploadingImages || parsingScreenshots) && (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="ml-2 text-sm text-muted-foreground">
+              {parsingScreenshots ? "Reading screenshots…" : "Uploading images..."}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <Card>
@@ -287,11 +550,12 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
           <CardDescription>
             {isEditMode 
               ? 'Update the recipe details and screenshots' 
-              : 'Fill in the recipe details and upload screenshots'}
+              : 'Drop 3 screenshots (chart, settings, stats) to auto-fill, or 4 to include DCA'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {!isEditMode && renderScreenshotsSection()}
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Basic Information</h3>
@@ -310,19 +574,56 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="asset">Asset *</Label>
-                  <Select onValueChange={(value) => setValue("asset", value)} defaultValue={recipe?.asset}>
+                  <Label htmlFor="asset_class">Asset Class *</Label>
+                  <Select
+                    onValueChange={(value) => {
+                      setValue("asset_class", value as "Equities" | "ETFs" | "Crypto");
+                      if (value !== "Crypto") {
+                        setValue("algorithm", "Market Wave");
+                      }
+                    }}
+                    defaultValue={recipe?.asset_class || "Equities"}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select asset" />
+                      <SelectValue placeholder="Select asset class" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="BTC">BTC</SelectItem>
-                      <SelectItem value="ETH">ETH</SelectItem>
-                      <SelectItem value="SOL">SOL</SelectItem>
-                      <SelectItem value="XRP">XRP</SelectItem>
-                      <SelectItem value="SUI">SUI</SelectItem>
+                      <SelectItem value="Equities">Equities</SelectItem>
+                      <SelectItem value="ETFs">ETFs</SelectItem>
+                      <SelectItem value="Crypto">Crypto</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.asset_class && (
+                    <p className="text-sm text-destructive">{errors.asset_class.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="asset">Asset *</Label>
+                  {selectedAssetClass === "Crypto" ? (
+                    <Select onValueChange={(value) => setValue("asset", value)} defaultValue={recipe?.asset}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select asset" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CRYPTO_ASSETS.map((symbol) => (
+                          <SelectItem key={symbol} value={symbol}>{symbol}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      id="asset"
+                      {...register("asset", {
+                        onChange: (e) => {
+                          e.target.value = e.target.value.toUpperCase().trim();
+                        },
+                      })}
+                      defaultValue={recipe?.asset}
+                      placeholder="e.g., AAPL, SPY"
+                      maxLength={10}
+                    />
+                  )}
                   {errors.asset && (
                     <p className="text-sm text-destructive">{errors.asset.message}</p>
                   )}
@@ -360,18 +661,6 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                     <p className="text-sm text-destructive">{errors.focus.message}</p>
                   )}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="strategy_type">Strategy Type *</Label>
-                <Input
-                  id="strategy_type"
-                  {...register("strategy_type")}
-                  placeholder="e.g., Daily Arbitrage, 6 hour Arbitrage"
-                />
-                {errors.strategy_type && (
-                  <p className="text-sm text-destructive">{errors.strategy_type.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -415,18 +704,24 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                   <Label htmlFor="algorithm">Algorithm *</Label>
                   <Select
                     onValueChange={(value) => setValue("algorithm", value as any)}
-                    defaultValue={recipe?.algorithm || "Oracle Protocol"}
+                    defaultValue={recipe?.algorithm || "Market Wave"}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select algorithm" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Intelligence Algorithm">Intelligence Algorithm</SelectItem>
-                      <SelectItem value="Arbitrage Algorithm">Arbitrage Algorithm</SelectItem>
-                      <SelectItem value="Oracle Protocol">Oracle Protocol</SelectItem>
+                      <SelectItem value="Intelligence Algorithm" disabled={isEquitiesOrEtf}>Intelligence Algorithm</SelectItem>
+                      <SelectItem value="Arbitrage Algorithm" disabled={isEquitiesOrEtf}>Arbitrage Algorithm</SelectItem>
+                      <SelectItem value="Oracle Protocol" disabled={isEquitiesOrEtf}>Oracle Protocol (Legacy)</SelectItem>
                       <SelectItem value="Market Wave">Market Wave</SelectItem>
                     </SelectContent>
                   </Select>
+                  {isEquitiesOrEtf && (
+                    <p className="text-sm text-muted-foreground">Equities and ETF recipes require Market Wave.</p>
+                  )}
+                  {errors.algorithm && (
+                    <p className="text-sm text-destructive">{errors.algorithm.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -1024,8 +1319,8 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                 </div>
               )}
 
-              {/* Market Wave Inputs */}
-              {selectedAlgorithm === 'Market Wave' && (
+              {/* Market Wave Inputs — Crypto variant (unchanged) */}
+              {selectedAlgorithm === 'Market Wave' && selectedAssetClass === 'Crypto' && (
                 <div className="space-y-4 border rounded-md p-4">
                   <h4 className="font-medium">Market Wave Inputs</h4>
 
@@ -1193,21 +1488,6 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                     </div>
                   </div>
 
-                  {/* Benchmark */}
-                  <div className="space-y-3">
-                    <h5 className="font-medium">Benchmark</h5>
-                    <div className="space-y-2 max-w-xs">
-                      <Label>Buy &amp; Hold PnL (%)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        defaultValue={recipe?.algorithm_inputs?.buyHoldPnlPercent}
-                        {...register('algorithm_inputs.buyHoldPnlPercent' as any, { valueAsNumber: true })}
-                        placeholder="e.g., 42.5"
-                      />
-                    </div>
-                  </div>
-
                   {/* Trend Filter */}
                   <div className="space-y-3">
                     <h5 className="font-medium">Trend Filter</h5>
@@ -1299,6 +1579,327 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                   </div>
                 </div>
               )}
+
+              {/* Market Wave Inputs — Equities/ETF variant */}
+              {selectedAlgorithm === 'Market Wave' && isEquitiesOrEtf && (
+                <div className="space-y-4 border rounded-md p-4">
+                  <h4 className="font-medium">Market Wave Inputs</h4>
+
+                  {/* User Initial Capital */}
+                  <div className="space-y-3">
+                    <h5 className="font-medium">User Initial Capital</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Starting Cash ($)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.userInitialCapital?.startingCash}
+                          {...register('algorithm_inputs.userInitialCapital.startingCash' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Starting Share Quantity</Label>
+                        <Input type="number" step="1" defaultValue={recipe?.algorithm_inputs?.userInitialCapital?.startingQty}
+                          {...register('algorithm_inputs.userInitialCapital.startingQty' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Order Entry & Exit Rules */}
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Order Entry &amp; Exit Rules</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="eqMwLongEnabled"
+                            defaultChecked={!!recipe?.algorithm_inputs?.longThreshold?.enabled}
+                            onCheckedChange={(checked) => setValue('algorithm_inputs.longThreshold.enabled' as any, !!checked)}
+                          />
+                          <Label htmlFor="eqMwLongEnabled">Long Threshold (%)</Label>
+                        </div>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.longThreshold?.percent}
+                          {...register('algorithm_inputs.longThreshold.percent' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="eqMwExitEnabled"
+                            defaultChecked={!!recipe?.algorithm_inputs?.exitThreshold?.enabled}
+                            onCheckedChange={(checked) => setValue('algorithm_inputs.exitThreshold.enabled' as any, !!checked)}
+                          />
+                          <Label htmlFor="eqMwExitEnabled">Exit Threshold (%)</Label>
+                        </div>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.exitThreshold?.percent}
+                          {...register('algorithm_inputs.exitThreshold.percent' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Trade Size */}
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Trade Size ($5 min)</h5>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="eqMwSharesEnabled"
+                        defaultChecked={!!recipe?.algorithm_inputs?.tradeSize?.sharesEnabled}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.tradeSize.sharesEnabled' as any, !!checked)}
+                      />
+                      <Label htmlFor="eqMwSharesEnabled">Shares Trade Size</Label>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Entry Trade Size (shares)</Label>
+                        <Input type="number" step="1" defaultValue={recipe?.algorithm_inputs?.tradeSize?.entryShares}
+                          {...register('algorithm_inputs.tradeSize.entryShares' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Exit Trade Size (shares)</Label>
+                        <Input type="number" step="1" defaultValue={recipe?.algorithm_inputs?.tradeSize?.exitShares}
+                          {...register('algorithm_inputs.tradeSize.exitShares' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="eqMwFixedEnabled"
+                        defaultChecked={!!recipe?.algorithm_inputs?.tradeSize?.fixedEnabled}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.tradeSize.fixedEnabled' as any, !!checked)}
+                      />
+                      <Label htmlFor="eqMwFixedEnabled">Fixed Trade Size</Label>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Entry Trade Size ($)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.tradeSize?.entryFixed}
+                          {...register('algorithm_inputs.tradeSize.entryFixed' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Exit Trade Size ($)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.tradeSize?.exitFixed}
+                          {...register('algorithm_inputs.tradeSize.exitFixed' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="eqMwPercentEnabled"
+                        defaultChecked={!!recipe?.algorithm_inputs?.tradeSize?.percentEnabled}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.tradeSize.percentEnabled' as any, !!checked)}
+                      />
+                      <Label htmlFor="eqMwPercentEnabled">Percentage Trade Size</Label>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Entry Trade Size (%)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.tradeSize?.entryPercent}
+                          {...register('algorithm_inputs.tradeSize.entryPercent' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Exit Trade Size (%)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.tradeSize?.exitPercent}
+                          {...register('algorithm_inputs.tradeSize.exitPercent' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="eqMwRoundDownWholeShares"
+                        defaultChecked={!!recipe?.algorithm_inputs?.tradeSize?.roundDownWholeShares}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.tradeSize.roundDownWholeShares' as any, !!checked)}
+                      />
+                      <Label htmlFor="eqMwRoundDownWholeShares">Round Down to Whole Shares (Dollar &amp; % modes)</Label>
+                    </div>
+                  </div>
+
+                  {/* Market Wave */}
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Market Wave</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Scope (0.5=micro 20=macro)</Label>
+                        <Input type="number" step="0.1" defaultValue={recipe?.algorithm_inputs?.marketWave?.scope}
+                          {...register('algorithm_inputs.marketWave.scope' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="flex flex-col gap-2 md:mt-6">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="eqMwMwOnlySellAbove"
+                            defaultChecked={!!recipe?.algorithm_inputs?.marketWave?.onlySellAbove}
+                            onCheckedChange={(checked) => setValue('algorithm_inputs.marketWave.onlySellAbove' as any, !!checked)}
+                          />
+                          <Label htmlFor="eqMwMwOnlySellAbove">Only Sell Above</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="eqMwMwOnlyBuyBelow"
+                            defaultChecked={!!recipe?.algorithm_inputs?.marketWave?.onlyBuyBelow}
+                            onCheckedChange={(checked) => setValue('algorithm_inputs.marketWave.onlyBuyBelow' as any, !!checked)}
+                          />
+                          <Label htmlFor="eqMwMwOnlyBuyBelow">Only Buy Below</Label>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Sell Buffer (%)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.marketWave?.sellBuffer}
+                          {...register('algorithm_inputs.marketWave.sellBuffer' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Buy Buffer (%)</Label>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.marketWave?.buyBuffer}
+                          {...register('algorithm_inputs.marketWave.buyBuffer' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Static Market Price Filter */}
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Static Market Price Filter</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="eqMwStaticSellAboveEnabled"
+                            defaultChecked={!!recipe?.algorithm_inputs?.staticPriceFilter?.sellAboveEnabled}
+                            onCheckedChange={(checked) => setValue('algorithm_inputs.staticPriceFilter.sellAboveEnabled' as any, !!checked)}
+                          />
+                          <Label htmlFor="eqMwStaticSellAboveEnabled">Only Sell Above</Label>
+                        </div>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.staticPriceFilter?.sellAbove}
+                          {...register('algorithm_inputs.staticPriceFilter.sellAbove' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="eqMwStaticBuyBelowEnabled"
+                            defaultChecked={!!recipe?.algorithm_inputs?.staticPriceFilter?.buyBelowEnabled}
+                            onCheckedChange={(checked) => setValue('algorithm_inputs.staticPriceFilter.buyBelowEnabled' as any, !!checked)}
+                          />
+                          <Label htmlFor="eqMwStaticBuyBelowEnabled">Only Buy Below</Label>
+                        </div>
+                        <Input type="number" step="0.01" defaultValue={recipe?.algorithm_inputs?.staticPriceFilter?.buyBelow}
+                          {...register('algorithm_inputs.staticPriceFilter.buyBelow' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Trend Filter */}
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Trend Filter</h5>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="eqMwTrendBuyDown"
+                          defaultChecked={!!recipe?.algorithm_inputs?.trendFilter?.buyInDownTrend}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.trendFilter.buyInDownTrend' as any, !!checked)}
+                        />
+                        <Label htmlFor="eqMwTrendBuyDown">Buy in Down Trend</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="eqMwTrendBuyUp"
+                          defaultChecked={!!recipe?.algorithm_inputs?.trendFilter?.buyInUpTrend}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.trendFilter.buyInUpTrend' as any, !!checked)}
+                        />
+                        <Label htmlFor="eqMwTrendBuyUp">Buy in Up Trend</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="eqMwTrendSellDown"
+                          defaultChecked={!!recipe?.algorithm_inputs?.trendFilter?.sellInDownTrend}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.trendFilter.sellInDownTrend' as any, !!checked)}
+                        />
+                        <Label htmlFor="eqMwTrendSellDown">Sell in Down Trend</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="eqMwTrendSellUp"
+                          defaultChecked={!!recipe?.algorithm_inputs?.trendFilter?.sellInUpTrend}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.trendFilter.sellInUpTrend' as any, !!checked)}
+                        />
+                        <Label htmlFor="eqMwTrendSellUp">Sell in Up Trend</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="eqMwTrendBuyUpBreakout"
+                          defaultChecked={!!recipe?.algorithm_inputs?.trendFilter?.buyOnUpTrend}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.trendFilter.buyOnUpTrend' as any, !!checked)}
+                        />
+                        <Label htmlFor="eqMwTrendBuyUpBreakout">Buy on change of trend (Up Trend breakout)</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="eqMwTrendSellDownBreakout"
+                          defaultChecked={!!recipe?.algorithm_inputs?.trendFilter?.sellOnDownTrend}
+                          onCheckedChange={(checked) => setValue('algorithm_inputs.trendFilter.sellOnDownTrend' as any, !!checked)}
+                        />
+                        <Label htmlFor="eqMwTrendSellDownBreakout">Sell on change of trend (Down Trend breakout)</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Start Date / Time */}
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Start Date / Time</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                      <div className="space-y-2">
+                        <Label>Year</Label>
+                        <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.year}
+                          {...register('algorithm_inputs.dates.start.year' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Month</Label>
+                        <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.month}
+                          {...register('algorithm_inputs.dates.start.month' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Day</Label>
+                        <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.day}
+                          {...register('algorithm_inputs.dates.start.day' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Hour (24h)</Label>
+                        <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.hour}
+                          {...register('algorithm_inputs.dates.start.hour' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Minute</Label>
+                        <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.start?.minute}
+                          {...register('algorithm_inputs.dates.start.minute' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* End Date */}
+                  <div className="space-y-3">
+                    <h5 className="font-medium">End Date</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Year</Label>
+                        <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.end?.year}
+                          {...register('algorithm_inputs.dates.end.year' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Month</Label>
+                        <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.end?.month}
+                          {...register('algorithm_inputs.dates.end.month' as any, { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Day</Label>
+                        <Input type="number" defaultValue={recipe?.algorithm_inputs?.dates?.end?.day}
+                          {...register('algorithm_inputs.dates.end.day' as any, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Backtesting */}
+                  <div className="space-y-3">
+                    <h5 className="font-medium">Backtesting</h5>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="eqMwExitFullOnLast"
+                        defaultChecked={!!recipe?.algorithm_inputs?.backtest?.exitFullOnLastBar}
+                        onCheckedChange={(checked) => setValue('algorithm_inputs.backtest.exitFullOnLastBar' as any, !!checked)}
+                      />
+                      <Label htmlFor="eqMwExitFullOnLast">Exit Full Position on Last Historical Bar</Label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Trading Parameters section intentionally removed. These fields are now
@@ -1350,113 +1951,64 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: RecipeFormProps) {
                   />
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="best_for">Best For</Label>
-                <Textarea
-                  id="best_for"
-                  {...register("best_for")}
-                  placeholder="Describe who this recipe is best suited for..."
-                  rows={2}
-                />
-              </div>
             </div>
 
-            {/* Screenshots */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Screenshots</h3>
-              
+            {selectedAlgorithm === 'Market Wave' && (
               <div className="space-y-4">
-                <div 
-                  className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
-                    isDragOver 
-                      ? 'border-primary bg-primary/5' 
-                      : 'border-muted-foreground/25'
-                  }`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  <div className="text-center">
-                    <ImageIcon className={`mx-auto h-12 w-12 transition-colors ${
-                      isDragOver ? 'text-primary' : 'text-muted-foreground'
-                    }`} />
-                    <div className="mt-4">
-                      <Label htmlFor="image-upload" className="cursor-pointer">
-                        <span className={`mt-2 block text-sm font-medium transition-colors ${
-                          isDragOver ? 'text-primary' : 'text-muted-foreground'
-                        }`}>
-                          {isDragOver ? 'Drop images here' : 'Upload screenshots'}
-                        </span>
-                        <span className="mt-1 block text-xs text-muted-foreground">
-                          PNG, JPG, WEBP up to 5MB each (max {MAX_IMAGES_PER_RECIPE} images)
-                        </span>
-                        <span className="mt-1 block text-xs text-muted-foreground">
-                          Or drag and drop images here
-                        </span>
-                      </Label>
+                <h3 className="text-lg font-semibold">Benchmark</h3>
+                <div className={`grid grid-cols-1 gap-4 ${isEquitiesOrEtf ? 'md:grid-cols-2 max-w-2xl' : 'max-w-xs'}`}>
+                  <div className="space-y-2">
+                    <Label>Buy &amp; Hold PnL (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      defaultValue={recipe?.algorithm_inputs?.buyHoldPnlPercent}
+                      {...register('algorithm_inputs.buyHoldPnlPercent' as any, { valueAsNumber: true })}
+                      placeholder="e.g., 42.5"
+                    />
+                  </div>
+                  {isEquitiesOrEtf && (
+                    <div className="space-y-2">
+                      <Label>DCA PnL (%)</Label>
                       <Input
-                        id="image-upload"
-                        type="file"
-                        multiple
-                        accept="image/png,image/jpeg,image/jpg,image/webp"
-                        onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
-                        className="hidden"
-                        disabled={uploadingImages}
+                        type="number"
+                        step="0.01"
+                        defaultValue={recipe?.algorithm_inputs?.dcaPnlPercent}
+                        {...register('algorithm_inputs.dcaPnlPercent' as any, { valueAsNumber: true })}
+                        placeholder="e.g., 18.2"
                       />
                     </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="showBuyHoldBenchmark"
+                      defaultChecked={recipe?.algorithm_inputs?.benchmark?.showBuyHold !== false}
+                      onCheckedChange={(checked) => setValue('algorithm_inputs.benchmark.showBuyHold' as any, !!checked)}
+                    />
+                    <Label htmlFor="showBuyHoldBenchmark">Show Buy &amp; Hold Benchmark</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="showDcaBenchmark"
+                      defaultChecked={!!recipe?.algorithm_inputs?.benchmark?.showDca || !!recipe?.algorithm_inputs?.showDcaBenchmark}
+                      onCheckedChange={(checked) => setValue('algorithm_inputs.benchmark.showDca' as any, !!checked)}
+                    />
+                    <Label htmlFor="showDcaBenchmark">Show DCA Benchmark</Label>
                   </div>
                 </div>
-
-                {screenshots.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Uploaded Screenshots ({screenshots.length}/{MAX_IMAGES_PER_RECIPE})</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {screenshots.map((screenshot, index) => (
-                        <div key={screenshot.id} className="relative group">
-                          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                            <img
-                              src={screenshot.image_url}
-                              alt={`Screenshot ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => removeScreenshot(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <div className="absolute top-2 left-2">
-                            <Badge variant="secondary" className="text-xs">
-                              {index + 1}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {uploadingImages && (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    <span className="ml-2 text-sm text-muted-foreground">Uploading images...</span>
-                  </div>
-                )}
               </div>
-            </div>
+            )}
+
+            {isEditMode && renderScreenshotsSection()}
 
             {/* Form Actions */}
             <div className="flex justify-end space-x-4 pt-6 border-t">
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || parsingScreenshots}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

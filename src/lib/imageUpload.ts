@@ -18,7 +18,10 @@ export const MAX_IMAGES_PER_RECIPE = 5;
  * Validates an image file
  */
 export function validateImage(file: File): ImageValidationError | null {
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  const allowedExtensions = ["jpeg", "jpg", "png", "webp"];
+  const typeOk = ALLOWED_TYPES.includes(file.type) || (!file.type && !!extension && allowedExtensions.includes(extension));
+  if (!typeOk) {
     return {
       message: `Invalid file type. Allowed types: ${ALLOWED_TYPES.join(', ')}`
     };
@@ -187,6 +190,18 @@ export async function uploadRecipeImage(
     id: imageId,
     url: uploadResult.url
   };
+}
+
+/**
+ * Extracts the storage object path from a public recipe-screenshots URL.
+ */
+export function getStoragePathFromPublicUrl(imageUrl: string): string {
+  const marker = "/recipe-screenshots/";
+  const index = imageUrl.indexOf(marker);
+  if (index === -1) {
+    throw new Error("Invalid screenshot URL: cannot determine storage path");
+  }
+  return decodeURIComponent(imageUrl.slice(index + marker.length));
 }
 
 /**
