@@ -7,13 +7,23 @@ no sign-up form, and the database refuses new accounts that are not on the list.
 Roles are `editor`, `approver` and `marketing_editor`. Phase 0 enforces
 membership only; what each role may do arrives with the publish flow in Phase 1.
 
+## Status in production
+
+On 10 November 2026, `20261110000001` and `20261110000002` were applied to
+production (`xsoixhltejgyuhedhbdu`) and checked in place. The seed listed
+alex@archpublic.com and josh@archpublic.com as editors, the two accounts
+that could write before. The three @thearchpublic.com accounts had already
+lost write access when the domain changed in May 2026 and stay off the list.
+`20261110000003` (narrower function grants) waits for approval.
+
 ## Applying the Phase 0 migrations
 
-Run these two files, in order, in the Supabase SQL editor of the production
+Run these files, in order, in the Supabase SQL editor of the production
 project (`xsoixhltejgyuhedhbdu`), then on staging:
 
 1. `supabase/migrations/20261110000001_admin_allowlist.sql`
 2. `supabase/migrations/20261110000002_block_admin_self_signup.sql`
+3. `supabase/migrations/20261110000003_tighten_admin_function_grants.sql`
 
 The first seeds the list with every existing confirmed `@archpublic.com`
 account, as `editor`, so nobody who works today is locked out. The app code
