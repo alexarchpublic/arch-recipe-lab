@@ -6,10 +6,21 @@ Staging is a separate Supabase project for testing ingestion and migrations
 
 | | Production | Staging |
 | --- | --- | --- |
-| Supabase project | `xsoixhltejgyuhedhbdu` | a project of its own (see below) |
+| Supabase project | `xsoixhltejgyuhedhbdu` | `vdtkboqglndanzvzrqsn` (arch-recipe-lab-staging, us-east-2) |
 | Deployed from | `main`, automatically | `dev` and pull requests, as Vercel previews |
 | Strategy data | the source of truth | a copy of production, reset on demand |
 | Images | production bucket | rows point at production's public images; new uploads go to the staging bucket |
+
+Staging was created on 10 November 2026 in the Arch Public organization
+($10 a month). It holds all 15 migrations, including `20261110000003`, and a
+copy of production's 76 strategies and 165 screenshots whose fingerprint
+matched production's. Vercel's preview environment points at it; production
+and development keep production's values. Its admin list holds
+alex@archpublic.com: invite that address from the staging dashboard to sign in.
+
+Two differences from production, both harmless: `update_updated_at_column()`
+was re-saved by hand in production (same behaviour), and production does not
+yet have `20261110000003`.
 
 The old project named in the repo, `latolckbjpwwnjpglgee`, no longer exists
 (its address stopped resolving by 10 November 2026), so it cannot be reused.
@@ -37,6 +48,20 @@ The old project named in the repo, `latolckbjpwwnjpglgee`, no longer exists
 
 4. Add `ANTHROPIC_API_KEY` to the preview environment if it is not there, and
    add staging admins with the SQL in `docs/ADMIN_ACCESS.md`.
+
+### Without a database password
+
+Staging was first built through the Supabase connector, which has no
+password. Two things learned there:
+
+- Apply migrations one at a time. Two sent together got the same version
+  timestamp and one was refused.
+- `20251030000220` fails on an empty table (`setval` cannot take 0). The base
+  migration's 13 sample rows must exist first, which the file order provides.
+
+The copy then ran inside staging: `pg_net` fetched production's public
+`recipes` and `recipe_screenshots` with the publishable key, and one
+transaction replaced staging's rows with them.
 
 ## Reset staging to production's strategies
 

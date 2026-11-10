@@ -61,4 +61,12 @@ end $$;
 insert into public.admin_users (email, role, added_by) values ('invited@archpublic.com', 'approver', 'test');
 insert into auth.users (email, email_confirmed_at) values ('Invited@ArchPublic.com', now());
 
+-- 6. Grants after 20261110000003: signed out, the admin functions are closed.
+do $$ begin
+  if has_function_privilege('anon', 'public.is_admin()', 'execute') then raise exception 'anon can call is_admin'; end if;
+  if has_function_privilege('anon', 'public.refuse_unlisted_signup()', 'execute') then raise exception 'anon can call the trigger function'; end if;
+  if not has_function_privilege('authenticated', 'public.is_admin()', 'execute') then raise exception 'signed-in users cannot call is_admin'; end if;
+  if not has_function_privilege('authenticated', 'public.user_has_valid_domain()', 'execute') then raise exception 'write policies cannot run'; end if;
+end $$;
+
 select 'allowlist checks passed' as result;
