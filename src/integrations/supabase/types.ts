@@ -51,10 +51,13 @@ export type Database = {
           annualized_return: number | null
           algorithm: string
           algorithm_inputs: Json
+          archived_at: string | null
           asset: string
+          asset_class: string
           asset_accumulated: string | null
           backtesting_period: string | null
           buy_hold_pnl_percent: number | null
+          dca_pnl_percent: number | null
           best_for: string | null
           display_number: number | null
           cagr: number | null
@@ -79,10 +82,13 @@ export type Database = {
           annualized_return?: number | null
           algorithm: string
           algorithm_inputs?: Json
+          archived_at?: string | null
           asset: string
+          asset_class?: string
           asset_accumulated?: string | null
           backtesting_period?: string | null
           buy_hold_pnl_percent?: number | null
+          dca_pnl_percent?: number | null
           best_for?: string | null
           display_number?: number | null
           cagr?: number | null
@@ -107,10 +113,13 @@ export type Database = {
           annualized_return?: number | null
           algorithm?: string
           algorithm_inputs?: Json
+          archived_at?: string | null
           asset?: string
+          asset_class?: string
           asset_accumulated?: string | null
           backtesting_period?: string | null
           buy_hold_pnl_percent?: number | null
+          dca_pnl_percent?: number | null
           best_for?: string | null
           display_number?: number | null
           cagr?: number | null
@@ -138,7 +147,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_role: { Args: Record<PropertyKey, never>; Returns: string | null }
+      is_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

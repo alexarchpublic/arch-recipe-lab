@@ -11,20 +11,12 @@ import { Separator } from "@/components/ui/separator";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { scaleAlgorithmInputs } from "@/utils/recipeScaling";
 import { computeScaledMetricsForRecipe, DEFAULT_BASE_CAPITAL } from "@/lib/portfolio";
+import { CRYPTO_ASSETS, isLegacyAlgorithm } from "@/lib/algorithms";
 
 interface TradingViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-const assetHexBySymbol: Record<string, string> = {
-  // Recognizable brand-adjacent colors
-  BTC: '#f7931a',     // Bitcoin orange
-  ETH: '#627eea',     // Ethereum blue/purple
-  SOL: '#14f195',     // Solana green
-  XRP: '#23292f',     // XRP black-ish
-  SUI: '#2F80ED',     // Sui blue
-};
 
 export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) {
   const { positions, initialCapital, recipes, rows } = usePortfolio();
@@ -157,6 +149,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
         lines.push(`  End Date: ${formatDate(scaledInputs.dates.end)}`);
       }
     } else if (recipe.algorithm === 'Market Wave') {
+      const isCryptoAsset = CRYPTO_ASSETS.includes(recipe.assetSymbol as (typeof CRYPTO_ASSETS)[number]);
       lines.push('Market Wave Parameters:');
       // User Initial Capital
       if (scaledInputs.userInitialCapital) {
@@ -165,6 +158,9 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
         }
         if (typeof scaledInputs.userInitialCapital.startingCryptoQty === 'number') {
           lines.push(`  Starting Crypto Qty: ${scaledInputs.userInitialCapital.startingCryptoQty}`);
+        }
+        if (typeof scaledInputs.userInitialCapital.startingQty === 'number') {
+          lines.push(`  Starting Share Qty: ${scaledInputs.userInitialCapital.startingQty}`);
         }
       }
       // Order Entry & Exit Rules
@@ -175,6 +171,15 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
         lines.push(`  Exit Threshold: ${scaledInputs.exitThreshold.percent}%`);
       }
       // Trade Size
+      if (scaledInputs.tradeSize?.sharesEnabled) {
+        lines.push(`  Shares Trade Size: Yes`);
+        if (typeof scaledInputs.tradeSize.entryShares === 'number') {
+          lines.push(`  Entry Trade Size (shares): ${scaledInputs.tradeSize.entryShares}`);
+        }
+        if (typeof scaledInputs.tradeSize.exitShares === 'number') {
+          lines.push(`  Exit Trade Size (shares): ${scaledInputs.tradeSize.exitShares}`);
+        }
+      }
       if (scaledInputs.tradeSize?.fixedEnabled) {
         lines.push(`  Fixed Trade Size: Yes`);
         if (typeof scaledInputs.tradeSize.entryFixed === 'number') {
@@ -193,10 +198,14 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
           lines.push(`  Exit Trade Size (%): ${scaledInputs.tradeSize.exitPercent}%`);
         }
       }
+      if (scaledInputs.tradeSize?.roundDownWholeShares) {
+        lines.push(`  Round Down to Whole Shares: Yes`);
+      }
       // Market Wave
       if (scaledInputs.marketWave) {
         if (typeof scaledInputs.marketWave.scope === 'number') {
-          lines.push(`  Scope (0.5=micro 10=macro): ${scaledInputs.marketWave.scope}`);
+          const scopeHint = isCryptoAsset ? '0.5=micro 10=macro' : '0.5=micro 20=macro';
+          lines.push(`  Scope (${scopeHint}): ${scaledInputs.marketWave.scope}`);
         }
         if (scaledInputs.marketWave.onlySellAbove) {
           lines.push(`  Only Sell Above: Yes`);
@@ -219,6 +228,18 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
         lines.push(`  Static Filter — Only Buy Below: $${scaledInputs.staticPriceFilter.buyBelow.toLocaleString()}`);
       }
       // Trend Filter
+      if (scaledInputs.trendFilter?.buyInDownTrend) {
+        lines.push(`  Buy in Down Trend: Yes`);
+      }
+      if (scaledInputs.trendFilter?.buyInUpTrend) {
+        lines.push(`  Buy in Up Trend: Yes`);
+      }
+      if (scaledInputs.trendFilter?.sellInDownTrend) {
+        lines.push(`  Sell in Down Trend: Yes`);
+      }
+      if (scaledInputs.trendFilter?.sellInUpTrend) {
+        lines.push(`  Sell in Up Trend: Yes`);
+      }
       if (scaledInputs.trendFilter?.buyOnUpTrend) {
         lines.push(`  Buy on Up Trend breakout: Yes`);
       }
@@ -371,19 +392,29 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
     }
     if (recipe.algorithm === 'Market Wave') {
       let entrySize = '?';
-      if (scaledInputs?.tradeSize?.fixedEnabled && typeof scaledInputs?.tradeSize?.entryFixed === 'number') {
+      let exitSize = '?';
+
+      if (scaledInputs?.tradeSize?.sharesEnabled) {
+        if (typeof scaledInputs?.tradeSize?.entryShares === 'number') {
+          entrySize = `${scaledInputs.tradeSize.entryShares}sh`;
+        }
+        if (typeof scaledInputs?.tradeSize?.exitShares === 'number') {
+          exitSize = `${scaledInputs.tradeSize.exitShares}sh`;
+        }
+      } else if (scaledInputs?.tradeSize?.fixedEnabled && typeof scaledInputs?.tradeSize?.entryFixed === 'number') {
         entrySize = `$${scaledInputs.tradeSize.entryFixed.toLocaleString()}`;
       } else if (scaledInputs?.tradeSize?.percentEnabled && typeof scaledInputs?.tradeSize?.entryPercent === 'number' && capitalAllocated > 0) {
         const entryDollar = Math.round(capitalAllocated * (scaledInputs.tradeSize.entryPercent / 100));
         entrySize = `$${entryDollar.toLocaleString()}`;
       }
 
-      let exitSize = '?';
-      if (scaledInputs?.tradeSize?.fixedEnabled && typeof scaledInputs?.tradeSize?.exitFixed === 'number') {
-        exitSize = `$${scaledInputs.tradeSize.exitFixed.toLocaleString()}`;
-      } else if (scaledInputs?.tradeSize?.percentEnabled && typeof scaledInputs?.tradeSize?.exitPercent === 'number' && capitalAllocated > 0) {
-        const exitDollar = Math.round(capitalAllocated * (scaledInputs.tradeSize.exitPercent / 100));
-        exitSize = `$${exitDollar.toLocaleString()}`;
+      if (!scaledInputs?.tradeSize?.sharesEnabled) {
+        if (scaledInputs?.tradeSize?.fixedEnabled && typeof scaledInputs?.tradeSize?.exitFixed === 'number') {
+          exitSize = `$${scaledInputs.tradeSize.exitFixed.toLocaleString()}`;
+        } else if (scaledInputs?.tradeSize?.percentEnabled && typeof scaledInputs?.tradeSize?.exitPercent === 'number' && capitalAllocated > 0) {
+          const exitDollar = Math.round(capitalAllocated * (scaledInputs.tradeSize.exitPercent / 100));
+          exitSize = `$${exitDollar.toLocaleString()}`;
+        }
       }
 
       const scope = typeof scaledInputs?.marketWave?.scope === 'number' ? ` Scope(${scaledInputs.marketWave.scope})` : '';
@@ -396,7 +427,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Copy To TradingView</DialogTitle>
+          <DialogTitle>Copy to TradingView</DialogTitle>
           <DialogDescription className="space-y-2">
             <div>
               Algorithm parameters and scaled input values for each recipe in your portfolio.
@@ -428,22 +459,21 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         {typeof recipe.display_number === 'number' && (
-                          <Badge variant="default" className="text-base font-bold px-3 py-1">#{recipe.display_number}</Badge>
+                          <Badge variant="chip">#{recipe.display_number}</Badge>
                         )}
-                        <h3 className="text-lg font-semibold">
+                        <h3 className="text-lg font-extrabold tracking-[-0.02em]">
                           {typeof recipe.display_number === 'number' 
                             ? `Recipe #${recipe.display_number}` 
-                            : `Recipe Name: ${recipe.title}`}
+                            : `Recipe name: ${recipe.title}`}
                         </h3>
-                        <Badge 
-                          variant="outline"
-                          className="text-white"
-                          style={{ backgroundColor: assetHexBySymbol[recipe.assetSymbol] || '#6b7280', borderColor: assetHexBySymbol[recipe.assetSymbol] || '#6b7280' }}
-                        >
+                        <Badge variant="chip">
                           {recipe.assetSymbol}
                         </Badge>
                         {recipe.algorithm && (
-                          <Badge variant="secondary">{recipe.algorithm}</Badge>
+                          <Badge variant="secondary">
+                            {recipe.algorithm}
+                            {isLegacyAlgorithm(recipe.algorithm) ? ' (Legacy)' : ''}
+                          </Badge>
                         )}
                       </div>
                       {/* Suggested TradingView Name */}

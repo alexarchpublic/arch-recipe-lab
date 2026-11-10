@@ -35,7 +35,7 @@ export function PortfolioDrawer() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
-          className={"fixed bottom-6 right-6 h-12 px-5 rounded-full shadow-lg transition-colors " + (flash ? "bg-green-600 hover:bg-green-600 text-white" : "")}
+          className={"fixed bottom-6 right-6 h-12 px-5 rounded-full shadow-lg " + (flash ? "bg-gain text-white hover:bg-gain hover:brightness-100" : "")}
           variant="default"
         >
           Portfolio
@@ -52,32 +52,31 @@ export default PortfolioDrawer;
 
 function currency(n: number | null): string {
   if (n === null) return "—";
-  return `$${Math.round(n).toLocaleString()}`;
+  const abs = `$${Math.abs(Math.round(n)).toLocaleString()}`;
+  return n < 0 ? `−${abs}` : abs;
 }
 
 function pct(n: number): string {
   return `${(Math.round(n * 100) / 100).toFixed(2)}%`;
 }
 
-const assetHexBySymbol: Record<string, string> = {
-  // Recognizable brand-adjacent colors
-  BTC: '#f7931a',     // Bitcoin orange
-  ETH: '#627eea',     // Ethereum blue/purple
-  SOL: '#14f195',     // Solana green
-  XRP: '#23292f',     // XRP black-ish
-  SUI: '#2F80ED',     // Sui blue
-};
+function signedPct(n: number): string {
+  const abs = (Math.round(Math.abs(n) * 100) / 100).toFixed(2);
+  if (n < 0) return `−${abs}%`;
+  if (n > 0) return `+${abs}%`;
+  return `${abs}%`;
+}
 
-const getFocusColor = (focus?: string | null): string => {
+const getFocusPill = (focus?: string | null): string => {
   switch (focus) {
-    case 'Cash Yielding':
-      return 'bg-accent text-accent-foreground';
-    case 'Accumulation':
-      return 'bg-primary text-primary-foreground';
-    case 'Balanced':
-      return 'bg-secondary text-secondary-foreground';
+    case "Cash Yielding":
+      return "bg-primary text-primary-foreground";
+    case "Accumulation":
+      return "bg-navy text-white";
+    case "Balanced":
+      return "bg-muted text-foreground border-border";
     default:
-      return 'bg-muted text-muted-foreground';
+      return "bg-muted text-muted-foreground";
   }
 };
 
@@ -146,7 +145,7 @@ function DrawerInner() {
 
       <div className="mt-4 grid grid-cols-2 gap-2 flex-shrink-0">
         <div className="space-y-1">
-          <div className="text-xs text-muted-foreground">Initial Capital</div>
+          <div className="eyebrow">Initial capital</div>
           <Input
             type="text"
             value={capitalInput}
@@ -159,11 +158,12 @@ function DrawerInner() {
             }}
             placeholder="$100,000"
             min={0}
+            className="font-mono tabular-nums"
           />
         </div>
         <div className="space-y-1">
-          <div className="text-xs text-muted-foreground">Remaining Allocation</div>
-          <div className={"text-sm font-medium " + (remainingPct < 0 ? "text-destructive" : remainingPct > 0 ? "text-amber-500" : "")}>{pct(remainingPct)}</div>
+          <div className="eyebrow">Remaining allocation</div>
+          <div className={"font-mono text-sm font-semibold tabular-nums " + (remainingPct < 0 ? "text-destructive" : remainingPct > 0 ? "text-warn" : "")}>{signedPct(remainingPct)}</div>
         </div>
       </div>
 
@@ -171,7 +171,7 @@ function DrawerInner() {
       <div className="mt-4 flex-1 overflow-y-auto min-h-0">
         <div className="space-y-3">
         {positionEntries.length === 0 && (
-          <div className="text-sm text-muted-foreground">No recipes added yet. Tap the heart on a recipe to add it.</div>
+          <div className="text-sm text-muted-foreground">No recipes added yet. Add a recipe from the browser.</div>
         )}
 
         {positionEntries.map(pos => {
@@ -180,33 +180,30 @@ function DrawerInner() {
           if (!r || !row) return null;
           const sliderMax = Math.max(0, Math.min(100, remainingPct + pos.allocationPct));
           return (
-            <div key={pos.recipeId} className="rounded-md border p-3">
+            <div key={pos.recipeId} className="rounded-md border border-border bg-card p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium leading-tight">
+                  <div className="font-extrabold leading-tight tracking-[-0.02em]">
                     {typeof r.display_number === 'number' ? `Recipe #${r.display_number}` : r.title}
                   </div>
                   <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                    <Badge 
-                      className="px-1 py-0.5 text-[10px] text-white"
-                      style={{ backgroundColor: assetHexBySymbol[r.assetSymbol] || '#6b7280' }}
-                    >
+                    <Badge variant="chip" className="px-1 py-0.5 text-[10px]">
                       {r.assetSymbol}
                     </Badge>
                     {r.focus && (
-                      <Badge className={`px-1 py-0.5 text-[10px] ${getFocusColor(r.focus)}`}>
+                      <Badge className={`px-1 py-0.5 text-[10px] ${getFocusPill(r.focus)}`}>
                         {r.focus}
                       </Badge>
                     )}
                     {r.algorithm && (
-                      <Badge variant="outline" className="px-2 py-0.5 text-[10px] border-muted-foreground/30 text-center whitespace-nowrap">
+                      <Badge variant="outline" className="px-2 py-0.5 text-[10px] text-center whitespace-nowrap">
                         {r.algorithm}
                       </Badge>
                     )}
-                    <span>Alloc: {pct(pos.allocationPct)}</span>
+                    <span className="font-mono tabular-nums">Alloc: {pct(pos.allocationPct)}</span>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => removeRecipe(pos.recipeId)}>
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={() => removeRecipe(pos.recipeId)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -226,24 +223,24 @@ function DrawerInner() {
                     max={sliderMax}
                     step={0.5}
                     onChange={e => setAllocation(pos.recipeId, Number(e.target.value))}
-                    className="w-24"
+                    className="w-24 font-mono tabular-nums"
                   />
-                  <div className="text-xs text-muted-foreground">Capital: {currency(row.capitalAllocated)}</div>
+                  <div className="font-mono text-xs tabular-nums text-muted-foreground">Capital: {currency(row.capitalAllocated)}</div>
                 </div>
               </div>
 
               <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
-                  <div className="text-muted-foreground">Cash Profit</div>
-                  <div className="font-medium">{currency(row.cashRealized)}</div>
+                <div className="rounded-md border border-tile-border bg-muted p-2">
+                  <div className="eyebrow">Cash profit</div>
+                  <div className="mt-0.5 font-mono font-semibold tabular-nums">{currency(row.cashRealized)}</div>
                 </div>
-                <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
-                  <div className="text-muted-foreground">Net Profit</div>
-                  <div className={"font-medium " + ((row.netProfit ?? 0) < 0 ? "text-destructive" : "")}>{currency(row.netProfit)}</div>
+                <div className="rounded-md border border-tile-border bg-muted p-2">
+                  <div className="eyebrow">Net profit</div>
+                  <div className={"mt-0.5 font-mono font-semibold tabular-nums " + ((row.netProfit ?? 0) < 0 ? "text-destructive" : "")}>{currency(row.netProfit)}</div>
                 </div>
-                <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
-                  <div className="text-muted-foreground">Qty ({row.assetSymbol})</div>
-                  <div className="font-medium">{row.assetQuantity !== null ? row.assetQuantity.toFixed(6) : "—"}</div>
+                <div className="rounded-md border border-tile-border bg-muted p-2">
+                  <div className="eyebrow">Qty ({row.assetSymbol})</div>
+                  <div className="mt-0.5 font-mono font-semibold tabular-nums">{row.assetQuantity !== null ? row.assetQuantity.toFixed(6) : "—"}</div>
                 </div>
               </div>
             </div>
@@ -253,35 +250,32 @@ function DrawerInner() {
       </div>
 
       <div className="mt-4 space-y-2 flex-shrink-0">
-        <div className="text-sm font-semibold">Aggregates</div>
+        <div className="eyebrow">Aggregates</div>
         <div className="grid grid-cols-3 gap-2 text-xs">
-          <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
-            <div className="text-muted-foreground">Capital</div>
-            <div className="font-medium">{currency(aggregates.totalCapitalAllocated)}</div>
+          <div className="rounded-md border border-tile-border bg-muted p-2">
+            <div className="eyebrow">Capital</div>
+            <div className="mt-0.5 font-mono font-semibold tabular-nums">{currency(aggregates.totalCapitalAllocated)}</div>
           </div>
-          <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
-            <div className="text-muted-foreground">Cash Profit</div>
-            <div className="font-medium">{currency(aggregates.totalCashRealized)}</div>
+          <div className="rounded-md border border-tile-border bg-muted p-2">
+            <div className="eyebrow">Cash profit</div>
+            <div className="mt-0.5 font-mono font-semibold tabular-nums">{currency(aggregates.totalCashRealized)}</div>
           </div>
-          <div className="rounded-md bg-gray-100 border border-gray-200 p-2">
-            <div className="text-muted-foreground">Net Profit</div>
-            <div className={"font-medium " + ((aggregates.totalNetProfit ?? 0) < 0 ? "text-destructive" : "")}>{currency(aggregates.totalNetProfit)}</div>
+          <div className="rounded-md border border-tile-border bg-muted p-2">
+            <div className="eyebrow">Net profit</div>
+            <div className={"mt-0.5 font-mono font-semibold tabular-nums " + ((aggregates.totalNetProfit ?? 0) < 0 ? "text-destructive" : "")}>{currency(aggregates.totalNetProfit)}</div>
           </div>
         </div>
 
         {Object.keys(aggregates.assetAccumulations).length > 0 && (
           <div className="mt-3 text-xs">
-            <div className="text-sm font-semibold mb-2">Crypto Accumulation</div>
-            <div className="rounded-md bg-gray-100 border border-gray-200 p-3 space-y-2">
+            <div className="eyebrow mb-2">Asset accumulation</div>
+            <div className="space-y-2 rounded-md border border-tile-border bg-muted p-3">
               {Object.entries(aggregates.assetAccumulations).map(([sym, qty]) => (
                 <div key={sym} className="flex items-center justify-between">
-                  <Badge 
-                    className="px-2 py-1 text-xs text-white"
-                    style={{ backgroundColor: assetHexBySymbol[sym] || '#6b7280' }}
-                  >
+                  <Badge variant="chip" className="px-2 py-1 text-xs">
                     {sym}
                   </Badge>
-                  <span className="font-medium">{qty.toFixed(6)}</span>
+                  <span className="font-mono font-semibold tabular-nums">{qty.toFixed(6)}</span>
                 </div>
               ))}
             </div>
@@ -296,10 +290,10 @@ function DrawerInner() {
           onClick={() => setTradingViewModalOpen(true)}
           disabled={positionEntries.length === 0}
         >
-          <Copy className="h-4 w-4" /> Copy To TradingView
+          <Copy className="h-4 w-4" /> Copy to TradingView
         </Button>
         <Button variant="destructive" className="gap-2" onClick={clear}>
-          <Trash2 className="h-4 w-4" /> Clear
+          <Trash2 className="h-4 w-4" /> Clear all
         </Button>
       </div>
 

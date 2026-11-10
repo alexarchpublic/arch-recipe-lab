@@ -4,6 +4,7 @@ export interface RecipeMetricsInput {
   algorithm?: string | null;
   algorithm_inputs?: unknown;
   buy_hold_pnl_percent?: number | null;
+  dca_pnl_percent?: number | null;
   initial_capital?: number | null;
   net_profit?: string | null;
   cagr?: number | null;
@@ -139,12 +140,75 @@ export function resolveBuyHoldPnlPercentForSave(
   return getBuyHoldPnlPercent({ algorithm, algorithm_inputs });
 }
 
+/** Market Wave: admin-entered DCA PnL (%). */
+export function getDcaPnlPercent(recipe: RecipeMetricsInput): number | null {
+  if (!isMarketWaveAlgorithm(recipe)) return null;
+
+  const fromColumn = parsePercentValue(recipe.dca_pnl_percent);
+  if (fromColumn !== null) return fromColumn;
+
+  const ai = normalizeAlgorithmInputs(recipe.algorithm_inputs);
+  if (!ai) return null;
+
+  return (
+    parsePercentValue(ai.dcaPnlPercent) ??
+    parsePercentValue(ai.dca_pnl_percent) ??
+    parsePercentValue((ai.benchmark as Record<string, unknown> | undefined)?.dcaPnlPercent)
+  );
+}
+
+/** Persisted value for Market Wave recipes (column + algorithm_inputs). */
+export function resolveDcaPnlPercentForSave(
+  algorithm: string | undefined,
+  algorithm_inputs: unknown,
+): number | null {
+  if (algorithm?.trim() !== "Market Wave") return null;
+  return getDcaPnlPercent({ algorithm, algorithm_inputs });
+}
+
+function getBenchmarkDisplayFlags(recipe: RecipeMetricsInput): {
+  showBuyHold: boolean;
+  showDca: boolean;
+} {
+  const ai = normalizeAlgorithmInputs(recipe.algorithm_inputs);
+  const benchmark = ai?.benchmark as Record<string, unknown> | undefined;
+
+  const showBuyHold =
+    benchmark?.showBuyHold === false || ai?.showBuyHoldBenchmark === false
+      ? false
+      : true;
+  const showDca =
+    benchmark?.showDca === true || ai?.showDcaBenchmark === true;
+
+  return { showBuyHold, showDca };
+}
+
+export function shouldShowBuyHoldBenchmark(recipe: RecipeMetricsInput): boolean {
+  if (!isMarketWaveAlgorithm(recipe)) return false;
+  return getBenchmarkDisplayFlags(recipe).showBuyHold;
+}
+
+export function shouldShowDcaBenchmark(recipe: RecipeMetricsInput): boolean {
+  if (!isMarketWaveAlgorithm(recipe)) return false;
+  return getBenchmarkDisplayFlags(recipe).showDca;
+}
+
 /** Strategy PnL % minus buy & hold PnL % (positive = strategy outperformed). */
 export function getPnlVsBuyHoldDelta(recipe: RecipeMetricsInput): number | null {
+  if (!shouldShowBuyHoldBenchmark(recipe)) return null;
   const strategy = getStrategyPnlPercent(recipe);
   const buyHold = getBuyHoldPnlPercent(recipe);
   if (strategy === null || buyHold === null) return null;
   return strategy - buyHold;
+}
+
+/** Strategy PnL % minus DCA PnL % (positive = strategy outperformed). */
+export function getPnlVsDcaDelta(recipe: RecipeMetricsInput): number | null {
+  if (!shouldShowDcaBenchmark(recipe)) return null;
+  const strategy = getStrategyPnlPercent(recipe);
+  const dca = getDcaPnlPercent(recipe);
+  if (strategy === null || dca === null) return null;
+  return strategy - dca;
 }
 
 export function getPortfolioValues(
@@ -153,18 +217,39 @@ export function getPortfolioValues(
   initialCapitalOverride?: number | null,
 ): { beginning: number | null; ending: number | null } {
   const scaleFactor = Number.isFinite(scale) ? scale : 1;
-  const baseBegin =
-    initialCapitalOverride ?? recipe.initial_capital ?? null;
   const netProfit = parseCurrencyFromString(recipe.net_profit);
-  if (baseBegin === null || baseBegin === undefined || netProfit === null) {
+  const hasOverride =
+    initialCapitalOverride !== null &&
+    initialCapitalOverride !== undefined &&
+    Number.isFinite(initialCapitalOverride);
+
+  // Override is the user's display capital already — do not multiply by scale again.
+  // Without override, scale the recipe's authored base capital.
+  const beginning = hasOverride
+    ? Math.round(initialCapitalOverride as number)
+    : recipe.initial_capital != null && Number.isFinite(recipe.initial_capital)
+      ? Math.round(recipe.initial_capital * scaleFactor)
+      : null;
+
+  if (beginning === null || netProfit === null) {
     return { beginning: null, ending: null };
   }
-  const beginning = Math.round(baseBegin * scaleFactor);
-  const ending = Math.round((baseBegin + netProfit) * scaleFactor);
+  const ending = Math.round(beginning + netProfit * scaleFactor);
   return { beginning, ending };
 }
 
 export function formatSignedPercent(value: number, decimals = 1): string {
-  const sign = value >= 0 ? "+" : "";
-  return `${sign}${value.toFixed(decimals)}%`;
+  const abs = Math.abs(value).toFixed(decimals);
+  if (value < 0) return `−${abs}%`;
+  return `+${abs}%`;
+}
+
+export function formatSignedCurrency(value: number): string {
+  const abs = `$${Math.abs(Math.round(value)).toLocaleString()}`;
+  return value < 0 ? `−${abs}` : abs;
+}
+
+/** Unsigned percent for display (e.g. CAGR). Always includes the % sign. */
+export function formatPercent(value: number, decimals = 1): string {
+  return `${value.toFixed(decimals)}%`;
 }

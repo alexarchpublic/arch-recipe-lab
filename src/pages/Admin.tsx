@@ -14,11 +14,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import type { Session, User } from "@supabase/supabase-js";
+import { ADMIN_DENIED_MESSAGE, decideAdminAccess } from "../../lib/adminAccess";
 
 interface Recipe {
   id: string;
   name: string;
   asset: string;
+  asset_class?: string;
   time_horizon: string;
   strategy_type: string;
   algorithm?: string;
@@ -29,15 +31,15 @@ interface Recipe {
   exit_trade: string;
   exit_to_entry_proportion: number;
   time_frame: string;
-  backtesting_period?: string;
-  initial_capital?: number | null;
+  backtesting_period: string;
+  initial_capital: number | null;
   cagr: number | null;
   annualized_return: number | null;
   net_profit: string | null;
   cash_profit: number | null;
-  asset_accumulated?: string | null;
-  sell_above_cost_basis?: boolean | null;
-  best_for?: string | null;
+  asset_accumulated: string | null;
+  sell_above_cost_basis: boolean | null;
+  best_for: string | null;
   created_at: string;
   updated_at: string;
   display_number?: number | null;
@@ -61,49 +63,42 @@ export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const isAdminEmail = (email?: string | null) =>
-    typeof email === "string" && email.toLowerCase().endsWith("@archpublic.com");
-
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let cancelled = false;
+
+    const admit = async (session: Session | null) => {
       if (!session) {
         navigate('/auth');
-      } else {
-        if (!isAdminEmail(session.user.email)) {
-          supabase.auth.signOut();
-          toast({
-            variant: "destructive",
-            title: "Access Restricted",
-            description: "Admin access requires an @archpublic.com email address.",
-          });
-          navigate('/auth');
-          return;
-        }
-        setUser(session.user);
-        fetchRecipes();
+        return;
       }
-    });
+      const rpc = await supabase.rpc('is_admin');
+      if (cancelled) return;
+      const decision = decideAdminAccess(rpc, session.user.email);
+      if (!decision.allowed) {
+        await supabase.auth.signOut();
+        toast({
+          variant: "destructive",
+          title: "Access Restricted",
+          description: ADMIN_DENIED_MESSAGE,
+        });
+        navigate('/auth');
+        return;
+      }
+      setUser(session.user);
+      fetchRecipes();
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => admit(session));
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session: Session | null) => {
-      if (!session) {
-        navigate('/auth');
-      } else {
-        if (!isAdminEmail(session.user.email)) {
-          supabase.auth.signOut();
-          toast({
-            variant: "destructive",
-            title: "Access Restricted",
-            description: "Admin access requires an @archpublic.com email address.",
-          });
-          navigate('/auth');
-          return;
-        }
-        setUser(session.user);
-        fetchRecipes();
-      }
+      // Defer: awaiting Supabase calls inside this callback can deadlock the auth client.
+      setTimeout(() => void admit(session), 0);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const fetchRecipes = async () => {
@@ -185,17 +180,17 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-gradient-hero border-b border-primary/20">
+      <header className="border-b border-white/[0.08] bg-navy">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
+          <h1 className="text-2xl font-extrabold tracking-[-0.02em] text-white">Admin</h1>
           <div className="flex items-center gap-4">
             <Button onClick={() => navigate('/')} variant="secondary" className="gap-2">
               <Eye className="h-4 w-4" />
-              View Public Site
+              View public site
             </Button>
             <Button variant="secondary" onClick={handleSignOut} className="gap-2">
               <LogOut className="h-4 w-4" />
-              Sign Out
+              Sign out
             </Button>
           </div>
         </div>
@@ -232,7 +227,7 @@ export default function Admin() {
           </div>
           <Button onClick={handleCreateRecipe} className="gap-2">
             <Plus className="h-4 w-4" />
-            Create Recipe
+            Create recipe
           </Button>
         </div>
 
