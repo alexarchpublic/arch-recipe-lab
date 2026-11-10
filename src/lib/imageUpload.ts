@@ -105,14 +105,18 @@ export async function deleteImage(imagePath: string): Promise<void> {
 export async function saveImageMetadata(
   recipeId: string,
   imageUrl: string,
-  displayOrder: number
+  displayOrder: number,
+  kind: ScreenshotKind = 'other',
+  sha256: string | null = null,
 ): Promise<string> {
   const { data, error } = await supabase
     .from('recipe_screenshots')
     .insert({
       recipe_id: recipeId,
       image_url: imageUrl,
-      display_order: displayOrder
+      display_order: displayOrder,
+      kind,
+      sha256,
     })
     .select('id')
     .single();
@@ -178,13 +182,15 @@ export async function updateScreenshotOrder(
 export async function uploadRecipeImage(
   file: File,
   recipeId: string,
-  displayOrder: number
+  displayOrder: number,
+  kind: ScreenshotKind = 'other',
 ): Promise<{ id: string; url: string }> {
+  const sha256 = await sha256Hex(file);
   // Upload the file
   const uploadResult = await uploadImage(file, recipeId);
-  
-  // Save metadata
-  const imageId = await saveImageMetadata(recipeId, uploadResult.url, displayOrder);
+
+  // Save metadata, with kind and content hash (PRD 7, "Source asset")
+  const imageId = await saveImageMetadata(recipeId, uploadResult.url, displayOrder, kind, sha256);
   
   return {
     id: imageId,
@@ -205,12 +211,30 @@ export function getStoragePathFromPublicUrl(imageUrl: string): string {
 }
 
 /**
- * Complete image deletion process: delete file + metadata
+ * Removes a screenshot from a strategy's current set. The file stays in
+ * storage: published versions keep pointing at it (A3).
  */
-export async function deleteRecipeImage(imageId: string, imagePath: string): Promise<void> {
-  // Delete from storage
-  await deleteImage(imagePath);
-  
-  // Delete metadata
+export async function removeRecipeImage(imageId: string): Promise<void> {
   await deleteImageMetadata(imageId);
+}
+
+export type ScreenshotKind = 'chart' | 'settings' | 'stats' | 'dca' | 'other';
+
+/** Screenshot kind from the label the form shows ("Chart", "Settings", ...). */
+export function kindFromLabel(label?: string | null): ScreenshotKind {
+  const l = (label ?? '').toLowerCase();
+  if (l.includes('dca')) return 'dca';
+  if (l.includes('setting') || l.includes('input')) return 'settings';
+  if (l.includes('stat') || l.includes('data window')) return 'stats';
+  if (l.includes('chart')) return 'chart';
+  return 'other';
+}
+
+export async function sha256Hex(file: Blob): Promise<string | null> {
+  try {
+    const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+    return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return null;
+  }
 }

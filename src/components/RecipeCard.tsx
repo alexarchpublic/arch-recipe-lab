@@ -3,56 +3,26 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { parseCurrencyFromString } from "@/lib/portfolio";
 import {
+  type ProStrategy,
+  displayCagr,
   formatPercent,
   formatSignedCurrency,
   formatSignedPercent,
-  getDisplayCagr,
-  getPnlVsBuyHoldDelta,
-  getPnlVsDcaDelta,
-  getStrategyPnlPercent,
-  isMarketWaveAlgorithm,
-} from "@/utils/recipeMetrics";
+  scaledResults,
+  vsBuyHold,
+  vsDca,
+} from "@core";
+import { toPortfolioSummary } from "@/data/proStrategies";
 import { Image as ImageIcon } from "lucide-react";
 import { MetricTileGrid } from "@/components/MetricTileGrid";
 import { StatTile, deltaTone, signedTone } from "@/components/StatTile";
 import { isLegacyAlgorithm } from "@/lib/algorithms";
 
-interface Recipe {
-  id: string;
-  name: string;
-  asset: string;
-  asset_class?: string;
-  time_horizon: string;
-  strategy_type: string;
-  algorithm?: string;
-  algorithm_inputs?: any;
-  buy_hold_pnl_percent?: number | null;
-  dca_pnl_percent?: number | null;
-  focus: string;
-  goal: string;
-  display_number?: number | null;
-  entry_trade: string;
-  exit_trade: string;
-  exit_to_entry_proportion: number;
-  time_frame: string;
-  cagr: number | null;
-  annualized_return: number | null;
-  net_profit: string | null;
-  cash_profit: number | null;
-  asset_accumulated?: string | null;
-  initial_capital?: number | null;
-  screenshots?: Array<{
-    id: string;
-    image_url: string;
-    display_order: number;
-  }>;
-}
-
 interface RecipeCardProps {
-  recipe: Recipe;
-  scale?: number;
+  recipe: ProStrategy;
+  /** Capital the visitor entered; figures scale from the strategy's own starting capital (D3). */
+  capital?: number;
   onClick: () => void;
 }
 
@@ -69,30 +39,17 @@ const getFocusPill = (focus: string) => {
   }
 };
 
-export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
-  const returnValue = getDisplayCagr(recipe);
-  const scaleFactor = Number.isFinite(scale) ? (scale as number) : 1;
-  const parseAssetQuantity = (text?: string | null): number | null => {
-    if (!text) return null;
-    const match = String(text).match(/\b([0-9]+(?:\.[0-9]+)?)\s*(?:[A-Z]{2,6})?\b/);
-    if (!match) return null;
-    const qty = parseFloat(match[1]);
-    return Number.isFinite(qty) ? qty : null;
-  };
-  const assetQty = parseAssetQuantity(recipe.asset_accumulated);
-  const netProfitNumber = parseCurrencyFromString(recipe.net_profit);
-  const scaledAssetQty = assetQty !== null ? +(assetQty * scaleFactor) : null;
-  const scaledNetProfitNumber = netProfitNumber !== null ? Math.round(netProfitNumber * scaleFactor) : null;
-  const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0
-    ? recipe.screenshots[0].image_url
-    : null;
-  const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
-    ? Math.round((recipe.cash_profit as number) * (Number.isFinite(scale) ? scale : 1))
-    : null;
+export const RecipeCard = ({ recipe, capital, onClick }: RecipeCardProps) => {
+  const returnValue = displayCagr(recipe);
+  const scaled = scaledResults(recipe, capital);
+  const scaledAssetQty = scaled.assetQty;
+  const scaledNetProfitNumber = Math.round(scaled.netProfit);
+  const thumbnailUrl = recipe.screenshots.length > 0 ? recipe.screenshots[0].url : null;
+  const scaledCashProfit = scaled.cashProfit !== null ? Math.round(scaled.cashProfit) : null;
 
-  const pnlPercent = getStrategyPnlPercent(recipe);
-  const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
-  const pnlVsDcaDelta = getPnlVsDcaDelta(recipe);
+  const pnlPercent = recipe.return_pct;
+  const pnlVsBuyHoldDelta = vsBuyHold(recipe);
+  const pnlVsDcaDelta = vsDca(recipe);
 
   return (
     <Card
@@ -103,7 +60,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
         {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
-            alt={`${recipe.name} thumbnail`}
+            alt={`${recipe.short_name} thumbnail`}
             className="h-full w-full object-cover"
           />
         ) : (
@@ -128,13 +85,13 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
           </Badge>
         </div>
         <CardTitle className="text-balance text-lg font-extrabold leading-snug tracking-[-0.02em] text-foreground">
-          {recipe.goal}
+          {recipe.title}
         </CardTitle>
       </CardHeader>
 
       <CardContent className="flex-1 space-y-4">
         <MetricTileGrid>
-          {scaledNetProfitNumber !== null && (
+          {(
             <StatTile
               label="Net profit"
               value={formatSignedCurrency(scaledNetProfitNumber)}
@@ -154,7 +111,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
             />
           )}
 
-          {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
+          {pnlVsBuyHoldDelta !== null && (
             <StatTile
               label="vs Buy & Hold"
               value={formatSignedPercent(pnlVsBuyHoldDelta)}
@@ -162,7 +119,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
             />
           )}
 
-          {isMarketWaveAlgorithm(recipe) && pnlVsDcaDelta !== null && (
+          {pnlVsDcaDelta !== null && (
             <StatTile
               label="vs DCA"
               value={formatSignedPercent(pnlVsDcaDelta)}
@@ -206,7 +163,7 @@ export const RecipeCard = ({ recipe, scale = 1, onClick }: RecipeCardProps) => {
   );
 };
 
-function AddToPortfolioButton({ recipe }: { recipe: any }) {
+function AddToPortfolioButton({ recipe }: { recipe: ProStrategy }) {
   const { isInPortfolio, toggleRecipe } = usePortfolio();
   const [flash, setFlash] = useState(false);
   const added = isInPortfolio(recipe.id);
@@ -219,20 +176,7 @@ function AddToPortfolioButton({ recipe }: { recipe: any }) {
       variant={added ? "secondary" : "outline"}
       onClick={(e) => {
         e.stopPropagation();
-        toggleRecipe({
-          recipeId: recipe.id,
-          title: recipe.name,
-          assetSymbol: recipe.asset,
-          time_frame: recipe.time_frame,
-          baseInitialCapital: recipe.initial_capital ?? undefined,
-          baseCashProfit: recipe.cash_profit ?? null,
-          baseNetProfit: parseCurrencyFromString(recipe.net_profit),
-          assetAccumulatedText: recipe.asset_accumulated ?? null,
-          algorithm: recipe.algorithm,
-          algorithm_inputs: recipe.algorithm_inputs,
-          display_number: recipe.display_number ?? null,
-          focus: recipe.focus,
-        });
+        toggleRecipe(toPortfolioSummary(recipe));
         setFlash(true);
         setTimeout(() => setFlash(false), 1500);
       }}

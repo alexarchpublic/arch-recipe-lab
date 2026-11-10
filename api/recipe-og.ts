@@ -67,18 +67,12 @@ export default async function handler(request: Request): Promise<Response> {
   const supabase = createClient(supabaseUrl, supabaseKey);
   const displayNumber = parseInt(displayNumberParam, 10);
 
-  const recipeSelect = `
-      name,
-      asset,
-      focus,
-      goal,
-      display_number,
-      recipe_screenshots (image_url, display_order)
-    `;
+  // Reads the Pro view: the base tables are admin-only since Phase 1.
+  const recipeSelect = "title, short_name, asset, focus, goal, display_number, screenshots";
 
   const fetchRecipe = (filterArchived: boolean) => {
     let query = supabase
-      .from("recipes")
+      .from("strategies_pro")
       .select(recipeSelect)
       .eq("display_number", displayNumber);
 
@@ -99,17 +93,17 @@ export default async function handler(request: Request): Promise<Response> {
     return new Response("Not found", { status: 404 });
   }
 
-  const screenshots = [...(recipe.recipe_screenshots ?? [])].sort(
-    (a, b) => a.display_order - b.display_order,
+  const screenshots = [...((recipe.screenshots as Array<{ url: string; order: number }> | null) ?? [])].sort(
+    (a, b) => a.order - b.order,
   );
   const ogImage =
-    screenshots[0]?.image_url ?? (await getLatestRecipeCardOgImage());
+    screenshots[0]?.url ?? (await getLatestRecipeCardOgImage());
 
   const title =
     typeof recipe.display_number === "number"
-      ? `Recipe #${recipe.display_number}: ${recipe.name}`
-      : recipe.name;
-  const description = `${recipe.asset} · ${recipe.focus} — ${recipe.goal}`;
+      ? `Recipe #${recipe.display_number}: ${recipe.short_name}`
+      : recipe.short_name;
+  const description = `${recipe.asset} · ${recipe.focus} — ${recipe.title}`;
   const pageUrl = `${PRODUCTION_SITE_URL}/recipe/${displayNumberParam}`;
 
   return new Response(

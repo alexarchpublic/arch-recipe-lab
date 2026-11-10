@@ -15,51 +15,30 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import type { Session, User } from "@supabase/supabase-js";
 import { ADMIN_DENIED_MESSAGE, decideAdminAccess } from "../../lib/adminAccess";
-
-interface Recipe {
-  id: string;
-  name: string;
-  asset: string;
-  asset_class?: string;
-  time_horizon: string;
-  strategy_type: string;
-  algorithm?: string;
-  algorithm_inputs?: unknown;
-  focus: string;
-  goal: string;
-  entry_trade: string;
-  exit_trade: string;
-  exit_to_entry_proportion: number;
-  time_frame: string;
-  backtesting_period: string;
-  initial_capital: number | null;
-  cagr: number | null;
-  annualized_return: number | null;
-  net_profit: string | null;
-  cash_profit: number | null;
-  asset_accumulated: string | null;
-  sell_above_cost_basis: boolean | null;
-  best_for: string | null;
-  created_at: string;
-  updated_at: string;
-  display_number?: number | null;
-  archived_at?: string | null;
-  screenshots?: Array<{
-    id: string;
-    image_url: string;
-    display_order: number;
-  }>;
-}
+import { VersionReview } from "@/components/admin/VersionReview";
+import {
+  type AdminRole,
+  type ParityRun,
+  type StrategyGroup,
+  fetchAdminRole,
+  fetchLatestParity,
+  fetchStrategyGroups,
+  versionToFormRecipe,
+  versionToProStrategy,
+} from "@/data/adminVersions";
 
 export default function Admin() {
   const [user, setUser] = useState<User | null>(null);
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [groups, setGroups] = useState<StrategyGroup[]>([]);
+  const [role, setRole] = useState<AdminRole | null>(null);
+  const [parity, setParity] = useState<ParityRun | null>(null);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
-  const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
+  const [editingGroup, setEditingGroup] = useState<StrategyGroup | null>(null);
+  const [viewingGroup, setViewingGroup] = useState<StrategyGroup | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -101,32 +80,25 @@ export default function Admin() {
     };
   }, [navigate]);
 
-  const fetchRecipes = async () => {
+  const fetchRecipes = async (): Promise<StrategyGroup[] | null> => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('recipes')
-        .select(`
-          *,
-          recipe_screenshots(*)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      // Transform the data to include screenshots in the expected format
-      const transformedData = (data || []).map(recipe => ({
-        ...recipe,
-        screenshots: recipe.recipe_screenshots?.sort((a: any, b: any) => a.display_order - b.display_order) || []
-      }));
-      
-      setRecipes(transformedData);
-    } catch (error: any) {
+      const [nextGroups, nextRole, nextParity] = await Promise.all([
+        fetchStrategyGroups(),
+        fetchAdminRole(),
+        fetchLatestParity(),
+      ]);
+      setGroups(nextGroups);
+      setRole(nextRole);
+      setParity(nextParity);
+      return nextGroups;
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load recipes",
+        description: error instanceof Error ? error.message : "Failed to load strategies",
       });
+      return null;
     } finally {
       setLoading(false);
     }
@@ -139,44 +111,45 @@ export default function Admin() {
   };
 
   const handleCreateRecipe = () => {
-    setEditingRecipe(null);
+    setEditingGroup(null);
     setShowForm(true);
   };
 
-  const handleEditRecipe = (recipe: Recipe) => {
-    setEditingRecipe(recipe);
+  const handleEditRecipe = (group: StrategyGroup) => {
+    setReviewingId(null);
+    setEditingGroup(group);
     setShowForm(true);
   };
 
-  const handleViewRecipe = (recipe: Recipe) => {
-    setViewingRecipe(recipe);
-  };
-
-  const handleFormSuccess = () => {
+  const handleFormSuccess = async (versionId?: string) => {
     setShowForm(false);
-    setEditingRecipe(null);
-    fetchRecipes();
+    setEditingGroup(null);
+    const all = await fetchRecipes();
+    // After a save, go straight to the draft's review (A6).
+    const owner = versionId ? all?.find((g) => g.history.some((v) => v.id === versionId)) : null;
+    if (owner) setReviewingId(owner.strategyId);
   };
 
   const handleFormCancel = () => {
     setShowForm(false);
-    setEditingRecipe(null);
+    setEditingGroup(null);
   };
 
-  const handleDeleteRecipe = () => {
-    fetchRecipes();
-  };
+  const editingVersion = editingGroup ? editingGroup.draft ?? editingGroup.published ?? editingGroup.history[0] : null;
+  const reviewingGroup = groups.find((g) => g.strategyId === reviewingId) ?? null;
+  const viewingVersion = viewingGroup ? viewingGroup.draft ?? viewingGroup.published ?? viewingGroup.history[0] : null;
 
-  // Filter recipes based on search query
-  const filteredRecipes = recipes
-    .filter((recipe) => (showArchived ? true : !recipe.archived_at))
-    .filter(recipe =>
-      recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      recipe.asset.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      recipe.strategy_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      recipe.goal.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  const archivedCount = recipes.filter((r) => !!r.archived_at).length;
+  // Filter strategies based on search query
+  const q = searchQuery.toLowerCase();
+  const filteredGroups = groups
+    .filter((g) => (showArchived ? true : !g.archivedAt))
+    .filter((g) => {
+      const v = g.draft ?? g.published ?? g.history[0];
+      return [v.name, v.short_name, v.title, v.asset, v.strategy_type, v.goal, String(g.displayNumber ?? "")]
+        .some((t) => (t ?? "").toLowerCase().includes(q));
+    });
+  const archivedCount = groups.filter((g) => !!g.archivedAt).length;
+  const openDrafts = groups.filter((g) => g.draft).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -197,12 +170,34 @@ export default function Admin() {
       </header>
       
       <div className="container mx-auto px-4 py-8">
+        {/* Parity check (R5, D8): the views against the store, after every publish and daily */}
+        {parity && (
+          <div
+            className={`mb-6 rounded-lg border p-3 text-sm ${
+              parity.ok ? "border-gain/40 bg-gain/5" : "border-destructive/50 bg-destructive/5"
+            }`}
+          >
+            <span className="font-semibold">
+              {parity.ok ? "Parity check clean" : `Parity check found ${parity.problems.length} problem(s)`}
+            </span>
+            <span className="text-muted-foreground">
+              {" "}· {new Date(parity.ran_at).toLocaleString()} ({parity.trigger})
+              {" "}· {String((parity.counts as Record<string, unknown>).pro_rows ?? "?")} client rows,{" "}
+              {String((parity.counts as Record<string, unknown>).public_rows ?? "?")} public rows
+              {openDrafts > 0 && ` · ${openDrafts} open draft${openDrafts === 1 ? "" : "s"}`}
+            </span>
+            {!parity.ok && (
+              <pre className="mt-2 max-h-32 overflow-auto text-xs">{JSON.stringify(parity.problems.slice(0, 20), null, 1)}</pre>
+            )}
+          </div>
+        )}
+
         {/* Header Actions */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search recipes..."
+              placeholder="Search strategies..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -238,7 +233,7 @@ export default function Admin() {
               <div key={i} className="h-80 bg-muted animate-pulse rounded-lg" />
             ))}
           </div>
-        ) : filteredRecipes.length === 0 ? (
+        ) : filteredGroups.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
               {searchQuery ? 'No recipes found matching your search.' : 'No recipes found. Create your first recipe!'}
@@ -247,16 +242,17 @@ export default function Admin() {
         ) : (
           <>
             <p className="text-sm text-muted-foreground mb-4">
-              Showing {filteredRecipes.length} of {recipes.length} recipes
+              Showing {filteredGroups.length} of {groups.length} strategies
             </p>
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredRecipes.map(recipe => (
+              {filteredGroups.map(group => (
                 <AdminRecipeCard
-                  key={recipe.id}
-                  recipe={recipe}
+                  key={group.strategyId}
+                  group={group}
                   onEdit={handleEditRecipe}
-                  onDelete={handleDeleteRecipe}
-                  onView={handleViewRecipe}
+                  onReview={(g) => setReviewingId(g.strategyId)}
+                  onView={setViewingGroup}
+                  onChanged={() => void fetchRecipes()}
                 />
               ))}
             </div>
@@ -269,11 +265,12 @@ export default function Admin() {
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingRecipe ? 'Edit Recipe' : 'Create New Recipe'}
+              {editingGroup ? 'Edit strategy (saves a draft)' : 'Create New Recipe'}
             </DialogTitle>
           </DialogHeader>
           <RecipeForm
-            recipe={editingRecipe}
+            recipe={editingVersion ? versionToFormRecipe(editingVersion) : null}
+            role={role}
             onSuccess={handleFormSuccess}
             onCancel={handleFormCancel}
           />
@@ -282,11 +279,21 @@ export default function Admin() {
 
       {/* Recipe Detail Modal */}
       <RecipeDetailModal
-        recipe={viewingRecipe}
-        open={!!viewingRecipe}
-        onOpenChange={(open) => !open && setViewingRecipe(null)}
-        scale={1}
-        initialCapital={null}
+        recipe={viewingVersion ? versionToProStrategy(viewingVersion) : null}
+        open={!!viewingVersion}
+        onOpenChange={(open) => !open && setViewingGroup(null)}
+        initialCapital={viewingVersion?.starting_capital}
+      />
+
+      {/* Review, publish and history (A2, A3, A6, A7, D9) */}
+      <VersionReview
+        key={reviewingId ?? "none"}
+        group={reviewingGroup}
+        role={role}
+        open={!!reviewingGroup}
+        onOpenChange={(open) => !open && setReviewingId(null)}
+        onChanged={() => void fetchRecipes()}
+        onEdit={handleEditRecipe}
       />
     </div>
   );

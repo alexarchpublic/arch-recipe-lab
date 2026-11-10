@@ -12,68 +12,39 @@ import { Link2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { scaleRecipeFreeText, scaleAlgorithmInputs } from "@/utils/recipeScaling";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { parseCurrencyFromString } from "@/lib/portfolio";
 import { getRecipeShareUrl } from "@/lib/recipeShare";
 import { useToast } from "@/hooks/use-toast";
 import {
+  type ProStrategy,
+  displayCagr,
+  basisLabel,
+  displayTestEnd,
+  formatMoney,
   formatPercent,
   formatSignedCurrency,
   formatSignedPercent,
-  getBuyHoldPnlPercent,
-  getDcaPnlPercent,
-  getDisplayCagr,
-  getPnlVsBuyHoldDelta,
-  getPnlVsDcaDelta,
-  getPortfolioValues,
-  getStrategyPnlPercent,
-  isMarketWaveAlgorithm,
-  shouldShowBuyHoldBenchmark,
-  shouldShowDcaBenchmark,
-} from "@/utils/recipeMetrics";
+  formatTestWindow,
+  scaleFor,
+  scaledResults,
+  settingsForDisplay,
+  showsBuyHold,
+  showsDca,
+  vsBuyHold,
+  vsDca,
+} from "@core";
+import { toPortfolioSummary } from "@/data/proStrategies";
 import { Button } from "@/components/ui/button";
 import { MetricTileGrid } from "@/components/MetricTileGrid";
 import { StatTile, deltaTone, signedTone } from "@/components/StatTile";
 import { isEquitiesOrEtfClass, isLegacyAlgorithm } from "@/lib/algorithms";
 
-interface Recipe {
-  id: string;
-  name: string;
-  asset: string;
-  asset_class?: string;
-  time_horizon: string;
-  strategy_type: string;
-  display_number?: number | null;
-  algorithm?: string;
-  algorithm_inputs?: any;
-  buy_hold_pnl_percent?: number | null;
-  dca_pnl_percent?: number | null;
-  focus: string;
-  goal: string;
-  entry_trade: string;
-  exit_trade: string;
-  sell_above_cost_basis: boolean | null;
-  exit_to_entry_proportion: number;
-  time_frame: string;
-  backtesting_period: string;
-  initial_capital: number | null;
-  cash_profit: number | null;
-  asset_accumulated: string | null;
-  net_profit: string | null;
-  cagr: number | null;
-  annualized_return: number | null;
-  best_for: string | null;
-  screenshots?: Array<{
-    id: string;
-    image_url: string;
-    display_order: number;
-  }>;
-}
+type Recipe = ProStrategy;
 
 interface RecipeDetailModalProps {
   recipe: Recipe | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  scale?: number;
+  /** Capital the visitor entered; figures scale from the strategy's own starting capital (D3). */
   initialCapital?: number;
 }
 
@@ -90,7 +61,7 @@ const getFocusPill = (focus: string) => {
   }
 };
 
-export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initialCapital }: RecipeDetailModalProps) => {
+export const RecipeDetailModal = ({ recipe, open, onOpenChange, initialCapital }: RecipeDetailModalProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [api, setApi] = useState<CarouselApi>();
   const { isInPortfolio, toggleRecipe } = usePortfolio();
@@ -115,40 +86,31 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
   
   if (!recipe) return null;
 
-  const scaledInitialCapital = (initialCapital ?? recipe.initial_capital) ?? null;
-  // CAGR is invariant to display scale — compute from recipe base capital + unscaled profit
-  const returnValue = getDisplayCagr(recipe);
-  const scaleFactor = Number.isFinite(scale) ? scale : 1;
+  // Figures come from the published version; only dollars scale (D3).
+  const returnValue = displayCagr(recipe);
+  const scaleFactor = scaleFor(initialCapital, recipe);
+  const scaled = scaledResults(recipe, initialCapital);
   const scaledEntryTrade = recipe.entry_trade ? (scaleRecipeFreeText(recipe.entry_trade, scaleFactor) as string) : '';
   const scaledExitTrade = recipe.exit_trade ? (scaleRecipeFreeText(recipe.exit_trade, scaleFactor) as string) : '';
-  const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
-    ? Math.round((recipe.cash_profit as number) * scaleFactor)
-    : null;
+  const scaledCashProfit = scaled.cashProfit !== null ? Math.round(scaled.cashProfit) : null;
 
-  // Scale algorithm inputs based on initial capital scaling
-  const scaledAlgorithmInputs = recipe.algorithm_inputs
-    ? scaleAlgorithmInputs(recipe.algorithm_inputs, scaleFactor, recipe.algorithm)
-    : recipe.algorithm_inputs;
+  // Settings as a client sees them: the end date is the last bar on the chart,
+  // never the far-future run year (D10). Dollar inputs scale to the capital.
+  const scaledAlgorithmInputs = scaleAlgorithmInputs(
+    settingsForDisplay(recipe.algorithm_inputs, recipe.algorithm, displayTestEnd(recipe)),
+    scaleFactor,
+    recipe.algorithm,
+  );
 
-  // Parse from authored (unscaled) values, then multiply once — matches RecipeCard
-  const parseAssetQuantity = (text?: string | null): number | null => {
-    if (!text) return null;
-    const qtyMatch = String(text).match(/\b([0-9]+(?:\.[0-9]+)?)\s*(?:[A-Z]{2,6})?\b/);
-    if (!qtyMatch) return null;
-    const qty = parseFloat(qtyMatch[1]);
-    return Number.isFinite(qty) ? qty : null;
-  };
-  const assetQty = parseAssetQuantity(recipe.asset_accumulated);
-  const scaledAssetQty = assetQty !== null ? +(assetQty * scaleFactor) : null;
-  const netProfitNumber = parseCurrencyFromString(recipe.net_profit);
-  const scaledNetProfitNumber = netProfitNumber !== null ? Math.round(netProfitNumber * scaleFactor) : null;
+  const scaledAssetQty = scaled.assetQty;
+  const scaledNetProfitNumber = Math.round(scaled.netProfit);
 
-  const pnlPercent = getStrategyPnlPercent(recipe);
-  const buyHoldPnlPercent = getBuyHoldPnlPercent(recipe);
-  const dcaPnlPercent = getDcaPnlPercent(recipe);
-  const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
-  const pnlVsDcaDelta = getPnlVsDcaDelta(recipe);
-  const portfolioValues = getPortfolioValues(recipe, scaleFactor, scaledInitialCapital);
+  const pnlPercent = recipe.return_pct;
+  const buyHoldPnlPercent = recipe.buy_hold_pnl_pct;
+  const dcaPnlPercent = recipe.dca_pnl_pct;
+  const pnlVsBuyHoldDelta = vsBuyHold(recipe);
+  const pnlVsDcaDelta = vsDca(recipe);
+  const portfolioValues = { beginning: Math.round(scaled.beginning), ending: Math.round(scaled.ending) };
 
   const handleCopyShareLink = async () => {
     if (typeof recipe.display_number !== "number") return;
@@ -176,7 +138,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
         <DialogHeader>
           <div className="flex items-start justify-between gap-3 pr-8">
             <DialogTitle className="flex items-center gap-3 text-2xl font-extrabold tracking-[-0.02em] text-balance">
-              <span>{recipe.goal}</span>
+              <span>{recipe.title}</span>
               {typeof recipe.display_number === "number" && (
                 <Badge variant="chip">#{recipe.display_number}</Badge>
               )}
@@ -227,12 +189,12 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                             className="aspect-video bg-muted rounded-lg overflow-hidden cursor-pointer"
                             onClick={() => {
                               // Open full-size image in new tab
-                              window.open(screenshot.image_url, '_blank');
+                              window.open(screenshot.url, '_blank');
                             }}
                           >
                             <img
-                              src={screenshot.image_url}
-                              alt={`${recipe.name} screenshot ${index + 1}`}
+                              src={screenshot.url}
+                              alt={`${recipe.short_name} screenshot ${index + 1}`}
                               className="w-full h-full object-contain hover:opacity-90 transition-opacity"
                             />
                           </div>
@@ -276,7 +238,12 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
 
           {/* Results (moved above Parameters) */}
           <div>
-            <h3 className="eyebrow mb-4 text-primary">Results</h3>
+            <h3 className="eyebrow mb-1 text-primary">Results</h3>
+            {/* Basis, test period and starting capital travel with every result (C1, C3, D10). */}
+            <p className="mb-4 text-xs text-muted-foreground" data-field="test_window">
+              {basisLabel(recipe)} · {formatTestWindow(recipe)} · {formatMoney(recipe.starting_capital)} starting capital
+              {returnValue === null && displayTestEnd(recipe) && recipe.test_years < 1 && " · CAGR not shown for a test under one year"}
+            </p>
             <MetricTileGrid>
               {portfolioValues.beginning !== null && (
                 <StatTile label="Beginning portfolio" value={formatSignedCurrency(portfolioValues.beginning)} />
@@ -301,7 +268,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 />
               )}
 
-              {scaledNetProfitNumber !== null && (
+              {(
                 <StatTile
                   label="Net profit"
                   value={formatSignedCurrency(scaledNetProfitNumber)}
@@ -317,7 +284,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 />
               )}
 
-              {isMarketWaveAlgorithm(recipe) && shouldShowBuyHoldBenchmark(recipe) && buyHoldPnlPercent !== null && (
+              {showsBuyHold(recipe) && buyHoldPnlPercent !== null && (
                 <StatTile
                   label="Buy & Hold PnL"
                   value={formatSignedPercent(buyHoldPnlPercent)}
@@ -325,7 +292,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 />
               )}
 
-              {isMarketWaveAlgorithm(recipe) && shouldShowDcaBenchmark(recipe) && dcaPnlPercent !== null && (
+              {showsDca(recipe) && dcaPnlPercent !== null && (
                 <StatTile
                   label="DCA PnL"
                   value={formatSignedPercent(dcaPnlPercent)}
@@ -333,7 +300,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 />
               )}
 
-              {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
+              {pnlVsBuyHoldDelta !== null && (
                 <StatTile
                   label="vs Buy & Hold"
                   value={formatSignedPercent(pnlVsBuyHoldDelta)}
@@ -341,7 +308,7 @@ export const RecipeDetailModal = ({ recipe, open, onOpenChange, scale = 1, initi
                 />
               )}
 
-              {isMarketWaveAlgorithm(recipe) && pnlVsDcaDelta !== null && (
+              {pnlVsDcaDelta !== null && (
                 <StatTile
                   label="vs DCA"
                   value={formatSignedPercent(pnlVsDcaDelta)}
@@ -848,20 +815,7 @@ function AddToPortfolioButton({ recipe }: { recipe: Recipe }) {
       variant={added ? "secondary" : "outline"}
       onClick={(e) => {
         e.stopPropagation();
-        toggleRecipe({
-          recipeId: recipe.id,
-          title: recipe.name,
-          assetSymbol: recipe.asset,
-          time_frame: recipe.time_frame,
-          baseInitialCapital: recipe.initial_capital ?? undefined,
-          baseCashProfit: recipe.cash_profit ?? null,
-          baseNetProfit: parseCurrencyFromString(recipe.net_profit),
-          assetAccumulatedText: recipe.asset_accumulated ?? null,
-          algorithm: recipe.algorithm,
-          algorithm_inputs: recipe.algorithm_inputs,
-          display_number: recipe.display_number ?? null,
-          focus: recipe.focus,
-        });
+        toggleRecipe(toPortfolioSummary(recipe));
         setFlash(true);
         setTimeout(() => setFlash(false), 1500);
       }}

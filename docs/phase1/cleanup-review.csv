@@ -1,0 +1,25 @@
+num,strategy,run_end_in_settings,test_end_v1,test_end_v2,how_v2_end_was_read,test_years_v2,return_pct,cagr_v1_pct,cagr_v2_pct,note
+58,GOOGL 1D,2030-01-28,2030-01-28,2026-07-08,audit 10 Nov: daily bars past the Jul gridline; bar timer; same-day upload,2.00,120.7,15.3,48.6,
+60,BTC 6h,2030-01-28,2030-01-28,2026-08-04,audit 10 Nov: days past the Aug gridline; same-day upload,0.48,22.7,5.3,,CAGR hidden: test under one year (D12)
+62,IREN STH 1H Scalp (from Oct 2025),2030-01-28,2030-01-28,2026-08-06,audit 10 Nov: IREN 1d strategy ends 2026-08-06,0.81,75.4,14.0,,CAGR hidden: test under one year (D12)
+63,IREN STH 1H Scalp (from Jan 2026),2030-01-28,2030-01-28,2026-08-06,audit 10 Nov: IREN 1d strategy ends 2026-08-06,0.59,63.4,12.8,,CAGR hidden: test under one year (D12)
+64,MSFT LTH 1W Position,2030-01-28,2030-01-28,2026-08-11,audit 10 Nov: weekly bars past the Jul gridline; bar timer shows a Tuesday,4.77,111.5,9.5,17.0,
+65,MSFT STH 1D Swing (from Aug 2024),2030-01-28,2030-01-28,2026-08-11,audit 10 Nov: daily bars past the Jul gridline,2.03,68.4,10.0,29.3,
+66,MSFT STH 1D Swing (from Jan 2026),2030-01-28,2030-01-28,2026-08-12,audit 10 Nov: daily bars past the Aug label,0.61,33.2,7.3,,CAGR hidden: test under one year (D12)
+67,MARA STH 4H Scalp,2030-01-28,2030-01-28,2026-07-28,audit 10 Nov: between the Jul and Aug gridlines,0.57,38.4,8.3,,CAGR hidden: test under one year (D12)
+68,MARA LTH 1W Position,2999-01-28,2999-01-28,2026-07-23,audit 10 Nov: weekly bars past the Jul gridline,2.56,55.8,0.0,18.9,
+69,MARA STH 1H Scalp,2999-01-28,2999-01-28,2026-07-24,audit 10 Nov: between the Jul and Aug gridlines,1.00,21.0,0.0,20.9,"Window is 366 days, so CAGR shows; one trading day earlier would hide it"
+70,MARA STH 1D Swing,2999-01-28,2999-01-28,2026-07-23,audit 10 Nov: daily bars past the Jul gridline,3.00,158.3,0.1,37.2,
+71,AAPL LTH 1W Position,2030-01-28,2030-01-28,2026-07-14,audit 10 Nov: one weekly bar past the Jul gridline,8.98,607.3,16.9,24.3,
+72,AAPL STH 1D Swing (accumulation),2030-01-28,2030-01-28,2026-07-02,audit 10 Nov: last bar at the Jul gridline,1.96,41.7,6.5,19.4,
+73,AAPL STH 1D Swing (cash yield),2030-01-28,2030-01-28,2026-07-09,audit 10 Nov: daily bars past the Jul gridline,1.98,59.2,8.8,26.5,
+77,MRNA STH 4H Scalp,2999-01-28,2999-01-28,2026-08-25,audit 10 Nov: same-batch strategies end 2026-08-25,0.65,531.4,0.2,,CAGR hidden: test under one year (D12)
+78,MRNA LTH 1W Position,2999-01-28,2999-01-28,2026-08-25,audit 10 Nov: weekly bars past the Jul gridline; bar timer shows a Tuesday,6.23,1187.0,0.3,50.7,
+81,MRNA STH 1H Scalp,2999-01-28,2999-01-28,2026-08-25,audit 10 Nov: last bar at the 25 Aug day gridline,0.23,338.6,0.2,,CAGR hidden: test under one year (D12)
+85,XLE STH 1D Swing,2030-01-28,2030-01-28,2026-08-25,audit 10 Nov: trading days past the Aug gridline,0.65,48.2,10.1,,CAGR hidden: test under one year (D12)
+88,MU STH 4H Scalp (from Jun 2026),2026-09-24,2026-09-24,2026-09-23,"11 Nov, new: run end set a day after upload; same batch as #90",0.31,45.9,,,Not in the audit's 18. CAGR already hidden (under one year)
+89,MU STH 1W Position,2026-09-24,2026-09-24,2026-09-23,"11 Nov, new: run end set a day after upload; same batch as #90",0.31,52.9,,,Not in the audit's 18. CAGR already hidden (under one year)
+90,MU STH 4H Scalp (from Jan 2026),2026-09-24,2026-09-24,2026-09-23,"11 Nov, new: live 4h bar 15 trading days past the Sep gridline, the upload day",0.73,461.7,,,Not in the audit's 18. CAGR already hidden (under one year)
+94,META LTH 1W Position,2026-10-23,2026-10-23,2026-10-22,"11 Nov, new: run end set a day after upload; same batch as #96",5.48,217.8,23.5,23.5,Not in the audit's 18
+95,META STH 4H Scalp,2026-10-23,2026-10-23,2026-10-22,"11 Nov, new: run end set a day after upload; same batch as #96",1.80,153.6,67.4,67.5,Not in the audit's 18
+96,META STH 6H Scalp,2030-01-28,2030-01-28,2026-10-22,"11 Nov, new: live 6h bar 15 trading days past the Oct gridline, the upload day",0.80,103.8,19.1,,"Not in the audit's 18 (missed: 2030 run year). CAGR hidden: test under one year (D12)"

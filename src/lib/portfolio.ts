@@ -4,6 +4,14 @@ export type PortfolioStorageKey = "portfolio:v1";
 
 export interface PortfolioRecipeSummary {
   recipeId: string;
+  // Since Phase 1: the published version this position was added at (P12).
+  // Portfolios saved before Phase 1 have none and still open (P11).
+  versionId?: string;
+  versionNumber?: number;
+  // The real test end (D10), so the apply step never prints the run year.
+  testEnd?: string | null;
+  // Asset accumulated as a number (D1); older portfolios keep only the text.
+  assetQty?: number | null;
   title: string;
   assetSymbol: string; // e.g., BTC, ETH
   time_frame?: string | null; // e.g., 1 Day, 4 Hours
@@ -128,7 +136,8 @@ export function computeScaledMetricsForRecipe(
   const baseNetProfit = safeNumber(recipe.baseNetProfit);
   const netProfit = baseNetProfit !== null ? baseNetProfit * scaleFactor : null;
 
-  const baseQty = parseAssetQuantityFromText(recipe.assetAccumulatedText, recipe.assetSymbol);
+  const baseQty =
+    safeNumber(recipe.assetQty) ?? parseAssetQuantityFromText(recipe.assetAccumulatedText, recipe.assetSymbol);
   const assetQuantity = baseQty !== null ? baseQty * scaleFactor : null;
 
   return {

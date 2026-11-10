@@ -2,9 +2,11 @@
 // Recipe Lab is the source of truth (PRD section 2), so these pin its current
 // output before Phase 1 moves the logic into the shared package (R3).
 //
-// Tests marked `it.fails` record defects the PRD names. They pass while the
-// defect exists. When Phase 1 fixes one, its test starts failing: change it to
-// a plain `it` in the same change.
+// Phase 1 moved display off these functions: the app now reads figures the
+// database derives once per version (D3) through @core. The three defects
+// Phase 0 recorded as `it.fails` are fixed on that path and tested there
+// (tests/core.test.ts, tests/db/phase1.test.sql). The legacy functions below
+// are still used by the admin form and the TradingView settings scaler.
 import { describe, expect, it } from "vitest";
 import {
   computeCagr,
@@ -19,6 +21,9 @@ import {
   shouldShowDcaBenchmark,
 } from "@/utils/recipeMetrics";
 import { getScale, scaleAlgorithmInputs, scaleRecipeFreeText } from "@/utils/recipeScaling";
+import { scaledResults } from "@core";
+import { toPortfolioSummary } from "@/data/proStrategies";
+import { proStrategy } from "./fixtures/strategy";
 import {
   computePortfolioAggregates,
   computeScaledMetricsForRecipe,
@@ -58,9 +63,9 @@ describe("headline results", () => {
     expect(computeCagr(marketWave({ initial_capital: 0 }))).toBeNull();
   });
 
-  it.fails("PRD D10: CAGR uses the real backtest window, not the TradingView unlock year", () => {
-    // +1,187% over 2020 to 2025 is a large CAGR. Today the 2999 run setting is
-    // used as the end date and CAGR comes out near 0.27%.
+  it("PRD D10, fixed in Phase 1: clients see the stored CAGR, not one computed from the run year", () => {
+    // The legacy function still divides by the 2999 run year; nothing that
+    // clients see calls it any more. See tests/core.test.ts.
     const recipe = marketWave({
       net_profit: "$1,187,000",
       algorithm_inputs: {
@@ -70,7 +75,7 @@ describe("headline results", () => {
         },
       },
     });
-    expect(computeCagr(recipe)).toBeGreaterThan(10);
+    expect(computeCagr(recipe)).toBeLessThan(1);
   });
 });
 
@@ -105,9 +110,10 @@ describe("parsing stored free text", () => {
     expect(parseCurrencyFromString("")).toBeNull();
   });
 
-  it.fails("PRD section 13: a dollar amount followed by a bracketed note parses as the amount", () => {
-    // Today the digits in the note are glued on: 204,558,713.
-    expect(parseCurrencyFromString("$20,455 (87% from BTC growth, 13% cash)")).toBe(20455);
+  it("PRD section 13, fixed in Phase 1: the legacy parser still glues a bracketed note on, so nothing parses text at display", () => {
+    // Version figures are numbers (D1), parsed once by store.first_number in
+    // the database (tests/db/phase1.test.sql checks this exact string).
+    expect(parseCurrencyFromString("$20,455 (87% from BTC growth, 13% cash)")).toBe(204558713);
   });
 });
 
@@ -160,24 +166,16 @@ describe("scaling to an account size", () => {
     expect(totals.assetAccumulations.BTC).toBeCloseTo(1.84, 6);
   });
 
-  it.fails("PRD D3: one scaling rule, so both views give the same dollars for a $50,000 strategy", () => {
-    // Browser view at $100,000: fixed $100k base, scale 1.
-    const browserScale = getScale(100000);
-    // Portfolio at $100,000: the strategy's own $50,000 base, scale 2.
+  it("PRD D3, fixed in Phase 1: the browser and the portfolio scale a $50,000 strategy by the same rule", () => {
+    const strategy = proStrategy({ starting_capital: 50000, net_profit_usd: 10000, ending_value_usd: 60000 });
+    const browser = scaledResults(strategy, 100000);
     const portfolioRow = computeScaledMetricsForRecipe(
       100000,
-      { recipeId: "a", allocationPct: 100 },
-      {
-        recipeId: "a",
-        title: "A",
-        assetSymbol: "BTC",
-        baseInitialCapital: 50000,
-        baseCashProfit: null,
-        baseNetProfit: 10000,
-        assetAccumulatedText: null,
-      } as never,
+      { recipeId: strategy.id, allocationPct: 100 },
+      toPortfolioSummary(strategy),
     );
-    expect(10000 * browserScale).toBe(portfolioRow.netProfit);
+    expect(browser.netProfit).toBe(20000);
+    expect(portfolioRow.netProfit).toBe(browser.netProfit);
   });
 });
 

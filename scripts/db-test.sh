@@ -24,3 +24,4 @@ while read -r migration; do
   run -f "$migration"
 done < <(scripts/migration-order.sh)
 run -f tests/db/allowlist.test.sql
+run -f tests/db/phase1.test.sql

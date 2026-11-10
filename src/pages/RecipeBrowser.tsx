@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { RecipeCard } from "@/components/RecipeCard";
 import { FilterSidebar, Filters } from "@/components/FilterSidebar";
 import { RecipeDetailModal } from "@/components/RecipeDetailModal";
@@ -11,48 +10,15 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { parseCurrencyFromString, parseAssetQuantityFromText } from "@/lib/portfolio";
-import { getDisplayCagr, getStrategyPnlPercent } from "@/utils/recipeMetrics";
-import { getScale } from "@/utils/recipeScaling";
+import { type ProStrategy, displayCagr, scaledResults } from "@core";
+import { fetchProStrategies } from "@/data/proStrategies";
 import {
   ASSET_CLASS_ORDER,
   DEFAULT_ASSET_CLASSES,
   LEGACY_ALGORITHMS,
 } from "@/lib/algorithms";
 
-interface Recipe {
-  id: string;
-  name: string;
-  asset: string;
-  asset_class?: string;
-  time_horizon: string;
-  strategy_type: string;
-  algorithm?: string;
-  algorithm_inputs?: any;
-  focus: string;
-  goal: string;
-  entry_trade: string;
-  exit_trade: string;
-  sell_above_cost_basis: boolean | null;
-  exit_to_entry_proportion: number;
-  time_frame: string;
-  backtesting_period: string;
-  initial_capital: number | null;
-  cash_profit: number | null;
-  asset_accumulated: string | null;
-  net_profit: string | null;
-  cagr: number | null;
-  annualized_return: number | null;
-  best_for: string | null;
-  display_number?: number | null;
-  created_at?: string;
-  archived_at?: string | null;
-  screenshots?: Array<{
-    id: string;
-    image_url: string;
-    display_order: number;
-  }>;
-}
+type Recipe = ProStrategy;
 
 type SortOption = 'latest' | 'cagr-desc' | 'cagr-asc' | 'cash-profit-desc' | 'cash-profit-asc' | 'asset-accumulated-desc' | 'asset-accumulated-asc' | 'net-profit-desc' | 'net-profit-asc' | 'pnl-desc' | 'pnl-asc';
 
@@ -108,7 +74,6 @@ export default function RecipeBrowser() {
     return initialCapital;
   }, [initialCapital]);
 
-  const scale = useMemo(() => getScale(initialCapitalNumber), [initialCapitalNumber]);
 
   useEffect(() => {
     fetchRecipes();
@@ -134,42 +99,10 @@ export default function RecipeBrowser() {
   const fetchRecipes = async () => {
     try {
       setLoading(true);
-      const baseQuery = supabase
-        .from("recipes")
-        .select(
-          `
-          *,
-          recipe_screenshots(*)
-        `,
-        )
-        .order("created_at", { ascending: false });
-
-      // Prefer hiding archived recipes when the column exists. If the DB migration
-      // hasn't been applied yet, gracefully fall back to the old behavior.
-      let data: any[] | null = null;
-      let error: any = null;
-
-      {
-        const res = await baseQuery.is("archived_at", null);
-        data = res.data as any[] | null;
-        error = res.error;
-      }
-
-      if (error && String(error.message || "").includes("archived_at")) {
-        const res = await baseQuery;
-        data = res.data as any[] | null;
-        error = res.error;
-      }
-
-      if (error) throw error;
-      
-      // Transform the data to include screenshots in the expected format
-      const transformedData = (data || []).map(recipe => ({
-        ...recipe,
-        screenshots: recipe.recipe_screenshots?.sort((a: any, b: any) => a.display_order - b.display_order) || []
-      }));
-      
-      setRecipes(transformedData);
+      // Archived strategies stay readable to clients who hold them (A12) but
+      // leave browse.
+      const data = await fetchProStrategies();
+      setRecipes(data.filter((r) => !r.archived_at));
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -277,7 +210,8 @@ export default function RecipeBrowser() {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         if (
-          !recipe.name.toLowerCase().includes(query) &&
+          !recipe.short_name.toLowerCase().includes(query) &&
+          !recipe.title.toLowerCase().includes(query) &&
           !recipe.goal.toLowerCase().includes(query) &&
           !recipe.asset.toLowerCase().includes(query) &&
           !recipe.strategy_type.toLowerCase().includes(query)
@@ -308,9 +242,10 @@ export default function RecipeBrowser() {
 
       // Removed time frame and strategy type filters
 
-      // CAGR filter - use same logic as display
-      const returnValue = getDisplayCagr(recipe) ?? 0;
-      if (returnValue < filters.minCAGR) {
+      // CAGR filter: a strategy without a CAGR (test window under a year)
+      // has none, so any minimum above zero leaves it out (D12).
+      const cagr = displayCagr(recipe);
+      if (filters.minCAGR > 0 && (cagr === null || cagr < filters.minCAGR)) {
         return false;
       }
 
@@ -319,39 +254,30 @@ export default function RecipeBrowser() {
 
     // Helper function to get sortable values for a recipe
     const getSortValue = (recipe: Recipe, field: string): number => {
-      const scaleFactor = scale;
-      
-      let value: number;
+      const scaled = scaledResults(recipe, initialCapitalNumber);
+      let value: number | null;
       switch (field) {
-        case 'cagr': {
-          value = getDisplayCagr(recipe) ?? 0;
+        case 'cagr':
+          // No CAGR sorts below every CAGR, in either direction (D12).
+          value = displayCagr(recipe);
+          if (value === null) return sortBy === 'cagr-asc' ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
           break;
-        }
         case 'cash-profit':
-          if (recipe.cash_profit === null || recipe.cash_profit === undefined) return 0;
-          value = Math.round(recipe.cash_profit * scaleFactor);
+          value = scaled.cashProfit;
           break;
-        case 'asset-accumulated': {
-          const assetQty = parseAssetQuantityFromText(recipe.asset_accumulated, recipe.asset);
-          if (assetQty === null) return 0;
-          value = assetQty * scaleFactor;
+        case 'asset-accumulated':
+          value = scaled.assetQty;
           break;
-        }
-        case 'net-profit': {
-          const netProfit = parseCurrencyFromString(recipe.net_profit);
-          if (netProfit === null) return 0;
-          value = Math.round(netProfit * scaleFactor);
+        case 'net-profit':
+          value = scaled.netProfit;
           break;
-        }
         case 'pnl':
-          value = getStrategyPnlPercent(recipe) ?? 0;
+          value = recipe.return_pct;
           break;
         default:
           return 0;
       }
-      
-      // Ensure the value is a finite number
-      return Number.isFinite(value) ? value : 0;
+      return value !== null && Number.isFinite(value) ? value : 0;
     };
 
     // Sort with tie-breaker for stable sorting
@@ -364,8 +290,8 @@ export default function RecipeBrowser() {
           const bClass = ASSET_CLASS_ORDER[getRecipeAssetClass(b)] ?? 99;
           comparison = aClass - bClass;
           if (comparison === 0) {
-            const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-            const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+            const aTime = a.strategy_created_at ? new Date(a.strategy_created_at).getTime() : 0;
+            const bTime = b.strategy_created_at ? new Date(b.strategy_created_at).getTime() : 0;
             comparison = bTime - aTime;
           }
           break;
@@ -443,7 +369,7 @@ export default function RecipeBrowser() {
     });
 
     return filtered;
-  }, [recipes, searchQuery, filters, sortBy, scale]);
+  }, [recipes, searchQuery, filters, sortBy, initialCapitalNumber]);
 
 
   return (
@@ -621,7 +547,7 @@ export default function RecipeBrowser() {
                     <RecipeCard
                       key={recipe.id}
                       recipe={recipe}
-                      scale={scale}
+                      capital={initialCapitalNumber}
                       onClick={() => setSelectedRecipe(recipe)}
                     />
                   ))}
@@ -661,7 +587,6 @@ export default function RecipeBrowser() {
             }
           }
         }}
-        scale={scale}
         initialCapital={initialCapitalNumber}
       />
     </div>
