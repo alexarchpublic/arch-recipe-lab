@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 const CRYPTO_ASSETS = ["BTC", "ETH", "SOL", "XRP", "SUI"] as const;
 const ETF_TICKERS = [
   "SPY", "QQQ", "QQQM", "IWM", "DIA", "VTI", "VOO", "VTV", "VUG", "VEA", "VWO",
@@ -66,6 +68,8 @@ export interface RecipeScreenshotExtraction {
   ribbonColorScheme?: string | null;
   dcaInterval?: string | null;
   lastPrice?: number | null;
+  /** Date of the last bar on the chart, when the settings end year is in the future (A16). */
+  lastBarDate?: string | null;
   settings: {
     startingCash?: number | null;
     startingQty?: number | null;
@@ -132,10 +136,124 @@ export interface RecipeScreenshotExtraction {
   };
 }
 
+export interface CrossCheckEntry {
+  field: string;
+  chart: number;
+  panel: number;
+}
+
 export interface ScreenshotImportResult {
   recipe: ImportedRecipeDraft;
   orderedKinds: RecipeScreenshotKind[];
   warnings: string[];
+  /** Chart header and settings panel disagreements (A9). */
+  crossCheck?: CrossCheckEntry[];
+  /** Last bar on the chart, YYYY-MM-DD, when the run end is in the future (A16). */
+  lastBarDate?: string | null;
+}
+
+/** Bump whenever RECIPE_SCREENSHOT_EXTRACTION_PROMPT changes (A5, A14). */
+export const PROMPT_VERSION = "2026-11-11.1";
+
+const num = z.number().finite().nullable().optional();
+const bool = z.boolean().nullable().optional();
+const extractionSchema = z.object({
+  imageKinds: z.array(z.enum(["chart", "settings", "stats", "dca"])),
+  ticker: z.string().min(1),
+  assetName: z.string().nullable().optional(),
+  assetClass: z.enum(["Equities", "ETFs", "Crypto"]).nullable().optional(),
+  timeFrame: z.string().nullable().optional(),
+  chartIndicatorParameters: z.string().nullable().optional(),
+  ribbonColorScheme: z.string().nullable().optional(),
+  dcaInterval: z.string().nullable().optional(),
+  lastPrice: num,
+  lastBarDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "must be YYYY-MM-DD").nullable().optional(),
+  settings: z.object({
+    startingCash: num, startingQty: num,
+    longThresholdEnabled: bool, longThresholdPercent: num,
+    exitThresholdEnabled: bool, exitThresholdPercent: num,
+    sharesEnabled: bool, entryShares: num, exitShares: num,
+    fixedEnabled: bool, entryFixed: num, exitFixed: num,
+    percentEnabled: bool, entryPercent: num, exitPercent: num,
+    roundDownWholeShares: bool, scope: num,
+    onlySellAbove: bool, onlyBuyBelow: bool, sellBuffer: num, buyBuffer: num,
+    staticSellAboveEnabled: bool, staticSellAbove: num, staticBuyBelowEnabled: bool, staticBuyBelow: num,
+    buyInDownTrend: bool, buyInUpTrend: bool, sellInDownTrend: bool, sellInUpTrend: bool,
+    buyOnUpTrend: bool, sellOnDownTrend: bool,
+    startYear: num, startMonth: num, startDay: num, startHour: num, startMinute: num,
+    endYear: num, endMonth: num, endDay: num,
+    exitFullOnLastBar: bool, showDcaBenchmark: bool, dcaInterval: z.string().nullable().optional(),
+  }).passthrough(),
+  stats: z.object({
+    initialCashBalance: num, initialShares: num, currentShares: num, currentSharesValue: num,
+    currentCashBalance: num, totalBaseCost: num, avgCostBasis: num, unrealizedProfit: num,
+    realizedProfit: num, totalPnl: num, buyHoldRoiPercent: num, strategyRoiPercent: num,
+    strategyPortfolioValue: num,
+  }).passthrough(),
+  dca: z.object({
+    dcaBenchmarkRoiPercent: num, dcaPortfolioValue: num, showDcaBenchmark: bool,
+  }).passthrough().optional(),
+}).passthrough();
+
+/**
+ * Checks the model's JSON against the expected shape (A4). Returns one line
+ * per problem; an empty list means the shape is right. Numbers must be
+ * numbers: a string such as "1,234" is a problem, not a value.
+ */
+export function validateExtractionShape(raw: unknown): string[] {
+  const result = extractionSchema.safeParse(raw);
+  if (result.success) return [];
+  return result.error.issues.map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`);
+}
+
+/**
+ * The chart header repeats the numeric settings. Every value both the header
+ * and the settings panel carry is compared; each disagreement is returned (A9).
+ */
+export function crossCheckChartAgainstSettings(extraction: RecipeScreenshotExtraction): CrossCheckEntry[] {
+  type Group = Record<string, unknown> | undefined;
+  type ChartParams = {
+    userInitialCapital?: Group; longThreshold?: Group; exitThreshold?: Group; tradeSize?: Group;
+    marketWave?: Group; staticPriceFilter?: Group; dates?: { start?: Group; end?: Group };
+  };
+  const chart = parseMarketWaveChartParams(extraction.chartIndicatorParameters ?? "") as ChartParams | null;
+  if (!chart) return [];
+  const settings = extraction.settings ?? {};
+  const pairs: Array<[string, unknown, unknown]> = [
+    ["startingCash", chart.userInitialCapital?.startingCash, settings.startingCash],
+    ["startingQty", chart.userInitialCapital?.startingQty, settings.startingQty],
+    ["longThresholdPercent", chart.longThreshold?.percent, settings.longThresholdPercent],
+    ["exitThresholdPercent", chart.exitThreshold?.percent, settings.exitThresholdPercent],
+    ["entryShares", chart.tradeSize?.entryShares, settings.entryShares],
+    ["exitShares", chart.tradeSize?.exitShares, settings.exitShares],
+    ["entryFixed", chart.tradeSize?.entryFixed, settings.entryFixed],
+    ["exitFixed", chart.tradeSize?.exitFixed, settings.exitFixed],
+    ["entryPercent", chart.tradeSize?.entryPercent, settings.entryPercent],
+    ["exitPercent", chart.tradeSize?.exitPercent, settings.exitPercent],
+    ["scope", chart.marketWave?.scope, settings.scope],
+    ["sellBuffer", chart.marketWave?.sellBuffer, settings.sellBuffer],
+    ["buyBuffer", chart.marketWave?.buyBuffer, settings.buyBuffer],
+    ["staticSellAbove", chart.staticPriceFilter?.sellAbove, settings.staticSellAbove],
+    ["staticBuyBelow", chart.staticPriceFilter?.buyBelow, settings.staticBuyBelow],
+    ["startYear", chart.dates?.start?.year, settings.startYear],
+    ["startMonth", chart.dates?.start?.month, settings.startMonth],
+    ["startDay", chart.dates?.start?.day, settings.startDay],
+    ["startHour", chart.dates?.start?.hour, settings.startHour],
+    ["startMinute", chart.dates?.start?.minute, settings.startMinute],
+    ["endYear", chart.dates?.end?.year, settings.endYear],
+    ["endMonth", chart.dates?.end?.month, settings.endMonth],
+    ["endDay", chart.dates?.end?.day, settings.endDay],
+  ];
+  const out: CrossCheckEntry[] = [];
+  for (const [field, a, b] of pairs) {
+    const chartValue = asFinite(a);
+    const panelValue = asFinite(b);
+    if (chartValue === null || panelValue === null) continue;
+    if (Math.abs(chartValue - panelValue) > 1e-9) {
+      out.push({ field, chart: chartValue, panel: panelValue });
+    }
+  }
+  return out;
 }
 
 const NUMBER_TOKEN_RE = /-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+(?:\.\d+)?/g;
@@ -246,7 +364,7 @@ export function parseMarketWaveChartParams(text: string): Record<string, unknown
       startYear >= 2000 &&
       startYear <= 2100 &&
       endYear >= 2000 &&
-      endYear <= 2100 &&
+      endYear <= 3000 &&
       startMonth >= 1 &&
       startMonth <= 12 &&
       endMonth >= 1 &&
@@ -370,6 +488,7 @@ Return ONLY JSON with this shape:
   "ribbonColorScheme": "Neon Pink / Neon Green",
   "dcaInterval": "Monthly"|null,
   "lastPrice": 37.92,
+  "lastBarDate": "2026-08-25",
   "settings": {
     "startingCash": 100000,
     "startingQty": 0,
@@ -443,7 +562,8 @@ Rules:
 - Prefer the settings panel for checkbox truth. Prefer the chart parameter string for the numeric series if settings are blurry.
 - If a checkbox is not visible, use false.
 - Ticker is the chart symbol (IREN, AAPL, SPY), not the company long name.
-- assetClass: Crypto only for BTC/ETH/SOL/XRP/SUI; ETFs for funds like SPY/QQQ; otherwise Equities.`;
+- assetClass: Crypto only for BTC/ETH/SOL/XRP/SUI; ETFs for funds like SPY/QQQ; otherwise Equities.
+- lastBarDate: the end year in the settings is often far in the future (for example 2030 or 2999) so TradingView unlocks the symbol. When the settings end date is later than the last candle on the chart, read the date of the last (right-most) candle from the chart's time axis, using the date gridline labels, and return it as "YYYY-MM-DD". Otherwise return null. Never return the settings end date here.`;
 
 export function buildRecipeFromExtraction(
   extraction: RecipeScreenshotExtraction,
@@ -632,7 +752,16 @@ export function buildRecipeFromExtraction(
     algorithm_inputs,
   };
 
-  return { recipe, orderedKinds: kinds, warnings };
+  const crossCheck = crossCheckChartAgainstSettings(extraction);
+  for (const entry of crossCheck) {
+    warnings.push(`Chart header and settings panel disagree on ${entry.field}: chart ${entry.chart}, panel ${entry.panel}.`);
+  }
+  const lastBarDate =
+    typeof extraction.lastBarDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(extraction.lastBarDate)
+      ? extraction.lastBarDate
+      : null;
+
+  return { recipe, orderedKinds: kinds, warnings, crossCheck, lastBarDate };
 }
 
 export function orderFilesByKinds<T>(items: T[], kinds: RecipeScreenshotKind[]): T[] {

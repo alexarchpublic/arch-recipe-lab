@@ -13,13 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  uploadRecipeImage, 
-  deleteRecipeImage, 
+import {
+  uploadRecipeImage,
+  removeRecipeImage,
   getRecipeScreenshots,
-  getStoragePathFromPublicUrl,
+  kindFromLabel,
   validateImage,
-  MAX_IMAGES_PER_RECIPE 
+  MAX_IMAGES_PER_RECIPE
 } from "@/lib/imageUpload";
 import { 
   Upload, 
@@ -30,7 +30,17 @@ import {
   Image as ImageIcon,
   Sparkles
 } from "lucide-react";
-import { computeCagr, resolveBuyHoldPnlPercentForSave, resolveDcaPnlPercentForSave } from "@/utils/recipeMetrics";
+import { resolveBuyHoldPnlPercentForSave, resolveDcaPnlPercentForSave } from "@/utils/recipeMetrics";
+import {
+  type AdminRole,
+  type FormValues,
+  formToVersionFields,
+  refreshDraftScreenshots,
+  runEndIsInFuture,
+  saveDraft,
+  strategyIdForVersion,
+  todayIso,
+} from "@/data/adminVersions";
 import { CRYPTO_ASSETS } from "@/lib/algorithms";
 import { parseRecipeScreenshotsFromFiles } from "@/lib/parseRecipeScreenshotsClient";
 import {
@@ -39,7 +49,6 @@ import {
   isImportableScreenshotCount,
   type ImportedRecipeDraft,
 } from "@/lib/recipeScreenshotImport";
-import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 const TICKER_REGEX = /^[A-Z.-]{1,10}$/;
 
@@ -67,7 +76,25 @@ const recipeSchema = z.object({
   // New algorithm fields
   algorithm: z.enum(["Intelligence Algorithm","Arbitrage Algorithm","Oracle Protocol","Market Wave"]).default("Market Wave"),
   algorithm_inputs: z.any().optional(),
+  // Version (PRD 7): identity, assumptions and the change note
+  title: z.string().optional(),
+  short_name: z.string().optional(),
+  slug: z.string().regex(/^$|^[a-z0-9]+(-[a-z0-9]+)*$/, "Lower-case words joined by hyphens").optional(),
+  as_of: z.string().optional(),
+  test_end_chart: z.string().optional(),
+  max_drawdown_pct: z.number().nullable().optional(),
+  listed_public: z.boolean().optional(),
+  change_note: z.string().optional(),
 }).superRefine((data, ctx) => {
+  // A far-future end year is a TradingView run setting. The real test end is
+  // the last bar on the chart, and clients only ever see that (D10, A16).
+  if (runEndIsInFuture(data.algorithm, data.algorithm_inputs, data.as_of || todayIso()) && !data.test_end_chart) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "The settings end date is in the future. Enter the date of the last bar on the chart.",
+      path: ["test_end_chart"],
+    });
+  }
   if (data.asset_class !== "Crypto" && data.algorithm !== "Market Wave") {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -104,14 +131,24 @@ interface RecipeScreenshot {
 }
 
 interface RecipeFormProps {
-  recipe?: any; // Existing recipe for edit mode
-  onSuccess: () => void;
+  /** For edit mode: versionToFormRecipe(open draft ?? published). `id` is the strategy id. */
+  recipe?: any;
+  /** The signed-in admin's role; a marketing editor saves copy only (A10). */
+  role?: AdminRole | null;
+  /** Called with the saved draft's version id. */
+  onSuccess: (versionId?: string) => void;
   onCancel: () => void;
+}
+
+interface ImportMeta {
+  extractionId: string | null;
+  lastBarDate: string | null;
 }
 
 interface RecipeFormBodyProps extends RecipeFormProps {
   importedScreenshotFiles?: File[] | null;
-  onScreenshotImport?: (draft: ImportedRecipeDraft, files: File[]) => void;
+  importMeta?: ImportMeta | null;
+  onScreenshotImport?: (draft: ImportedRecipeDraft, files: File[], meta: ImportMeta) => void;
 }
 
 function screenshotsFromFiles(files: File[]): RecipeScreenshot[] {
@@ -128,16 +165,29 @@ export function RecipeForm(props: RecipeFormProps) {
   const [importNonce, setImportNonce] = useState(0);
   const [importedRecipe, setImportedRecipe] = useState<ImportedRecipeDraft | null>(null);
   const [importedFiles, setImportedFiles] = useState<File[] | null>(null);
+  const [importMeta, setImportMeta] = useState<ImportMeta | null>(null);
+
+  // An import keeps the strategy's identity and version copy when editing (A11).
+  const recipe = importedRecipe
+    ? {
+        ...(props.recipe ?? {}),
+        ...importedRecipe,
+        id: props.recipe?.id,
+        test_end_chart: importMeta?.lastBarDate ?? props.recipe?.test_end_chart ?? "",
+      }
+    : props.recipe;
 
   return (
     <RecipeFormBody
       key={importNonce}
       {...props}
-      recipe={importedRecipe ?? props.recipe}
+      recipe={recipe}
       importedScreenshotFiles={importedFiles}
-      onScreenshotImport={(draft, files) => {
+      importMeta={importMeta}
+      onScreenshotImport={(draft, files, meta) => {
         setImportedRecipe(draft);
         setImportedFiles(files);
+        setImportMeta(meta);
         setImportNonce((n) => n + 1);
       }}
     />
@@ -146,9 +196,11 @@ export function RecipeForm(props: RecipeFormProps) {
 
 function RecipeFormBody({
   recipe,
+  role,
   onSuccess,
   onCancel,
   importedScreenshotFiles,
+  importMeta,
   onScreenshotImport,
 }: RecipeFormBodyProps) {
   const [loading, setLoading] = useState(false);
@@ -161,7 +213,10 @@ function RecipeFormBody({
   const [uploadingImages, setUploadingImages] = useState(false);
   const [parsingScreenshots, setParsingScreenshots] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  // When editing, dropping 3 or 4 screenshots reads them and updates the fields (A11).
+  const [autofillOnEdit, setAutofillOnEdit] = useState(true);
   const { toast } = useToast();
+  const isMarketingEditor = role === "marketing_editor";
 
   const isEditMode = Boolean(recipe?.id);
 
@@ -185,9 +240,17 @@ function RecipeFormBody({
       asset_class: recipe?.asset_class || "Equities",
       algorithm: recipe?.algorithm || "Market Wave",
       algorithm_inputs: recipe?.algorithm_inputs || {},
-      ...recipe
+      as_of: todayIso(),
+      listed_public: true,
+      test_end_chart: "",
+      change_note: "",
+      ...recipe,
+      max_drawdown_pct: recipe?.max_drawdown_pct ?? null,
     }
   });
+  const watchedInputs = watch("algorithm_inputs");
+  const watchedAsOf = watch("as_of");
+  const needsChartEnd = runEndIsInFuture(watch("algorithm"), watchedInputs, watchedAsOf || todayIso());
   const selectedAlgorithm = watch("algorithm");
   const selectedAssetClass = watch("asset_class");
   const isEquitiesOrEtf = selectedAssetClass === "Equities" || selectedAssetClass === "ETFs";
@@ -203,7 +266,12 @@ function RecipeFormBody({
   const loadExistingScreenshots = async (recipeId: string) => {
     try {
       const existingScreenshots = await getRecipeScreenshots(recipeId);
-      setScreenshots(existingScreenshots);
+      if (importedScreenshotFiles?.length) {
+        // New screenshots were read into this edit: they replace the current set.
+        setDeletedScreenshots(existingScreenshots.map((s) => ({ id: s.id, image_url: s.image_url })));
+        return;
+      }
+      setScreenshots(existingScreenshots.map((s) => ({ ...s, label: s.kind ? s.kind[0].toUpperCase() + s.kind.slice(1) : undefined })));
       setDeletedScreenshots([]);
     } catch (error: any) {
       toast({
@@ -223,14 +291,17 @@ function RecipeFormBody({
           throw new Error(validationError.message);
         }
       }
-      const result = await parseRecipeScreenshotsFromFiles(files);
+      const result = await parseRecipeScreenshotsFromFiles(files, isEditMode ? recipe.id : null);
       toast({
         title: "Recipe filled from screenshots",
         description: result.warnings.length
           ? result.warnings.join(" ")
           : "Review the fields, then click Create Recipe.",
       });
-      onScreenshotImport?.(result.recipe, result.orderedFiles);
+      onScreenshotImport?.(result.recipe, result.orderedFiles, {
+        extractionId: result.extractionId,
+        lastBarDate: result.lastBarDate ?? null,
+      });
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -246,7 +317,8 @@ function RecipeFormBody({
     if (parsingScreenshots) return;
     const files = Array.from(fileList);
 
-    if (!isEditMode && screenshots.length === 0 && isImportableScreenshotCount(files.length)) {
+    const canImport = isEditMode ? autofillOnEdit && !isMarketingEditor : screenshots.length === 0;
+    if (canImport && isImportableScreenshotCount(files.length)) {
       await importFromScreenshots(files);
       return;
     }
@@ -348,69 +420,52 @@ function RecipeFormBody({
     setLoading(true);
 
     try {
-      const payload = {
-        ...data,
-        algorithm: data.algorithm ?? "Market Wave",
-        asset: data.asset.trim().toUpperCase(),
-        strategy_type: isEditMode ? recipe.strategy_type : (data.algorithm ?? "Market Wave"),
-        best_for: isEditMode ? (recipe.best_for ?? null) : null,
-        cagr: computeCagr(data) ?? null,
-        buy_hold_pnl_percent: resolveBuyHoldPnlPercentForSave(
-          data.algorithm,
-          data.algorithm_inputs,
-        ),
-        dca_pnl_percent: resolveDcaPnlPercentForSave(
-          data.algorithm,
-          data.algorithm_inputs,
-        ),
-      };
-      let recipeId: string;
+      // Every save writes a draft version; nothing reaches clients until an
+      // approver publishes it (A2). The database derives return, CAGR and the
+      // benchmark deltas (D3), so none are computed here.
+      const fields = formToVersionFields(
+        { ...data, algorithm: data.algorithm ?? "Market Wave" } as FormValues,
+        {
+          role: role ?? null,
+          strategyType: isEditMode ? recipe.strategy_type : (data.algorithm ?? "Market Wave"),
+          buyHoldPnlPct: resolveBuyHoldPnlPercentForSave(data.algorithm, data.algorithm_inputs),
+          dcaPnlPct: resolveDcaPnlPercentForSave(data.algorithm, data.algorithm_inputs),
+          extractionId: importMeta?.extractionId ?? recipe?.extraction_id ?? null,
+        },
+      );
+      const versionId = await saveDraft(isEditMode ? recipe.id : null, fields);
 
-      if (isEditMode) {
-        // Update existing recipe
-        const { data: updatedRecipe, error } = await supabase
-          .from('recipes')
-          .update(payload as TablesUpdate<"recipes">)
-          .eq('id', recipe.id)
-          .select('id')
-          .single();
+      if (!isMarketingEditor) {
+        const strategyId = isEditMode ? recipe.id : await strategyIdForVersion(versionId);
 
-        if (error) throw error;
-        recipeId = updatedRecipe.id;
-      } else {
-        // Create new recipe
-        const { data: newRecipe, error } = await supabase
-          .from('recipes')
-          .insert(payload as TablesInsert<"recipes">)
-          .select('id')
-          .single();
+        // Removing a screenshot unlinks it; the file stays for published versions.
+        for (const deleted of deletedScreenshots) {
+          await removeRecipeImage(deleted.id);
+        }
 
-        if (error) throw error;
-        recipeId = newRecipe.id;
-      }
+        const newImageFiles = screenshots.filter((s) => s.file);
+        for (const screenshot of newImageFiles) {
+          if (screenshot.file) {
+            await uploadRecipeImage(
+              screenshot.file,
+              strategyId,
+              screenshot.display_order,
+              kindFromLabel(screenshot.label),
+            );
+          }
+        }
 
-      for (const deleted of deletedScreenshots) {
-        const imagePath = getStoragePathFromPublicUrl(deleted.image_url);
-        await deleteRecipeImage(deleted.id, imagePath);
-      }
-
-      const newImageFiles = screenshots.filter((s) => s.file);
-      for (const screenshot of newImageFiles) {
-        if (screenshot.file) {
-          await uploadRecipeImage(
-            screenshot.file,
-            recipeId,
-            screenshot.display_order,
-          );
+        if (deletedScreenshots.length > 0 || newImageFiles.length > 0) {
+          await refreshDraftScreenshots(versionId);
         }
       }
 
       toast({
-        title: "Success",
-        description: `Recipe ${isEditMode ? 'updated' : 'created'} successfully`,
+        title: "Draft saved",
+        description: "Review the checks, then submit it for publishing.",
       });
 
-      onSuccess();
+      onSuccess(versionId);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -431,6 +486,12 @@ function RecipeFormBody({
             <Sparkles className="h-3 w-3" />
             Auto-fill
           </Badge>
+        )}
+        {isEditMode && !isMarketingEditor && (
+          <label className="ml-2 flex items-center gap-2 text-sm text-muted-foreground">
+            <Checkbox checked={autofillOnEdit} onCheckedChange={(c) => setAutofillOnEdit(!!c)} />
+            Dropping 3 or 4 new screenshots updates the fields
+          </label>
         )}
       </div>
 
@@ -542,6 +603,75 @@ function RecipeFormBody({
     </div>
   );
 
+  const renderVersionSection = () => (
+    <div className="space-y-4 rounded-lg border border-border p-4">
+      <div>
+        <h3 className="text-lg font-semibold">Version</h3>
+        <p className="text-sm text-muted-foreground">
+          Saving writes a draft. Clients see nothing until an approver publishes it.
+          {isMarketingEditor && " As a marketing editor, only the title, short name, goal and change note are saved."}
+        </p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="title">Title</Label>
+          <Input id="title" {...register("title")} placeholder="Defaults to the goal" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="short_name">Short name</Label>
+          <Input id="short_name" {...register("short_name")} placeholder="e.g. MARA LTH 1W Position" />
+        </div>
+        {!isMarketingEditor && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="slug">Slug (optional)</Label>
+              <Input id="slug" {...register("slug")} placeholder="Generated when blank" />
+              {errors.slug && <p className="text-sm text-destructive">{errors.slug.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="as_of">As-of date</Label>
+              <Input id="as_of" type="date" {...register("as_of")} />
+            </div>
+            <div className={`space-y-2 ${needsChartEnd ? "rounded-md border border-destructive/60 bg-destructive/5 p-2" : ""}`}>
+              <Label htmlFor="test_end_chart">
+                Test end — last bar on the chart{needsChartEnd ? " *" : ""}
+              </Label>
+              <Input id="test_end_chart" type="date" {...register("test_end_chart")} />
+              <p className="text-xs text-muted-foreground">
+                {needsChartEnd
+                  ? "The settings end date is a far-future run setting. Clients see this date instead."
+                  : "Leave blank to use the end date in the settings."}
+                {importMeta?.lastBarDate ? ` Read from the chart: ${importMeta.lastBarDate}.` : ""}
+              </p>
+              {errors.test_end_chart && <p className="text-sm text-destructive">{errors.test_end_chart.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="max_drawdown_pct">Max drawdown % (optional)</Label>
+              <Input
+                id="max_drawdown_pct"
+                type="number"
+                step="0.01"
+                {...register("max_drawdown_pct", { setValueAs: (v) => (v === "" || v === null || v === undefined ? null : Number(v)) })}
+              />
+            </div>
+            <div className="flex items-center space-x-2 pt-6">
+              <Checkbox
+                id="listed_public"
+                defaultChecked={recipe?.listed_public ?? true}
+                onCheckedChange={(checked) => setValue("listed_public", !!checked)}
+              />
+              <Label htmlFor="listed_public">Listed on the public Strategy Lab</Label>
+            </div>
+          </>
+        )}
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="change_note">Change note</Label>
+          <Textarea id="change_note" {...register("change_note")} placeholder="What changed and why" rows={2} />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <Card>
@@ -549,13 +679,21 @@ function RecipeFormBody({
           <CardTitle>{isEditMode ? 'Edit Recipe' : 'Create New Recipe'}</CardTitle>
           <CardDescription>
             {isEditMode 
-              ? 'Update the recipe details and screenshots' 
+              ? 'Changes are saved as a draft version for review' 
               : 'Drop 3 screenshots (chart, settings, stats) to auto-fill, or 4 to include DCA'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {!isEditMode && renderScreenshotsSection()}
+            {importMeta && importMeta.extractionId === null && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  The screenshot reading was not recorded, so the review will not cross-check these figures against it.
+                </AlertDescription>
+              </Alert>
+            )}
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Basic Information</h3>
@@ -2001,6 +2139,8 @@ function RecipeFormBody({
               </div>
             )}
 
+            {renderVersionSection()}
+
             {isEditMode && renderScreenshotsSection()}
 
             {/* Form Actions */}
@@ -2012,10 +2152,10 @@ function RecipeFormBody({
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isEditMode ? 'Updating...' : 'Creating...'}
+                    Saving draft...
                   </>
                 ) : (
-                  isEditMode ? 'Update Recipe' : 'Create Recipe'
+                  'Save draft'
                 )}
               </Button>
             </div>

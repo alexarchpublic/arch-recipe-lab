@@ -2,62 +2,33 @@ import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, Edit, Trash2, Eye, Image as ImageIcon, Archive, ArchiveRestore } from "lucide-react";
-import { usePortfolio } from "@/hooks/usePortfolio";
+import { Edit, Eye, Image as ImageIcon, Archive, ArchiveRestore, ClipboardCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MetricTileGrid } from "@/components/MetricTileGrid";
 import { StatTile, deltaTone, signedTone } from "@/components/StatTile";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { parseCurrencyFromString } from "@/lib/portfolio";
 import {
   formatPercent,
   formatSignedCurrency,
   formatSignedPercent,
-  getDisplayCagr,
-  getPnlVsBuyHoldDelta,
-  getPnlVsDcaDelta,
-  getStrategyPnlPercent,
-  isMarketWaveAlgorithm,
-} from "@/utils/recipeMetrics";
+  scaledResults,
+  vsBuyHold,
+  vsDca,
+} from "@core";
 import { isLegacyAlgorithm } from "@/lib/algorithms";
-
-interface Recipe {
-  id: string;
-  name: string;
-  asset: string;
-  asset_class?: string;
-  time_horizon: string;
-  strategy_type: string;
-  algorithm?: string;
-  algorithm_inputs?: any;
-  focus: string;
-  goal: string;
-  display_number?: number | null;
-  entry_trade: string;
-  exit_trade: string;
-  exit_to_entry_proportion: number;
-  time_frame: string;
-  cagr: number | null;
-  annualized_return: number | null;
-  net_profit: string | null;
-  cash_profit: number | null;
-  asset_accumulated?: string | null;
-  initial_capital?: number | null;
-  archived_at?: string | null;
-  screenshots?: Array<{
-    id: string;
-    image_url: string;
-    display_order: number;
-  }>;
-}
+import {
+  type StrategyGroup,
+  countChecks,
+  setArchived,
+  versionToProStrategy,
+} from "@/data/adminVersions";
 
 interface AdminRecipeCardProps {
-  recipe: Recipe;
-  onEdit: (recipe: Recipe) => void;
-  onDelete: () => void;
-  onView: (recipe: Recipe) => void;
+  group: StrategyGroup;
+  onEdit: (group: StrategyGroup) => void;
+  onReview: (group: StrategyGroup) => void;
+  onView: (group: StrategyGroup) => void;
+  onChanged: () => void;
 }
 
 const getFocusPill = (focus: string) => {
@@ -73,121 +44,48 @@ const getFocusPill = (focus: string) => {
   }
 };
 
-export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecipeCardProps) {
-  const [deleting, setDeleting] = useState(false);
+const STATUS_LABEL: Record<string, string> = { draft: "Draft", in_review: "In review" };
+
+export function AdminRecipeCard({ group, onEdit, onReview, onView, onChanged }: AdminRecipeCardProps) {
   const [archiving, setArchiving] = useState(false);
   const { toast } = useToast();
-  const { isInPortfolio, toggleRecipe } = usePortfolio();
 
-  // Get thumbnail from screenshots prop
-  const thumbnailUrl = recipe.screenshots && recipe.screenshots.length > 0 
-    ? recipe.screenshots[0].image_url 
-    : null;
-
-  const returnValue = getDisplayCagr(recipe);
-  
-  // Parse asset accumulated numeric qty and net profit dollars
-  const parseAssetQuantity = (text?: string | null): number | null => {
-    if (!text) return null;
-    const match = String(text).match(/\b([0-9]+(?:\.[0-9]+)?)\s*(?:[A-Z]{2,6})?\b/);
-    if (!match) return null;
-    const qty = parseFloat(match[1]);
-    return Number.isFinite(qty) ? qty : null;
-  };
-  const assetQty = parseAssetQuantity(recipe.asset_accumulated);
-  const netProfitNumber = parseCurrencyFromString(recipe.net_profit);
-  const scaledAssetQty = assetQty !== null ? assetQty : null;
-  const scaledNetProfitNumber = netProfitNumber !== null ? netProfitNumber : null;
-  const scaledCashProfit = recipe.cash_profit !== null && recipe.cash_profit !== undefined
-    ? recipe.cash_profit
-    : null;
-
-  const pnlPercent = getStrategyPnlPercent(recipe);
-  const pnlVsBuyHoldDelta = getPnlVsBuyHoldDelta(recipe);
-  const pnlVsDcaDelta = getPnlVsDcaDelta(recipe);
-
-  const handleDelete = async () => {
-    setDeleting(true);
-    try {
-      // Delete recipe (cascade will handle screenshots)
-      const { error } = await supabase
-        .from('recipes')
-        .delete()
-        .eq('id', recipe.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Recipe deleted successfully",
-      });
-
-      onDelete();
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to delete recipe",
-      });
-    } finally {
-      setDeleting(false);
-    }
-  };
+  // The card shows the open draft when there is one, else the published version.
+  const v = group.draft ?? group.published ?? group.history[0];
+  const s = versionToProStrategy(v);
+  const scaled = scaledResults(s);
+  const thumbnailUrl = v.screenshots.length > 0 ? v.screenshots[0].url : null;
+  const checks = countChecks(group.draft);
+  const archived = !!group.archivedAt;
+  const bh = vsBuyHold(s);
+  const dca = vsDca(s);
 
   const handleToggleArchive = async () => {
     setArchiving(true);
     try {
-      const nextArchivedAt = recipe.archived_at ? null : new Date().toISOString();
-      const { error } = await supabase
-        .from('recipes')
-        .update({ archived_at: nextArchivedAt })
-        .eq('id', recipe.id);
-
-      if (error) {
-        const msg = String((error as any)?.message || "");
-        if (msg.includes("archived_at") || msg.includes("does not exist")) {
-          throw new Error(
-            "Archiving isn't enabled in the database yet (missing recipes.archived_at). Apply the latest Supabase migrations, then retry.",
-          );
-        }
-        throw error;
-      }
-
-      toast({
-        title: "Success",
-        description: recipe.archived_at ? "Recipe unarchived." : "Recipe archived.",
-      });
-
-      onDelete();
+      // Archive replaces delete (A12): history and files stay, clients who hold it keep it.
+      await setArchived(group.strategyId, !archived);
+      toast({ title: archived ? "Strategy unarchived" : "Strategy archived" });
+      onChanged();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === "string"
-            ? error
-            : "Failed to update recipe";
       toast({
         variant: "destructive",
         title: "Error",
-        description: message,
+        description: error instanceof Error ? error.message : "Failed to update the strategy",
       });
     } finally {
       setArchiving(false);
     }
   };
-  
+
   return (
     <Card className={cn(
       "group overflow-hidden border-border bg-card shadow-sm transition-[border-color,box-shadow,transform] duration-150 ease-out hover:-translate-y-px hover:border-border-strong hover:shadow-md",
-      recipe.archived_at && "opacity-75",
+      archived && "opacity-75",
     )}>
       <div className="aspect-video overflow-hidden bg-navy">
         {thumbnailUrl ? (
-          <img
-            src={thumbnailUrl}
-            alt={`${recipe.name} thumbnail`}
-            className="h-full w-full object-cover"
-          />
+          <img src={thumbnailUrl} alt={`${v.short_name} thumbnail`} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-white/50">
             <div className="text-center">
@@ -200,178 +98,83 @@ export function AdminRecipeCard({ recipe, onEdit, onDelete, onView }: AdminRecip
 
       <CardHeader className="space-y-3">
         <div className="flex flex-wrap items-center gap-1.5">
-          {typeof recipe.display_number === "number" && (
-            <Badge variant="chip">#{recipe.display_number}</Badge>
+          {typeof group.displayNumber === "number" && <Badge variant="chip">#{group.displayNumber}</Badge>}
+          <Badge variant="chip">{v.asset}</Badge>
+          <Badge className={getFocusPill(v.focus)}>{v.focus}</Badge>
+          <Badge variant="outline" className="rounded-full">{v.time_horizon}</Badge>
+          {isLegacyAlgorithm(v.algorithm) && <Badge variant="outline">Legacy</Badge>}
+          {archived && <Badge variant="secondary">Archived</Badge>}
+          {!v.listed_public && <Badge variant="outline">Not public</Badge>}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          {group.published ? (
+            <Badge variant="outline">Published v{group.published.version_number}</Badge>
+          ) : (
+            <Badge variant="destructive">Never published</Badge>
           )}
-          <Badge variant="chip">{recipe.asset}</Badge>
-          <Badge className={getFocusPill(recipe.focus)}>{recipe.focus}</Badge>
-          <Badge variant="outline" className="rounded-full">
-            {recipe.time_horizon}
-          </Badge>
-          {isLegacyAlgorithm(recipe.algorithm) && (
-            <Badge variant="outline">Legacy</Badge>
+          {group.draft && (
+            <Badge variant="secondary">
+              {STATUS_LABEL[group.draft.status]} v{group.draft.version_number}
+            </Badge>
+          )}
+          {group.draft && checks.error > 0 && (
+            <Badge variant="destructive">{checks.error} error{checks.error === 1 ? "" : "s"}</Badge>
+          )}
+          {group.draft && checks.review > 0 && (
+            <Badge variant="outline" className="border-amber-500 text-amber-700">
+              {checks.review} to review
+            </Badge>
           )}
         </div>
         <CardTitle className="text-balance text-lg font-extrabold leading-snug tracking-[-0.02em]">
-          {recipe.goal}
+          {v.title}
         </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
         <MetricTileGrid>
-          {returnValue !== null && (
-            <StatTile label="CAGR" value={formatPercent(returnValue)} />
+          {s.cagr_pct !== null && <StatTile label="CAGR" value={formatPercent(s.cagr_pct)} />}
+          {bh !== null && <StatTile label="vs Buy & Hold" value={formatSignedPercent(bh)} tone={deltaTone(bh)} />}
+          {dca !== null && <StatTile label="vs DCA" value={formatSignedPercent(dca)} tone={deltaTone(dca)} />}
+          {scaled.cashProfit !== null && (
+            <StatTile label="Cash profit" value={formatSignedCurrency(scaled.cashProfit)} />
           )}
-
-          {isMarketWaveAlgorithm(recipe) && pnlVsBuyHoldDelta !== null && (
-            <StatTile
-              label="vs Buy & Hold"
-              value={formatSignedPercent(pnlVsBuyHoldDelta)}
-              tone={deltaTone(pnlVsBuyHoldDelta)}
-            />
-          )}
-
-          {isMarketWaveAlgorithm(recipe) && pnlVsDcaDelta !== null && (
-            <StatTile
-              label="vs DCA"
-              value={formatSignedPercent(pnlVsDcaDelta)}
-              tone={deltaTone(pnlVsDcaDelta)}
-            />
-          )}
-
-          {scaledCashProfit !== null && (
-            <StatTile label="Cash profit" value={formatSignedCurrency(scaledCashProfit)} />
-          )}
-
-          {scaledAssetQty !== null && (
+          {scaled.assetQty !== null && (
             <StatTile
               label="Asset accumulated"
-              value={`${scaledAssetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${recipe.asset}`}
+              value={`${scaled.assetQty.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${v.asset}`}
             />
           )}
-
-          {scaledNetProfitNumber !== null && (
-            <StatTile
-              label="Net profit"
-              value={formatSignedCurrency(scaledNetProfitNumber)}
-              tone={signedTone(scaledNetProfitNumber)}
-            />
-          )}
-
-          {pnlPercent !== null && (
-            <StatTile
-              label="PnL"
-              value={formatSignedPercent(pnlPercent)}
-              tone={deltaTone(pnlPercent)}
-            />
-          )}
-
-          {recipe.algorithm && (
-            <StatTile
-              label="Algorithm"
-              value={recipe.algorithm}
-              fullWidth
-            />
-          )}
+          <StatTile label="Net profit" value={formatSignedCurrency(scaled.netProfit)} tone={signedTone(scaled.netProfit)} />
+          <StatTile label="PnL" value={formatSignedPercent(s.return_pct)} tone={deltaTone(s.return_pct)} />
+          <StatTile label="Algorithm" value={v.algorithm} fullWidth />
         </MetricTileGrid>
       </CardContent>
-      
+
       <CardFooter className="pt-0">
-        <div className="flex justify-between items-center w-full">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{recipe.strategy_type}</span>
-            {recipe.algorithm && (
-              <span className="before:content-['•'] before:mx-2 text-muted-foreground/80" />
-            )}
-            {recipe.algorithm && (
-              <span>{recipe.algorithm}</span>
-            )}
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex w-full items-center justify-between gap-2">
+          <Button size="sm" variant={group.draft ? "default" : "outline"} onClick={() => onReview(group)} className="gap-1">
+            <ClipboardCheck className="h-4 w-4" />
+            {group.draft ? "Review draft" : "Versions"}
+          </Button>
+          <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleToggleArchive}
               className="h-8 w-8 p-0"
               disabled={archiving}
-              aria-label={recipe.archived_at ? "Unarchive recipe" : "Archive recipe"}
-              title={recipe.archived_at ? "Unarchive" : "Archive"}
+              aria-label={archived ? "Unarchive strategy" : "Archive strategy"}
+              title={archived ? "Unarchive" : "Archive"}
             >
-              {recipe.archived_at ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+              {archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={isInPortfolio(recipe.id) ? "h-8 w-8 p-0 text-destructive hover:text-destructive" : "h-8 w-8 p-0"}
-              onClick={() =>
-                toggleRecipe({
-                  recipeId: recipe.id,
-                  title: recipe.name,
-                  assetSymbol: recipe.asset,
-                  baseInitialCapital: recipe.initial_capital ?? undefined,
-                  baseCashProfit: recipe.cash_profit ?? null,
-                  baseNetProfit: parseCurrencyFromString(recipe.net_profit),
-                  assetAccumulatedText: recipe.asset_accumulated ?? null,
-                  algorithm: recipe.algorithm,
-                  algorithm_inputs: recipe.algorithm_inputs,
-                  display_number: recipe.display_number ?? null,
-                })
-              }
-              aria-label={isInPortfolio(recipe.id) ? "Remove from portfolio" : "Add to portfolio"}
-            >
-              <Heart className={isInPortfolio(recipe.id) ? "h-4 w-4 fill-destructive" : "h-4 w-4"} />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onView(recipe)}
-              className="h-8 w-8 p-0"
-            >
+            <Button variant="outline" size="sm" onClick={() => onView(group)} className="h-8 w-8 p-0" title="Preview as client">
               <Eye className="h-4 w-4" />
             </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(recipe)}
-              className="h-8 w-8 p-0"
-            >
+            <Button variant="outline" size="sm" onClick={() => onEdit(group)} className="h-8 w-8 p-0" title="Edit (saves a draft)">
               <Edit className="h-4 w-4" />
             </Button>
-            
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  disabled={deleting}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete "{recipe.name}"? This action cannot be undone.
-                    All associated screenshots will also be deleted.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    disabled={deleting}
-                  >
-                    {deleting ? "Deleting..." : "Delete"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </div>
         </div>
       </CardFooter>

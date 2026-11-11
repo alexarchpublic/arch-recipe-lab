@@ -14,21 +14,21 @@ export async function getLatestRecipeCardOgImage(): Promise<string> {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const { data: recipe, error } = await supabase
-    .from("recipes")
-    .select("recipe_screenshots!inner(image_url, display_order)")
+  // Reads the Pro view: the base tables are admin-only since Phase 1.
+  const { data, error } = await supabase
+    .from("strategies_pro")
+    .select("screenshots")
     .is("archived_at", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("strategy_created_at", { ascending: false })
+    .limit(10);
 
-  if (error || !recipe) {
+  if (error || !data) {
     return FALLBACK_OG_IMAGE;
   }
 
-  const screenshots = [...(recipe.recipe_screenshots ?? [])].sort(
-    (a, b) => a.display_order - b.display_order,
-  );
-
-  return screenshots[0]?.image_url ?? FALLBACK_OG_IMAGE;
+  for (const row of data as Array<{ screenshots: Array<{ url: string; order: number }> | null }>) {
+    const first = [...(row.screenshots ?? [])].sort((a, b) => a.order - b.order)[0];
+    if (first?.url) return first.url;
+  }
+  return FALLBACK_OG_IMAGE;
 }

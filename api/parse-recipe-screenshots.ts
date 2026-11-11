@@ -1,8 +1,11 @@
-import { createClient } from "@supabase/supabase-js";
+import { createHash } from "node:crypto";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
+  PROMPT_VERSION,
   RECIPE_SCREENSHOT_EXTRACTION_PROMPT,
   buildRecipeFromExtraction,
   classifyKindsFromFilenames,
+  validateExtractionShape,
 } from "../lib/recipeScreenshotImport.bundle.js";
 import type { RecipeScreenshotExtraction } from "../lib/recipeScreenshotImport";
 
@@ -62,14 +65,16 @@ function extractJsonObject(text: string): RecipeScreenshotExtraction {
   return JSON.parse(raw.slice(start, end + 1)) as RecipeScreenshotExtraction;
 }
 
-async function requireAdmin(authHeader: string): Promise<JsonResult | null> {
+type AdminCheck = { error: JsonResult; client?: undefined } | { error?: undefined; client: SupabaseClient };
+
+async function requireAdmin(authHeader: string): Promise<AdminCheck> {
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
-  if (!token) return { status: 401, body: { error: "Missing auth token" } };
+  if (!token) return { error: { status: 401, body: { error: "Missing auth token" } } };
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!supabaseUrl || !supabaseKey) {
-    return { status: 500, body: { error: "Server configuration error" } };
+    return { error: { status: 500, body: { error: "Server configuration error" } } };
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey, {
@@ -78,7 +83,7 @@ async function requireAdmin(authHeader: string): Promise<JsonResult | null> {
   });
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) {
-    return { status: 403, body: { error: "Admin access required" } };
+    return { error: { status: 403, body: { error: "Admin access required" } } };
   }
 
   // Same rule as lib/adminAccess.ts, inlined because this function avoids
@@ -100,9 +105,12 @@ async function requireAdmin(authHeader: string): Promise<JsonResult | null> {
   return null;
 }
 
-async function extractWithOpenAI(images: IncomingImage[]): Promise<string> {
+type ModelReply = { text: string; provider: string; model: string };
+
+async function extractWithOpenAI(images: IncomingImage[]): Promise<ModelReply | null> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return "";
+  if (!apiKey) return null;
+  const model = process.env.OPENAI_VISION_MODEL || "gpt-4o";
 
   const content: Array<Record<string, unknown>> = [
     { type: "text", text: RECIPE_SCREENSHOT_EXTRACTION_PROMPT },
@@ -129,7 +137,7 @@ async function extractWithOpenAI(images: IncomingImage[]): Promise<string> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_VISION_MODEL || "gpt-4o",
+      model,
       temperature: 0,
       response_format: { type: "json_object" },
       messages: [{ role: "user", content }],
@@ -142,7 +150,7 @@ async function extractWithOpenAI(images: IncomingImage[]): Promise<string> {
   }
 
   const payload = await response.json();
-  return payload.choices?.[0]?.message?.content ?? "";
+  return { text: payload.choices?.[0]?.message?.content ?? "", provider: "openai", model: payload.model ?? model };
 }
 
 const ANTHROPIC_VISION_MODELS = [
@@ -152,9 +160,9 @@ const ANTHROPIC_VISION_MODELS = [
   "claude-haiku-4-5",
 ].filter((model, index, all): model is string => !!model && all.indexOf(model) === index);
 
-async function extractWithAnthropic(images: IncomingImage[]): Promise<string> {
+async function extractWithAnthropic(images: IncomingImage[]): Promise<ModelReply | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return "";
+  if (!apiKey) return null;
 
   const content: Array<Record<string, unknown>> = [
     { type: "text", text: RECIPE_SCREENSHOT_EXTRACTION_PROMPT },
@@ -196,7 +204,7 @@ async function extractWithAnthropic(images: IncomingImage[]): Promise<string> {
     if (response.ok) {
       const payload = await response.json();
       const textBlock = (payload.content ?? []).find((block: { type?: string }) => block.type === "text");
-      return textBlock?.text ?? "";
+      return { text: textBlock?.text ?? "", provider: "anthropic", model: payload.model ?? model };
     }
 
     const errText = await response.text();
@@ -209,9 +217,21 @@ async function extractWithAnthropic(images: IncomingImage[]): Promise<string> {
   throw new Error(lastError);
 }
 
+function imageRecords(images: IncomingImage[], kinds: string[] | null) {
+  return images.map((image, index) => {
+    const bytes = Buffer.from(image.data ?? "", "base64");
+    return {
+      filename: image.filename || `image-${index + 1}`,
+      kind: kinds?.[index] ?? null,
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      bytes: bytes.length,
+    };
+  });
+}
+
 async function parseScreenshots(authHeader: string, rawBody: unknown): Promise<JsonResult> {
-  const authError = await requireAdmin(authHeader);
-  if (authError) return authError;
+  const admin = await requireAdmin(authHeader);
+  if (admin.error) return admin.error;
 
   if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
     return {
@@ -223,8 +243,11 @@ async function parseScreenshots(authHeader: string, rawBody: unknown): Promise<J
     };
   }
 
-  const body = typeof rawBody === "string" ? JSON.parse(rawBody) : rawBody;
-  const images = ((body as { images?: IncomingImage[] } | null)?.images ?? []) as IncomingImage[];
+  const body = (typeof rawBody === "string" ? JSON.parse(rawBody) : rawBody) as
+    | { images?: IncomingImage[]; strategyId?: string | null }
+    | null;
+  const images = (body?.images ?? []) as IncomingImage[];
+  const strategyId = typeof body?.strategyId === "string" && body.strategyId ? body.strategyId : null;
   if (!Array.isArray(images) || images.length < MIN_COUNT || images.length > MAX_COUNT) {
     return { status: 400, body: { error: "Send 3 screenshots (chart, settings, stats) or 4 to include DCA" } };
   }
@@ -232,25 +255,27 @@ async function parseScreenshots(authHeader: string, rawBody: unknown): Promise<J
     return { status: 400, body: { error: "Each screenshot must include image data" } };
   }
 
-  let raw = "";
+  let reply: ModelReply | null = null;
   let lastError: unknown;
   try {
     if (process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
-      raw = await extractWithAnthropic(images);
+      reply = await extractWithAnthropic(images);
     } else {
-      raw = (await extractWithOpenAI(images)) || (await extractWithAnthropic(images));
+      reply = (await extractWithOpenAI(images)) || (await extractWithAnthropic(images));
     }
   } catch (error) {
     lastError = error;
     if (process.env.ANTHROPIC_API_KEY && process.env.OPENAI_API_KEY) {
-      raw = await extractWithAnthropic(images);
+      reply = await extractWithAnthropic(images);
     }
   }
-  if (!raw) {
+  if (!reply?.text) {
     throw lastError instanceof Error ? lastError : new Error("Vision provider returned an empty result");
   }
 
-  const extraction = extractJsonObject(raw);
+  const extraction = extractJsonObject(reply.text);
+  const parsedAsReturned = JSON.parse(JSON.stringify(extraction));
+  const schemaErrors = validateExtractionShape(extraction);
   const filenameKinds = classifyKindsFromFilenames(
     images.map((image, index) => image.filename || `image-${index + 1}`),
   );
@@ -263,7 +288,33 @@ async function parseScreenshots(authHeader: string, rawBody: unknown): Promise<J
     extraction.imageKinds = filenameKinds;
   }
 
-  return { status: 200, body: buildRecipeFromExtraction(extraction) };
+  const result = buildRecipeFromExtraction(extraction);
+  for (const problem of schemaErrors) {
+    result.warnings.push(`Model output: ${problem}`);
+  }
+
+  // Provenance (A5). Recording must never block ingestion.
+  let extractionId: string | null = null;
+  const recorded = await admin.client.rpc("admin_record_extraction", {
+    p_strategy: strategyId,
+    p_provider: reply.provider,
+    p_model: reply.model,
+    p_prompt_version: PROMPT_VERSION,
+    p_images: imageRecords(images, extraction.imageKinds ?? null),
+    p_raw_output: reply.text,
+    p_parsed: parsedAsReturned,
+    p_warnings: result.warnings,
+    p_cross_check: result.crossCheck ?? [],
+    p_schema_errors: schemaErrors,
+    p_last_bar_date: result.lastBarDate ?? null,
+  });
+  if (recorded.error) {
+    result.warnings.push(`The extraction record could not be saved (${recorded.error.message}); checks against it will be missing.`);
+  } else {
+    extractionId = recorded.data as string;
+  }
+
+  return { status: 200, body: { ...result, extractionId, schemaErrors } };
 }
 
 export default async function handler(

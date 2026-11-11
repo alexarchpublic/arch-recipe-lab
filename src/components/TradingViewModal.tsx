@@ -12,6 +12,7 @@ import { usePortfolio } from "@/hooks/usePortfolio";
 import { scaleAlgorithmInputs } from "@/utils/recipeScaling";
 import { computeScaledMetricsForRecipe, DEFAULT_BASE_CAPITAL } from "@/lib/portfolio";
 import { CRYPTO_ASSETS, isLegacyAlgorithm } from "@/lib/algorithms";
+import { TRADINGVIEW_END_INSTRUCTION, isRunSettingEnd } from "@core";
 
 interface TradingViewModalProps {
   open: boolean;
@@ -27,16 +28,8 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
     if (!recipe) return null;
     
     const row = rows.find(r => r.recipeId === pos.recipeId);
-    // For Intelligence Algorithm, use properties.initialCapital as base if available
-    // Otherwise fall back to recipe.baseInitialCapital
-    let baseCapital = recipe.baseInitialCapital ?? DEFAULT_BASE_CAPITAL;
-    if (recipe.algorithm === 'Intelligence Algorithm' && 
-        recipe.algorithm_inputs?.properties?.initialCapital) {
-      const propsInitialCapital = recipe.algorithm_inputs.properties.initialCapital;
-      if (typeof propsInitialCapital === 'number' && propsInitialCapital > 0) {
-        baseCapital = propsInitialCapital;
-      }
-    }
+    // One scaling rule: the strategy's own starting capital (D3).
+    const baseCapital = recipe.baseInitialCapital ?? DEFAULT_BASE_CAPITAL;
     const capitalAllocated = row?.capitalAllocated ?? 0;
     const scaleFactor = baseCapital > 0 ? capitalAllocated / baseCapital : 1;
     
@@ -51,6 +44,13 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       capitalAllocated,
     };
   }).filter((entry): entry is NonNullable<typeof portfolioEntries[0]> => entry !== null);
+
+  // The stored end is often a far-future year that unlocks symbols in
+  // TradingView. It is never printed (D10, P16): the client sets their own.
+  const endDateLine = (dateObj: any, testEnd?: string | null): string =>
+    isRunSettingEnd(dateObj, testEnd ?? null) || !testEnd
+      ? TRADINGVIEW_END_INSTRUCTION
+      : formatDate(dateObj);
 
   const formatDate = (dateObj: any): string => {
     if (!dateObj || !dateObj.year || !dateObj.month || !dateObj.day) return '';
@@ -85,7 +85,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
         lines.push(`  Start Date/Time: ${formatDate(scaledInputs.start)}`);
       }
       if (scaledInputs.end) {
-        lines.push(`  End Date: ${formatDate(scaledInputs.end)}`);
+        lines.push(`  End Date: ${endDateLine(scaledInputs.end, recipe.testEnd)}`);
       }
       if (typeof scaledInputs.startBarsBack?.bars === 'number') {
         lines.push(`  Start X Bars Back: ${scaledInputs.startBarsBack.bars}`);
@@ -146,7 +146,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       // Start/End Dates
       if (scaledInputs.dates?.start && scaledInputs.dates?.end) {
         lines.push(`  Start Date: ${formatDate(scaledInputs.dates.start)}`);
-        lines.push(`  End Date: ${formatDate(scaledInputs.dates.end)}`);
+        lines.push(`  End Date: ${endDateLine(scaledInputs.dates.end, recipe.testEnd)}`);
       }
     } else if (recipe.algorithm === 'Market Wave') {
       const isCryptoAsset = CRYPTO_ASSETS.includes(recipe.assetSymbol as (typeof CRYPTO_ASSETS)[number]);
@@ -249,7 +249,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       // Start/End Dates
       if (scaledInputs.dates?.start && scaledInputs.dates?.end) {
         lines.push(`  Start Date: ${formatDate(scaledInputs.dates.start)}`);
-        lines.push(`  End Date: ${formatDate(scaledInputs.dates.end)}`);
+        lines.push(`  End Date: ${endDateLine(scaledInputs.dates.end, recipe.testEnd)}`);
       }
       // Backtesting
       if (scaledInputs.backtest?.exitFullOnLastBar) {
@@ -298,7 +298,7 @@ export function TradingViewModal({ open, onOpenChange }: TradingViewModalProps) 
       // Start/End Dates
       if (scaledInputs.dates?.start && scaledInputs.dates?.end) {
         lines.push(`  Start Date: ${formatDate(scaledInputs.dates.start)}`);
-        lines.push(`  End Date: ${formatDate(scaledInputs.dates.end)}`);
+        lines.push(`  End Date: ${endDateLine(scaledInputs.dates.end, recipe.testEnd)}`);
       }
       if (scaledInputs.properties) {
         lines.push('');

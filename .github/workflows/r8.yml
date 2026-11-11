@@ -1,0 +1,39 @@
+name: R8 anonymous access
+
+# PRD R8: on every successful deploy and every day, confirm from an anonymous
+# session that the public view carries no settings or source screenshots and
+# that the store, base tables and admin functions are closed.
+#
+# Needs two repository variables (Settings > Secrets and variables > Actions >
+# Variables). Both are public values the site already ships to every browser:
+#   R8_SUPABASE_URL       https://xsoixhltejgyuhedhbdu.supabase.co
+#   R8_SUPABASE_ANON_KEY  the publishable key
+# Until 20261111000004 is applied in production, set R8_FLAGS=--allow-open-base.
+# After the login move, set R8_FLAGS=--pro-closed.
+
+on:
+  deployment_status:
+  schedule:
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  r8:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Anonymous access check
+        if: ${{ vars.R8_SUPABASE_URL != '' }}
+        env:
+          SUPABASE_URL: ${{ vars.R8_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.R8_SUPABASE_ANON_KEY }}
+        run: node scripts/r8-anon-check.mjs ${{ vars.R8_FLAGS }}
+      - name: Not configured
+        if: ${{ vars.R8_SUPABASE_URL == '' }}
+        run: echo "Set the R8_SUPABASE_URL and R8_SUPABASE_ANON_KEY repository variables to run this check."

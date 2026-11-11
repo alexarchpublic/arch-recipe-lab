@@ -62,9 +62,18 @@ export async function prepareScreenshotForVision(file: File): Promise<PreparedSc
   };
 }
 
-export async function parseRecipeScreenshotsFromFiles(files: File[]): Promise<ScreenshotImportResult & {
+export interface ParsedScreenshots extends ScreenshotImportResult {
   orderedFiles: File[];
-}> {
+  /** The provenance record of this reading (A5), or null if it could not be saved. */
+  extractionId: string | null;
+  schemaErrors: string[];
+}
+
+/** Reads 3 or 4 screenshots. Pass the strategy id when updating an existing strategy (A11). */
+export async function parseRecipeScreenshotsFromFiles(
+  files: File[],
+  strategyId?: string | null,
+): Promise<ParsedScreenshots> {
   if (!isImportableScreenshotCount(files.length)) {
     throw new Error("Drop 3 screenshots (chart, settings, stats) or 4 to include DCA");
   }
@@ -86,6 +95,7 @@ export async function parseRecipeScreenshotsFromFiles(files: File[]): Promise<Sc
     body: JSON.stringify({
       images,
       filenames: files.map((file) => file.name),
+      strategyId: strategyId ?? null,
     }),
   });
 
@@ -94,8 +104,13 @@ export async function parseRecipeScreenshotsFromFiles(files: File[]): Promise<Sc
     throw new Error(payload.error || "Failed to read recipe screenshots");
   }
 
-  const result = payload as ScreenshotImportResult;
+  const result = payload as ScreenshotImportResult & { extractionId?: string | null; schemaErrors?: string[] };
   const orderedFiles = orderFilesByKinds(files, result.orderedKinds);
 
-  return { ...result, orderedFiles };
+  return {
+    ...result,
+    orderedFiles,
+    extractionId: result.extractionId ?? null,
+    schemaErrors: result.schemaErrors ?? [],
+  };
 }
