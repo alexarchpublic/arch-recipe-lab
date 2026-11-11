@@ -193,6 +193,21 @@ Each step needs the owner's go-ahead.
 Rollback: the owner points the route back at the old capture, which stays
 deployable for 30 days (PRD 13, cutover safety).
 
+## Status
+
+- **Staging** (`vdtkboqglndanzvzrqsn`): migration 20261113000001 applied 10 Nov 2026 with the owner's OK. Function
+  bodies match the file; R8 passes the new checks (its one failure is the 24 clean-up drafts staging never published).
+- **Production** (`xsoixhltejgyuhedhbdu`): migration applied 10 Nov 2026 with the owner's OK. Function bodies match
+  staging and the file; the store parity check is clean; all R8 checks pass.
+- **Vercel**: project `arch-strategy-lab` (team `arch-public-082f875a`, root `apps/strategy-lab`, production branch
+  `main`, Node 22) created 10 Nov 2026 with the owner's OK. Production reads production, previews read staging.
+  **The address to route to: `https://arch-strategy-lab.vercel.app/strategy-lab`.** Its current production build
+  came from this branch before the noindex fix; merging the pull request replaces it with `main`. Page parity
+  clean on all 64 pages and R8 page checks pass against it.
+- **HubSpot**: not done. The connector cannot create contact properties or forms, and the HubSpot CLI on this Mac
+  is signed in to another account. Needs the owner in HubSpot (the form and fields below), then `HUBSPOT_FORM_GUID`
+  in the Vercel project.
+
 ## Gate 4
 
 | Item | How it is checked |
