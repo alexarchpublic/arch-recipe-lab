@@ -1,0 +1,37 @@
+name: Strategy Lab page parity
+
+# PRD R5, D8: read every public Strategy Lab page and compare each figure it
+# prints with the store. Runs after each production deploy, daily after the
+# store's own parity check (06:15 UTC), and on demand. A failure emails the
+# repository's watchers, which is the alert R4 asks for.
+#
+# Needs repository variables STRATEGY_LAB_URL (e.g.
+# https://archpublic.com/strategy-lab) and the two R8 variables.
+
+on:
+  deployment_status:
+  schedule:
+    - cron: "45 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  pages:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' && startsWith(github.event.deployment.environment, 'Production'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Compare public pages with the store
+        if: ${{ vars.STRATEGY_LAB_URL != '' && vars.R8_SUPABASE_URL != '' }}
+        env:
+          STRATEGY_LAB_URL: ${{ vars.STRATEGY_LAB_URL }}
+          SUPABASE_URL: ${{ vars.R8_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.R8_SUPABASE_ANON_KEY }}
+        run: node --experimental-strip-types scripts/parity-pages.mjs
+      - name: Not configured
+        if: ${{ vars.STRATEGY_LAB_URL == '' || vars.R8_SUPABASE_URL == '' }}
+        run: echo "Set STRATEGY_LAB_URL, R8_SUPABASE_URL and R8_SUPABASE_ANON_KEY to run this check."

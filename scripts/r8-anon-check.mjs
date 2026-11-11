@@ -6,6 +6,10 @@
 //
 //   SUPABASE_URL=https://<ref>.supabase.co SUPABASE_ANON_KEY=<publishable key> node scripts/r8-anon-check.mjs
 //
+// With STRATEGY_LAB_URL set (e.g. https://archpublic.com/strategy-lab), it also
+// reads the public Strategy Lab pages and confirms none carries a setting, a
+// source screenshot or a run-setting year (S9).
+//
 // Flags
 //   --allow-open-base   base tables may still be readable (before migration
 //                       20261111000004 is applied)
@@ -97,12 +101,12 @@ if (closed(store)) pass("store schema closed", `HTTP ${store.status}`);
 else fail("store schema closed", `HTTP ${store.status} ${JSON.stringify(store.body).slice(0, 200)}`);
 
 // 6. Admin views and functions are closed.
-for (const view of ["admin_strategy_versions", "admin_extractions", "admin_parity_runs", "admin_disclosure_history"]) {
+for (const view of ["admin_strategy_versions", "admin_extractions", "admin_parity_runs", "admin_disclosure_history", "admin_leads", "admin_site_content_history"]) {
   const r = await rest(`${view}?select=*&limit=1`);
   if (closed(r) || (r.status === 200 && Array.isArray(r.body) && r.body.length === 0 && false)) pass(`${view} closed`, `HTTP ${r.status}`);
   else fail(`${view} closed`, `HTTP ${r.status} ${JSON.stringify(r.body).slice(0, 200)}`);
 }
-for (const fn of ["admin_save_draft", "admin_publish", "run_parity_check", "admin_set_disclosure"]) {
+for (const fn of ["admin_save_draft", "admin_publish", "run_parity_check", "admin_set_disclosure", "admin_set_site_content", "admin_record_page_parity"]) {
   const r = await rest(`rpc/${fn}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
   if (r.status >= 400) pass(`rpc ${fn} refused`, `HTTP ${r.status}`);
   else fail(`rpc ${fn} refused`, `HTTP ${r.status}`);
@@ -140,7 +144,47 @@ if (disc.status === 404 || (disc.status >= 400 && /does not exist|schema cache/i
   else pass("disclosures readable, wording only", `${disc.body.length} slot(s)`);
 }
 
-// 10. The Pro view: open until the login move, then closed (D6).
+// 10. Site content (S12, migration 20261113000001): copy and switches only,
+//     never who changed it.
+const sc = await rest("site_content?select=*");
+if (sc.status === 404 || (sc.status >= 400 && /does not exist|schema cache/i.test(JSON.stringify(sc.body)))) {
+  console.log("INFO  site_content view not present yet (before 20261113000001); Strategy Lab shows its default copy");
+} else if (sc.status !== 200 || !Array.isArray(sc.body)) {
+  fail("site_content readable", `HTTP ${sc.status}`);
+} else {
+  const cols = [...new Set(sc.body.flatMap((r) => Object.keys(r)))].sort().join(",");
+  if (cols && cols !== "key,updated_at,value") fail("site_content columns", cols);
+  else if (/algorithm_inputs|recipe-screenshots/.test(JSON.stringify(sc.body))) fail("site_content carries no settings", "settings or a source screenshot found");
+  else pass("site_content readable, copy only", `${sc.body.length} key(s)`);
+}
+
+// 11. The public Strategy Lab pages (S9): no settings, no source screenshots,
+//     no run-setting years, in the HTML or the data shipped with it.
+const site = process.env.STRATEGY_LAB_URL?.replace(/\/+$/, "");
+if (site) {
+  const slugs = Array.isArray(pub.body) ? pub.body.map((r) => r.slug).filter(Boolean) : [];
+  const pick = [slugs[0], slugs[Math.floor(slugs.length / 2)], slugs[slugs.length - 1]].filter(Boolean);
+  const paths = ["", "/strategies", ...pick.map((x) => `/${x}`)];
+  let bad = 0;
+  for (const path of paths) {
+    const r = await fetch(`${site}${path}`, { headers: { "user-agent": "strategy-lab-r8" } });
+    const html = r.ok ? await r.text() : "";
+    const problems = [];
+    if (!r.ok) problems.push(`HTTP ${r.status}`);
+    if (/recipe-screenshots/.test(html)) problems.push("a source screenshot URL");
+    if (/algorithm_inputs|strategies_pro|\\"(tradeSize|longThreshold|exitThreshold|userInitialCapital|marketWave)\\"|"(tradeSize|longThreshold|exitThreshold|userInitialCapital|marketWave)"/.test(html)) problems.push("a settings key");
+    if (/\b(2030|2999)-\d\d-\d\d\b/.test(html)) problems.push("a 2030 or 2999 date");
+    if (problems.length) {
+      bad++;
+      fail(`Strategy Lab ${path || "/"}`, problems.join(", "));
+    }
+  }
+  if (!bad) pass("Strategy Lab pages carry no settings", `${paths.length} pages`);
+} else {
+  console.log("INFO  STRATEGY_LAB_URL not set; public pages not checked");
+}
+
+// 12. The Pro view: open until the login move, then closed (D6).
 const pro = await rest("strategies_pro?select=id&limit=1");
 const proOpen = pro.status === 200 && Array.isArray(pro.body) && pro.body.length > 0;
 if (proClosed) {

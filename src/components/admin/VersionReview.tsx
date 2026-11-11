@@ -21,6 +21,7 @@ import {
   submitForReview,
   versionToProStrategy,
 } from "@/data/adminVersions";
+import { afterPublish } from "@/data/strategyLab";
 
 interface VersionReviewProps {
   group: StrategyGroup | null;
@@ -125,8 +126,14 @@ export function VersionReview({ group, role, open, onOpenChange, onChanged, onEd
       setAcknowledged(new Set());
       toast({
         title: `Version ${draft.version_number} published`,
-        description: result.parity_ok ? "Parity check clean." : "The parity check found a problem. See the banner.",
+        description: result.parity_ok ? "Parity check clean. Checking the public page…" : "The parity check found a problem. See the banner.",
       });
+      // Strategy Lab: refresh now and read the public page back (R4, R5).
+      const lab = await afterPublish(
+        { ...(draft as unknown as Record<string, unknown>), strategy_id: draft.strategy_id, display_number: group?.displayNumber ?? null, version_number: draft.version_number, slug: draft.slug },
+        draft.listed_public,
+      );
+      toast({ variant: lab.ok ? undefined : "destructive", title: "Strategy Lab", description: lab.message });
     });
 
   return (

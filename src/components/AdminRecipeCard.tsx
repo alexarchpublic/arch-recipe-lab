@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MetricTileGrid } from "@/components/MetricTileGrid";
 import { StatTile, deltaTone, signedTone } from "@/components/StatTile";
 import { cn } from "@/lib/utils";
+import { refreshStrategyLab } from "@/data/strategyLab";
 import {
   formatPercent,
   formatSignedCurrency,
@@ -65,6 +66,7 @@ export function AdminRecipeCard({ group, onEdit, onReview, onView, onChanged }: 
     try {
       // Archive replaces delete (A12): history and files stay, clients who hold it keep it.
       await setArchived(group.strategyId, !archived);
+      void refreshStrategyLab("strategies");
       toast({ title: archived ? "Strategy unarchived" : "Strategy archived" });
       onChanged();
     } catch (error: unknown) {

@@ -23,6 +23,29 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  strategy-lab:
+    # The public site (apps/strategy-lab). Builds against the public view with
+    # the same public values R8 uses; without them, typechecks only.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/strategy-lab
+    env:
+      SUPABASE_URL: ${{ vars.R8_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ vars.R8_SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/strategy-lab/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - name: Build
+        if: ${{ vars.R8_SUPABASE_URL != '' }}
+        run: npx next build
+
   database:
     # Builds a database from supabase/migrations and runs tests/db.
     runs-on: ubuntu-latest
