@@ -75,7 +75,7 @@ export default function Auth() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy">
-            Arch Public Recipes
+            Strategy Lab Pro
           </h1>
           <p className="text-muted-foreground mt-2">Admin</p>
         </div>
@@ -132,7 +132,7 @@ export default function Auth() {
                 className="w-full text-xs"
                 onClick={() => navigate('/')}
               >
-                Back to Recipe Browser
+                Back to Strategy Lab Pro
               </Button>
             </form>
           </CardContent>

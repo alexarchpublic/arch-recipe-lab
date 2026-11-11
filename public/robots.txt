@@ -1,14 +1,6 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# Strategy Lab Pro is for clients and is not indexed (PRD P2). Every page and
+# response carries "noindex" (meta tag and X-Robots-Tag header). Crawling stays
+# allowed so search engines can see that, and so link previews keep working.
+# There is no sitemap. The public strategy pages are Strategy Lab.
 User-agent: *
 Allow: /

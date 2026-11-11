@@ -1,9 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
+import { PRO_SITE_URL } from "../packages/core/src/site";
 
-const PRODUCTION_SITE_URL = "https://recipes.archpublic.com";
-export const FALLBACK_OG_IMAGE = `${PRODUCTION_SITE_URL}/og-image.png`;
+export const FALLBACK_OG_IMAGE = `${PRO_SITE_URL}/og-image.png`;
 
-/** Card thumbnail for the most recently created non-archived recipe that has screenshots. */
+/** Card thumbnail for the most recently created non-archived strategy that has screenshots. */
 export async function getLatestRecipeCardOgImage(): Promise<string> {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;

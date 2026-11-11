@@ -8,6 +8,9 @@ type StatTileProps = {
   value: ReactNode;
   tone?: StatTone;
   fullWidth?: boolean;
+  /** Store field and raw value, carried in the markup for checks (PRD R5, D8). */
+  field?: string;
+  raw?: number | string | null;
 };
 
 export function signedTone(value: number | null | undefined): StatTone {
@@ -20,9 +23,11 @@ export function deltaTone(value: number | null | undefined): StatTone {
   return value > 0 ? "gain" : "loss";
 }
 
-export function StatTile({ label, value, tone = "default", fullWidth }: StatTileProps) {
+export function StatTile({ label, value, tone = "default", fullWidth, field, raw }: StatTileProps) {
   return (
     <div
+      data-field={field}
+      data-raw={raw ?? undefined}
       className={cn(
         "rounded-md border border-tile-border bg-muted px-2.5 py-2",
         fullWidth && "col-span-2",
