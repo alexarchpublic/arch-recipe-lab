@@ -8,6 +8,7 @@ import { BasisLabel, formatDate, formatMoney, formatTestWindow } from "@core";
 import { AccountSize } from "@/components/AccountSize";
 import { AlertCapture } from "@/components/AlertCapture";
 import { BookDemoButton, StartFreeLink } from "@/components/Booking";
+import { CaseStudyLinks } from "@/components/CaseStudyLinks";
 import { ComparisonBars } from "@/components/ComparisonBars";
 import { EmailMeThis } from "@/components/EmailMeThis";
 import { ResultsBlock } from "@/components/ResultsBlock";
@@ -15,6 +16,7 @@ import { SettingsLabel } from "@/components/SettingsLabel";
 import { StickyActions } from "@/components/StickyActions";
 import { Chip, StrategyCard } from "@/components/StrategyCard";
 import { ViewTracker } from "@/components/ViewTracker";
+import { getCaseStudyLinks } from "@/lib/caseStudies";
 import { getDisclaimer, getSiteContent, getStrategies, getStrategy } from "@/lib/data";
 import { canonicalUrl } from "@/lib/env";
 import { assetClassLabel, focusHelp, focusLabel, horizonLabel, relatedStrategies } from "@/lib/strategies";
@@ -48,9 +50,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function StrategyPage({ params }: Props) {
   const { slug } = await params;
-  const [all, content, disclaimer] = await Promise.all([getStrategies(), getSiteContent(), getDisclaimer()]);
+  const [all, content, disclaimer, studies] = await Promise.all([getStrategies(), getSiteContent(), getDisclaimer(), getCaseStudyLinks()]);
   const s = all.find((x) => x.slug === slug);
   if (!s) notFound();
+  const caseStudies = s.display_number !== null ? studies.get(s.display_number) ?? [] : [];
   const related = relatedStrategies(all, s, 3);
   const cfg = content.config;
   // best_for is not shown: Recipe Lab, the source of truth, does not display it,
@@ -107,6 +110,8 @@ export default async function StrategyPage({ params }: Props) {
               </div>
             )}
           </section>
+
+          <CaseStudyLinks links={caseStudies} short={`Strategy #${s.display_number}, ${s.short_name},`} />
 
           <section aria-labelledby="chart-h">
             <h2 id="chart-h" className="mb-3 text-xl">{s.public_chart_url ? "Chart" : "Against its benchmark"}</h2>

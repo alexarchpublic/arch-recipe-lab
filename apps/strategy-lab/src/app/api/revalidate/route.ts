@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { PRO_ORIGINS, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/env";
 import { CONTENT_TAG, STRATEGIES_TAG } from "@/lib/data";
+import { CASE_STUDIES_TAG } from "@/lib/caseStudies";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,10 @@ export async function POST(request: Request) {
     // no body: refresh everything
   }
   if (what.scope !== "content") revalidateTag(STRATEGIES_TAG);
-  if (what.scope !== "strategies") revalidateTag(CONTENT_TAG);
+  if (what.scope !== "strategies") {
+    revalidateTag(CONTENT_TAG);
+    revalidateTag(CASE_STUDIES_TAG);
+  }
   revalidatePath("/", "layout");
   return NextResponse.json({ ok: true, at: new Date().toISOString() }, { headers });
 }

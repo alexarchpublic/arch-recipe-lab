@@ -77,6 +77,43 @@ functions are closed.
   `https://archpublic.com/strategy-lab`. Unset, the console skips these steps
   and Strategy Lab refreshes on its own within two minutes.
 
+## Case studies, linked both ways
+
+Most strategies came from a case study. Each case study scenario that is a
+strategy's backtest now names it by number, once, in the case study's own
+content (`scenarios[].strategyNumber` in alexarchpublic/case-studies). From that
+one record:
+
+- the case study page links the scenario to `archpublic.com/strategy-lab/strategy/<n>`,
+  which Strategy Lab redirects to the strategy's page (or to the list when the
+  strategy is not on the public list), keeping the campaign tags;
+- the case study build lists the links in `case-studies.json`, and Strategy Lab
+  reads that index (`CASE_STUDIES_INDEX_URL`, every 10 minutes and on refresh)
+  to show a "Case study" block on each strategy page, linked to the exact
+  scenario, and to fill the home page's proof section with the latest studies
+  until marketing sets its own.
+
+63 scenarios in 20 studies link to 60 strategies, 53 of them on the public
+list. `docs/phase3/case-study-links.csv` lists every link and how it was
+matched:
+
+- **46 exact**: same ticker, chart and window, and the same return as the store.
+- **3 cited**: Enduring the Drop names Recipes #18, #19 and #20.
+- **14 figures differ**: same ticker, chart, window and benchmark figures, but
+  the case study quotes a different strategy return than the store. The store's
+  values match research's source entries, so Recipe Lab's figure stands on
+  Strategy Lab. The largest gaps are INTC #74 (+95.9% in the study, +267.1% in
+  the store), INTC #76 (+159.1% against +339.5%) and XLE #86 (+70.2% against
+  +137.3%). The owner decides which is right; the case study page is a dated
+  narrative, and Strategy Lab's block says so.
+
+Not linked: 9 public strategies with no matching study (#22 to 24 Bitcoin
+accumulation, #36 to 40 Market Wave crypto yield, #60 BTC 6h), and studies whose
+scenarios are different runs from anything in the store.
+
+Order: the case study change goes live only after `archpublic.com/strategy-lab`
+routes to the new app, because its links point there.
+
 ## Checks
 
 | Check | Where | When |

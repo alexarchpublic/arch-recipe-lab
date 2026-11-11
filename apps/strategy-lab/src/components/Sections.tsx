@@ -2,7 +2,7 @@
 // come from site content (S12); figures from the published strategies.
 import Link from "next/link";
 import { type PublicStrategy, ResultsDisclosure, formatSignedPercent } from "@core";
-import type { HomeContent, SiteContent } from "@/lib/content";
+import type { HomeContent, ProofItem, SiteContent } from "@/lib/content";
 import { assetClassLabel, librarySummary, topStrategies } from "@/lib/strategies";
 import { AlertCapture } from "./AlertCapture";
 import { BookDemoButton, BookingFlow, StartFreeLink } from "./Booking";
@@ -155,8 +155,10 @@ export function HowSection({ home }: { home: HomeContent }) {
   );
 }
 
-export function ProofSection({ home, strategies }: { home: HomeContent; strategies: PublicStrategy[] }) {
-  const items = home.proof.items.filter((i) => i.quote || i.title);
+export function ProofSection({ home, strategies, studies = [] }: { home: HomeContent; strategies: PublicStrategy[]; studies?: ProofItem[] }) {
+  // Marketing's proof items when set; otherwise the latest case studies, each with the strategies it uses (S17).
+  const set = home.proof.items.filter((i) => i.quote || i.title);
+  const items = set.length ? set : studies.slice(0, 3);
   if (!items.length) return null;
   const bySlug = new Map(strategies.map((s) => [s.slug, s]));
   return (
