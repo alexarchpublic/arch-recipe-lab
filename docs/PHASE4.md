@@ -9,8 +9,9 @@ TradingView screenshot was uploaded (decision P1, "we do not want to crop
 charts ever"). Every figure still comes from the store and passes the page
 parity and R8 checks.
 
-**Status:** built on branch `phase-4-public-redesign`; nothing is in
-production yet. Production waits for Alex at three gates (below).
+**Status:** built on branch `phase-4-public-redesign`. Gate A (case-study
+corrections) is done in production; the migration, the merge and the site
+content wait for Alex at Gates B and C (below).
 
 **Launch date:** _set at Gate C step 4_. Compare demo bookings and "email me
 these figures" per visitor in GA4 and HubSpot for the weeks before and after
@@ -31,9 +32,13 @@ placement) and `market_filter_used` (value, page).
 
 ## Production, in order (Gates A to C)
 
-1. **Gate A**, any time before step 4: publish the seven case-study
-   corrections (#74, #76, #86, #89, #84, #87, #47), one approval per strategy
-   (figures in the pull request).
+1. **Gate A: done 2026-11-11 16:35 UTC** (Alex: "Publish all seven"). The
+   seven case-study corrections are published in production through the
+   console's own functions under Alex's account (approved_by
+   alex@archpublic.com), in one transaction: #74 v2 +95.9%, #76 v2 +159.1%,
+   #86 v2 +70.2%, #89 v3 +44.2%, #84 v2 +61.7%, #87 v2 +102.8%, #47 v2
+   +181.5% (settings end 17 Jun 2026). Store parity clean after each publish;
+   Pro checked live (#74, #47).
 2. **Gate C, 1**: apply `20261114000001_public_charts.sql` (comment-stripped,
    then compare function bodies with a local build).
 3. **Gate B / C, 2**: merge the pull request; wait for both Vercel deploys.
