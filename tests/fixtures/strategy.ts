@@ -45,6 +45,7 @@ export function proStrategy(overrides: Partial<ProStrategy> = {}): ProStrategy {
     vs_buy_hold_pct: 102.908,
     vs_dca_pct: 70.238,
     public_chart_url: null,
+    chart_url: null,
     strategy_created_at: "2026-08-13T00:00:00Z",
     archived_at: null,
     change_type: "figures",

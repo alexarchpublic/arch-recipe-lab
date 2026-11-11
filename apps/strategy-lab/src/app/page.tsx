@@ -1,5 +1,7 @@
-// Strategy Lab home (PRD 9). Blocks in the order marketing sets (S12).
-import { BookSection, ClientsSection, FinderSection, Hero, HowSection, LibrarySection, ProofSection, TopSection } from "@/components/Sections";
+// Strategy Lab home (PRD 9; redesign PRD section 4). The hero first, then the
+// sections in the order marketing sets (S12): by default read, top, size, how,
+// clients, book.
+import { BookSection, ClientsSection, FinderSection, Hero, HowSection, LibrarySection, ProofSection, ReadSection, SizeSection, TopSection } from "@/components/Sections";
 import { StickyActions } from "@/components/StickyActions";
 import { getCaseStudyLinks } from "@/lib/caseStudies";
 import { getDisclaimer, getSiteContent, getStrategies } from "@/lib/data";
@@ -26,6 +28,8 @@ export default async function Home() {
   const home = content.home;
   const hero = heroStrategy(strategies, home.hero.featured);
   const blocks: Record<string, React.ReactNode> = {
+    read: <ReadSection key="read" home={home} />,
+    size: <SizeSection key="size" home={home} hero={hero} content={content} />,
     finder: <FinderSection key="finder" strategies={strategies} content={content} disclaimer={disclaimer} />,
     library: <LibrarySection key="library" strategies={strategies} disclaimer={disclaimer} />,
     top: <TopSection key="top" strategies={strategies} content={content} disclaimer={disclaimer} />,
@@ -36,7 +40,7 @@ export default async function Home() {
   };
   return (
     <>
-      <Hero home={home} hero={hero} disclaimer={disclaimer} scale={content.config.accountSize} />
+      <Hero home={home} hero={hero} count={strategies.length} />
       {home.sections.map((id) => blocks[id])}
       <StickyActions source="home" />
     </>

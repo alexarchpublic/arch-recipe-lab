@@ -23,7 +23,10 @@ export type StrategyLabEvent =
   | "booking_form_submitted"
   | "booking_completed"
   | "start_free_clicked"
-  | "email_me_this_sent";
+  | "email_me_this_sent"
+  // Redesign (PRD section 8): judge the chart-led design.
+  | "chart_opened"
+  | "market_filter_used";
 
 export function track(event: StrategyLabEvent, params: Params = {}): void {
   try {

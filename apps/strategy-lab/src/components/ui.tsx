@@ -3,11 +3,11 @@ import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAt
 
 export const btn = {
   primary:
-    "inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-sm transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60",
+    "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-extrabold text-primary-foreground transition hover:brightness-110 disabled:opacity-60",
   secondary:
-    "inline-flex items-center justify-center gap-2 rounded-full border border-border-strong bg-card px-5 py-2.5 text-sm font-bold text-foreground transition hover:border-primary hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
+    "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-navy bg-card px-5 text-sm font-extrabold text-navy transition hover:bg-tint disabled:opacity-60",
   onDark:
-    "inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white",
+    "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-white/[0.28] px-5 text-sm font-extrabold text-white transition hover:bg-white/10",
   link: "font-semibold text-primary underline-offset-4 hover:underline",
 };
 
@@ -26,7 +26,7 @@ export function Field({ label, children, hint }: { label: string; children: Reac
 }
 
 const control =
-  "w-full rounded-md border border-border-strong bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30";
+  "min-h-[48px] w-full rounded-md border border-line-strong bg-card px-3.5 text-[15px] text-navy placeholder:text-ink-muted focus:border-primary";
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`${control} ${props.className ?? ""}`} />;
@@ -43,18 +43,18 @@ export function Select({ children, ...props }: SelectHTMLAttributes<HTMLSelectEl
 export function Check({ checked, onChange, children }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode }) {
   return (
     <label className="flex items-start gap-2 text-xs leading-snug text-muted-foreground">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[hsl(var(--primary))]" />
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-[hsl(var(--primary))]" />
       <span>{children}</span>
     </label>
   );
 }
 
 /** Dollar amount typed by the visitor; reports positive numbers only. */
-export function MoneyInput({ value, onChange, id, label }: { value: number | null; onChange: (n: number | null) => void; id?: string; label: string }) {
+export function MoneyInput({ value, onChange, id, label, large = false }: { value: number | null; onChange: (n: number | null) => void; id?: string; label: string; large?: boolean }) {
   const text = value && value > 0 ? Math.round(value).toLocaleString("en-US") : "";
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-muted-foreground">$</span>
+      <span className={`pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-mono font-semibold text-navy ${large ? "text-[22px]" : "text-lg"}`}>$</span>
       <input
         id={id}
         aria-label={label}
@@ -70,7 +70,7 @@ export function MoneyInput({ value, onChange, id, label }: { value: number | nul
           e.target.value = Number.isFinite(n) && n > 0 ? Math.round(n).toLocaleString("en-US") : "";
         }}
         placeholder="100,000"
-        className={`${control} pl-7 font-mono tabular-nums`}
+        className={`${control} pl-8 font-mono font-semibold tabular-nums ${large ? "min-h-[56px] !text-[22px]" : "!text-lg"}`}
       />
     </div>
   );

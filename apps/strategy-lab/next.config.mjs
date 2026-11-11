@@ -15,6 +15,17 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   // packages/core sits outside this folder.
   experimental: { externalDir: true },
+  // Charts (redesign PRD 7.1): the uploaded TradingView screenshots are PNGs of
+  // up to 700 KB and 3,000px, so they go through the image optimizer, resized
+  // and re-encoded, never sent as they are. Staging rows point at the same
+  // production storage host.
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "xsoixhltejgyuhedhbdu.supabase.co", pathname: "/storage/v1/object/public/recipe-screenshots/**" },
+    ],
+    formats: ["image/webp"],
+    minimumCacheTTL: 86400,
+  },
   outputFileTracingRoot: repoRoot,
   webpack(config) {
     config.resolve.alias["@core"] = path.join(repoRoot, "packages/core/src");

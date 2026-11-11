@@ -14,10 +14,10 @@ googl,2,Cash yield through the bull run,"July 8, 2024 to July 8, 2026",Weekly ch
 googl,3,"Same window, the accumulation recipe","July 8, 2024 to July 8, 2026",Daily chart,+120.7%,58,GOOGL 1D,120.67,2024-07-08 to 2026-07-08,yes,exact
 ibit,1,The accumulator,"January 1 to August 25, 2026",Four hour chart,+16.5%,83,IBIT STH 4H Scalp,16.45,2026-01-01 to 2026-08-25,yes,exact
 ibit,2,The downtrend trade,"January 1 to August 25, 2026",Hourly chart,+32.6%,82,IBIT STH 1H Scalp,32.6,2026-01-01 to 2026-08-25,yes,exact
-ibit,3,The full cycle,"August 25, 2024 to August 25, 2026",Weekly chart,+61.7%,84,IBIT LTH 1W Position,66.01,2024-08-25 to 2026-08-25,yes,figures differ
-intc,1,The long sideways market,"June 1, 2018 to April 1, 2022",Weekly chart,+95.9%,74,INTC LTH 1W Position,267.06,2018-06-01 to 2022-04-01,yes,figures differ
+ibit,3,The full cycle,"August 25, 2024 to August 25, 2026",Weekly chart,+61.7%,84,IBIT LTH 1W Position,61.678,2024-08-25 to 2026-08-25,yes,corrected to case study (phase 4)
+intc,1,The long sideways market,"June 1, 2018 to April 1, 2022",Weekly chart,+95.9%,74,INTC LTH 1W Position,95.855,2018-06-01 to 2022-04-01,yes,corrected to case study (phase 4)
 intc,2,The run up,"January 1, 2026 to August 21, 2026",Daily chart,+117.9%,75,INTC STH 1D Swing,117.93,2026-01-01 to 2026-08-21,yes,exact
-intc,3,The round trip,"January 1, 2024 to April 1, 2026",Hourly chart,+159.1%,76,INTC LTH 1H Scalp,339.51,2024-01-01 to 2026-04-01,yes,figures differ
+intc,3,The round trip,"January 1, 2024 to April 1, 2026",Hourly chart,+159.1%,76,INTC LTH 1H Scalp,159.059,2024-01-01 to 2026-04-01,yes,corrected to case study (phase 4)
 iren,1,The round trip to nowhere,"January 1, 2026 to August 6, 2026, seven months",Hourly chart,+63.4%,63,IREN STH 1H Scalp,63.39,2026-01-01 to 2026-08-06,yes,exact
 iren,2,The full round trip,"October 15, 2025 to August 6, 2026, ten months",Hourly chart,+75.4%,62,IREN STH 1H Scalp,75.43,2025-10-15 to 2026-08-06,yes,exact
 iren,3,"The same crash, worked harder","October 15, 2025 to August 6, 2026, ten months",Daily chart,+106.2%,61,IREN 1d,106.2,2025-10-15 to 2026-08-06,yes,exact
@@ -33,10 +33,10 @@ mrna,3,The round trip,"June 1, 2020 to August 25, 2026",Weekly chart,"+1,187%",7
 msft,1,The whipsaw year,"January 1, 2026 to August 11, 2026",Daily chart,+33.2%,66,MSFT STH 1D Swing,33.2,2026-01-01 to 2026-08-12,yes,exact
 msft,2,The two year grind,"August 1, 2024 to August 11, 2026",Daily chart,+68.4%,65,MSFT STH 1D Swing,68.43,2024-08-01 to 2026-08-11,yes,exact
 msft,3,The full cycle,"November 1, 2021 to August 11, 2026",Weekly chart,+111.5%,64,MSFT LTH 1W Position,111.5,2021-11-01 to 2026-08-11,yes,exact
-mstr,1,Through the entire boom and give-back,"June 16, 2023 to June 17, 2026",Daily chart,+181.5%,47,MSTR Daily 3y,168.01,2023-06-16 to 2026-07-01,yes,figures differ
+mstr,1,Through the entire boom and give-back,"June 16, 2023 to June 17, 2026",Daily chart,+181.5%,47,MSTR Daily 3y,168.01,2023-06-16 to 2026-07-01,yes,figures differ (open: case study window ends before the settings end date)
 mstr,2,The great stock that went nowhere,"March 1, 2024 to June 17, 2026",Daily chart,+88.7%,53,MSTR 1d,88.74,2024-03-01 to 2026-06-17,yes,exact
 mstr,3,A profit in a falling market,"January 1, 2026 to June 17, 2026",4-hour chart,+20.2%,52,MSTR 4h,20.22,2026-01-01 to 2026-06-17,yes,exact
-mu,1,The weekly paycheck,"June 1 to September 18, 2026",Weekly chart,+44.2%,89,MU STH 1W Position,52.89,2026-06-01 to 2026-09-23,yes,figures differ
+mu,1,The weekly paycheck,"June 1 to September 18, 2026",Weekly chart,+44.2%,89,MU STH 1W Position,44.231,2026-06-01 to 2026-09-18,yes,corrected to case study (phase 4)
 mu,2,The patient buyer,"June 1 to September 23, 2026",Four hour chart,+45.9%,88,MU STH 4H Scalp,45.93,2026-06-01 to 2026-09-23,yes,exact
 mu,3,The 2026 scoreboard,"January 1 to September 23, 2026",Four hour chart,+461.7%,90,MU STH 4H Scalp,461.73,2026-01-01 to 2026-09-23,yes,exact
 nvda,1,The ‘it is already too high to buy’ test,"June 1, 2024 to June 22, 2026",Daily chart,+102.8%,50,NVDA daily,102.83,2024-06-01 to 2026-06-01,yes,exact
@@ -60,5 +60,5 @@ qqq,5,The cash yield recipe,January 2025 to June 2026,4-hour chart,+36.6%,42,QQQ
 tsla,1,"Three years, same logic, run on the daily","June 16, 2023 to June 16, 2026",Daily chart,+184.58%,49,TSLA 1d,184.58,2023-06-16 to 2026-06-16,yes,exact
 tsla,2,"The whipsaw test, on the 4-hour","January 1, 2025 to June 16, 2026",4-hour chart,+50.56%,48,TSLA 4h,50.56,2025-01-01 to 2026-06-17,yes,exact
 xle,1,Trading the war,"January 1, 2026 to August 25, 2026",Daily chart,+48.2%,85,XLE STH 1D Swing,48.2,2026-01-01 to 2026-08-25,yes,exact
-xle,2,Trading the range,"January 1, 2023 to January 1, 2026, valued at the window's end",Daily chart,+70.2%,86,XLE STH 1D Swing,137.29,2023-01-01 to 2026-01-01,yes,figures differ
-xle,3,The patient trade,"January 1, 2023 to August 25, 2026",Weekly chart,+102.8%,87,XLE LTH 1W Position,102.33,2023-01-01 to 2026-08-25,yes,figures differ
+xle,2,Trading the range,"January 1, 2023 to January 1, 2026, valued at the window's end",Daily chart,+70.2%,86,XLE STH 1D Swing,70.22,2023-01-01 to 2026-01-01,yes,corrected to case study (phase 4)
+xle,3,The patient trade,"January 1, 2023 to August 25, 2026",Weekly chart,+102.8%,87,XLE LTH 1W Position,102.843,2023-01-01 to 2026-08-25,yes,corrected to case study (phase 4)

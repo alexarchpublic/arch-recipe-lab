@@ -294,6 +294,7 @@ export type Database = {
           name: string | null
           net_profit_usd: number | null
           public_chart_url: string | null
+          chart_url: string | null
           published_at: string | null
           return_pct: number | null
           screenshots: Json | null
@@ -344,6 +345,7 @@ export type Database = {
           max_drawdown_pct: number | null
           net_profit_usd: number | null
           public_chart_url: string | null
+          chart_url: string | null
           return_pct: number | null
           short_name: string | null
           slug: string | null

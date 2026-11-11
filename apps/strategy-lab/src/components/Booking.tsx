@@ -306,18 +306,19 @@ export function BookDemoButton({ strategy, source, className = "", variant = "pr
   );
 }
 
-export function StartFreeLink({ source, strategy, className = "", variant = "secondary" }: { source: string; strategy?: string; className?: string; variant?: "primary" | "secondary" | "onDark" }) {
+export function StartFreeLink({ source, strategy, className = "", variant = "secondary" }: { source: string; strategy?: string; className?: string; variant?: "primary" | "secondary" | "onDark" | "white" }) {
   const { settings } = useBooking();
   const cls = {
     primary: "bg-primary text-primary-foreground border-transparent hover:brightness-110",
-    secondary: "border-border-strong bg-card text-foreground hover:border-primary hover:text-primary",
-    onDark: "border-white/30 text-white hover:bg-white/10",
+    secondary: "border-line-strong bg-card text-navy hover:border-navy",
+    onDark: "border-white/[0.28] text-white hover:bg-white/10",
+    white: "border-transparent bg-white text-navy hover:bg-tint",
   }[variant];
   return (
     <a
       href={settings.actions.startFreeUrl}
       onClick={() => track("start_free_clicked", { source, strategy: strategy ?? null })}
-      className={`inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${cls} ${className}`}
+      className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md border px-5 text-sm font-extrabold transition ${cls} ${className}`}
     >
       {settings.actions.startFree}
     </a>

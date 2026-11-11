@@ -15,6 +15,48 @@ export const focusHelp: Record<string, string> = {
   Accumulation: "Aims to grow how much of the asset you hold",
 };
 
+export interface ClassCount {
+  value: string; // "" for all
+  label: string;
+  count: number;
+}
+
+/** "All 62", "Stocks 39", "ETFs 14", "Crypto 9": live counts for the asset-class chips. */
+export function classCounts(strategies: Pick<PublicStrategy, "asset_class">[]): ClassCount[] {
+  return [
+    { value: "", label: "All", count: strategies.length },
+    ...ASSET_CLASSES.map((c) => ({ value: c, label: assetClassLabel(c), count: strategies.filter((s) => s.asset_class === c).length })).filter((x) => x.count > 0),
+  ];
+}
+
+/** What the list page's filters and sorts read, and nothing more, for the browser. */
+export interface ListRow {
+  id: string;
+  slug: string;
+  display_number: number | null;
+  asset: string;
+  asset_class: PublicStrategy["asset_class"];
+  focus: PublicStrategy["focus"];
+  time_horizon: PublicStrategy["time_horizon"];
+  algorithm: string;
+  return_pct: number;
+  as_of: string;
+  /** CAGR as a client may see it (displayCagr): null under a year or without a real test end. */
+  cagr: number | null;
+}
+
+export function listRow(s: PublicStrategy, cagr: number | null): ListRow {
+  return {
+    id: s.id, slug: s.slug, display_number: s.display_number, asset: s.asset, asset_class: s.asset_class, focus: s.focus,
+    time_horizon: s.time_horizon, algorithm: s.algorithm, return_pct: s.return_pct, as_of: s.as_of, cagr,
+  };
+}
+
+/** Only what a chart needs crosses to the browser (client components), never the whole row. */
+export function chartFields(s: PublicStrategy): Pick<PublicStrategy, "slug" | "display_number" | "asset" | "time_frame" | "chart_url" | "title"> {
+  return { slug: s.slug, display_number: s.display_number, asset: s.asset, time_frame: s.time_frame, chart_url: s.chart_url, title: s.title };
+}
+
 export function byReturn(a: PublicStrategy, b: PublicStrategy): number {
   return b.return_pct - a.return_pct;
 }

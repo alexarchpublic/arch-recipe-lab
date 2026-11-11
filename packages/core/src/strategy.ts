@@ -46,7 +46,13 @@ export interface PublicStrategy {
   cagr_pct: number | null; // null when the test window is under a year (D12)
   vs_buy_hold_pct: number | null;
   vs_dca_pct: number | null;
+  /** Unused since the redesign: a hand-cropped copy was never published (D9, reversed by P1). */
   public_chart_url: string | null;
+  /**
+   * The strategy's chart screenshot as uploaded, shown whole (redesign P1).
+   * The view picks it: kind "chart" first, else the first by order, else null.
+   */
+  chart_url: string | null;
 }
 
 export interface SourceScreenshot {
@@ -74,6 +80,22 @@ export interface ProStrategy extends PublicStrategy {
   sell_above_cost_basis: boolean | null;
   exit_to_entry_proportion: number | null;
   screenshots: SourceScreenshot[];
+}
+
+/**
+ * The screenshot that goes public for a version: the first whose kind is
+ * "chart", else the first by display order (ties: as stored), else null. The
+ * same rule as chart_url in the database views (migration 20261114000001);
+ * the admin console uses it to show reviewers which image goes public.
+ */
+export function publicChartScreenshot<T extends Pick<SourceScreenshot, "kind" | "order" | "url">>(screenshots: T[] | null | undefined): T | null {
+  const list = (screenshots ?? []).filter((s) => !!s?.url);
+  const tagged = list.find((s) => s.kind === "chart");
+  if (tagged) return tagged;
+  const ordered = list
+    .map((s, i) => ({ s, i }))
+    .sort((a, b) => (Number.isFinite(a.s.order) ? a.s.order : Infinity) - (Number.isFinite(b.s.order) ? b.s.order : Infinity) || a.i - b.i);
+  return ordered[0]?.s ?? null;
 }
 
 /** Numbers come back from PostgREST as strings for numeric columns. */
@@ -260,15 +282,23 @@ export function formatTestWindow(s: Pick<PublicStrategy, "test_start" | "test_en
 // Formatting (moved here from src/utils/recipeMetrics.ts).
 // ---------------------------------------------------------------------------
 
+/** "1192.4" -> "1,192.4": thousands grouping on a fixed-decimal string (rounding stays toFixed's). */
+const groupThousands = (fixed: string): string => {
+  const [int, frac] = fixed.split(".");
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return frac !== undefined ? `${grouped}.${frac}` : grouped;
+};
+
 export function formatSignedPercent(value: number, decimals = 1): string {
-  const abs = Math.abs(value).toFixed(decimals);
+  const abs = groupThousands(Math.abs(value).toFixed(decimals));
   if (value < 0) return `−${abs}%`;
   return `+${abs}%`;
 }
 
-export function formatSignedCurrency(value: number): string {
+export function formatSignedCurrency(value: number, { plus = false }: { plus?: boolean } = {}): string {
   const abs = `$${Math.abs(Math.round(value)).toLocaleString("en-US")}`;
-  return value < 0 ? `−${abs}` : abs;
+  if (value < 0) return `−${abs}`;
+  return plus && Math.round(value) > 0 ? `+${abs}` : abs;
 }
 
 /** Unsigned percent for display (e.g. CAGR). Always includes the % sign. */

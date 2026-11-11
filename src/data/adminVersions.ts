@@ -10,6 +10,7 @@ import {
   type PublicStrategy,
   type SourceScreenshot,
   normalizeStrategyRow,
+  publicChartScreenshot,
 } from "@core";
 
 export type VersionStatus = "draft" | "in_review" | "published" | "superseded" | "archived";
@@ -78,7 +79,7 @@ export const PUBLIC_VIEW_FIELDS = [
   "test_end", "fees_slippage", "data_source", "as_of", "net_profit_usd", "cash_profit_usd", "asset_qty",
   "asset_unit", "buy_hold_pnl_pct", "dca_pnl_pct", "max_drawdown_pct", "benchmark_shown",
   "ending_value_usd", "return_pct", "test_years", "cagr_pct", "vs_buy_hold_pct", "vs_dca_pct",
-  "public_chart_url",
+  "public_chart_url", "chart_url",
 ] as const;
 
 /** Fields a version may carry from the form (store.editable_fields). */
@@ -241,18 +242,6 @@ export async function setArchived(strategyId: string, archived: boolean): Promis
   if (error) throw error;
 }
 
-export async function uploadPublicChart(strategyId: string, versionNumber: number, png: Blob): Promise<string> {
-  const supabase = await client();
-  const path = `${strategyId}/v${versionNumber}.png`;
-  const { error } = await supabase.storage
-    .from("strategy-public")
-    .upload(path, png, { contentType: "image/png", upsert: true, cacheControl: "3600" });
-  if (error) throw error;
-  const { data } = supabase.storage.from("strategy-public").getPublicUrl(path);
-  // A version suffix busts caches when a draft's crop is redone.
-  return `${data.publicUrl}?v=${Date.now()}`;
-}
-
 // ---------------------------------------------------------------------------
 // Pure mappings (tested in tests/adminVersions.test.ts)
 // ---------------------------------------------------------------------------
@@ -265,6 +254,7 @@ export function countChecks(v: Pick<AdminVersion, "checks"> | null | undefined):
 
 /** A version as the client app would show it, for the Pro preview (A7). */
 export function versionToProStrategy(v: AdminVersion): ProStrategy {
+  const screenshots = [...(v.screenshots ?? [])].sort((a, b) => a.order - b.order);
   return {
     ...(v as unknown as ProStrategy),
     id: v.strategy_id,
@@ -272,7 +262,9 @@ export function versionToProStrategy(v: AdminVersion): ProStrategy {
     strategy_created_at: v.created_at,
     published_at: v.published_at ?? v.updated_at,
     archived_at: v.archived_at ?? null,
-    screenshots: [...(v.screenshots ?? [])].sort((a, b) => a.order - b.order),
+    screenshots,
+    // The views compute it the same way (migration 20261114000001).
+    chart_url: publicChartScreenshot(v.screenshots)?.url ?? null,
   };
 }
 

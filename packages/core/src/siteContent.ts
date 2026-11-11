@@ -7,8 +7,28 @@
 // never stored here: the database refuses a value that names a figure field,
 // and every number on the site comes from the published strategy.
 
-export type SectionId = "finder" | "library" | "top" | "how" | "proof" | "clients" | "book";
-export const ALL_SECTIONS: SectionId[] = ["finder", "library", "top", "how", "proof", "clients", "book"];
+export type SectionId = "read" | "finder" | "library" | "top" | "size" | "how" | "proof" | "clients" | "book";
+/** Every section id the home page knows. Ids not listed here are ignored. */
+export const ALL_SECTIONS: SectionId[] = ["read", "finder", "library", "top", "size", "how", "proof", "clients", "book"];
+/**
+ * The default order (redesign PRD section 4). The hero always renders first.
+ * finder, library and proof stay valid ids with working sections but are not
+ * in the default order.
+ */
+export const DEFAULT_SECTIONS: SectionId[] = ["read", "top", "size", "how", "clients", "book"];
+
+/** A market label a person chooses for a strategy (redesign PRD 7.2). Not a figure. */
+export type MarketTag = "falling" | "sideways" | "rising" | "volatile";
+export const MARKET_TAGS: MarketTag[] = ["falling", "sideways", "rising", "volatile"];
+export const MARKET_TAG_LABELS: Record<MarketTag, string> = {
+  falling: "Falling market",
+  sideways: "Sideways market",
+  rising: "Rising market",
+  volatile: "Volatile market",
+};
+
+/** The token content strings use for the number of published public strategies. */
+export const COUNT_TOKEN = "{count}";
 
 export interface ProofItem {
   quote?: string;
@@ -29,7 +49,14 @@ export interface HomeContent {
     subhead: string;
     /** Slug of the strategy shown in the hero. Empty: the highest return. */
     featured: string;
+    /**
+     * A line written for one strategy. Shown on the hero case card only while
+     * that strategy is the hero; otherwise the card shows the strategy's title.
+     */
+    case: { slug: string; line: string };
   };
+  /** "How to read a chart" (section id read). */
+  read: { eyebrow: string; title: string; items: Array<{ title: string; body: string }> };
   trust: {
     custody: string;
     exchanges: string[];
@@ -40,10 +67,12 @@ export interface HomeContent {
   sections: SectionId[];
   /** Top strategies, by slug, in order. Empty: ranked by return. */
   featured: string[];
-  top: { title: string; subtitle: string };
-  how: { title: string; steps: Array<{ title: string; body: string }>; videoUrl: string; videoLabel: string };
+  top: { eyebrow: string; title: string; subtitle: string };
+  /** "Your numbers" (section id size): account size and "email me these figures". */
+  size: { eyebrow: string; title: string; body: string[] };
+  how: { eyebrow: string; title: string; steps: Array<{ title: string; body: string }>; videoUrl: string; videoLabel: string };
   proof: { title: string; items: ProofItem[] };
-  clients: { title: string; body: string; bullets: string[] };
+  clients: { eyebrow: string; title: string; body: string; bullets: string[] };
   book: { title: string; body: string };
 }
 
@@ -98,9 +127,11 @@ export interface SiteContent {
   booking: BookingContent;
   config: SiteConfig;
   partners: Record<string, PartnerContent>;
+  /** Market tags by strategy slug (site content key market_tags). */
+  marketTags: Record<string, MarketTag>;
 }
 
-export const DEFAULT_CONTENT: Omit<SiteContent, "partners"> = {
+export const DEFAULT_CONTENT: Omit<SiteContent, "partners" | "marketTags"> = {
   home: {
     seo: {
       title: "Strategy Lab · Algorithm strategies for stocks, ETFs and crypto | Arch Public",
@@ -109,10 +140,23 @@ export const DEFAULT_CONTENT: Omit<SiteContent, "partners"> = {
     },
     hero: {
       eyebrow: "Arch Public Strategy Lab",
-      headline: "Great investing isn't about being smart. It's about not being emotional.",
+      headline: "See every trade the algorithm made.",
       subhead:
-        "Algorithm strategies for stocks, ETFs and crypto, with the results of every backtest and how each one trades. See any of them at your own account size.",
+        "{count} backtested strategies for stocks, ETFs and crypto. Each one comes with its chart: every buy, every sell, and what it returned against simply holding the asset.",
       featured: "",
+      case: { slug: "", line: "" },
+    },
+    read: {
+      eyebrow: "How to read a chart",
+      title: "Every chart shows its work.",
+      items: [
+        { title: "Blue arrows are buys", body: "Each arrow is an entry the algorithm took, with the size of the order printed beside it." },
+        { title: "Magenta marks are sells", body: "Each mark closes entries the algorithm opened earlier. Nothing is hidden and nothing is left off the chart." },
+        {
+          title: "The result is measured against holding",
+          body: "Every strategy states its return beside buy and hold, or buying monthly, over the same test period.",
+        },
+      ],
     },
     trust: {
       custody: "Your assets stay in your own exchange or brokerage account.",
@@ -120,11 +164,24 @@ export const DEFAULT_CONTENT: Omit<SiteContent, "partners"> = {
       exchangesNote: "Strategies run through TradingView on the account you already use.",
       demoBy: "",
     },
-    sections: ALL_SECTIONS,
+    sections: DEFAULT_SECTIONS,
     featured: [],
-    top: { title: "Top strategies", subtitle: "Ranked by return over each strategy's own test period." },
+    top: {
+      eyebrow: "The library",
+      title: "It does not need a rising market.",
+      subtitle: "Six of the {count}, in falling, sideways and rising markets. Open any one for its full chart and figures.",
+    },
+    size: {
+      eyebrow: "Your numbers",
+      title: "See any strategy at your account size.",
+      body: [
+        "Enter what you plan to trade and every dollar figure rescales to it. Percentages never change with size.",
+        "Want to keep them? We email you the figures for the strategies you looked at.",
+      ],
+    },
     how: {
-      title: "How it works",
+      eyebrow: "How it works",
+      title: "Your account. Your assets. The algorithm does the trading.",
       steps: [
         { title: "Connect", body: "Link the exchange or brokerage account you already use. Your assets never leave it." },
         { title: "Choose", body: "Pick strategies from the library and size them to the capital you plan to trade." },
@@ -135,7 +192,8 @@ export const DEFAULT_CONTENT: Omit<SiteContent, "partners"> = {
     },
     proof: { title: "Clients and case studies", items: [] },
     clients: {
-      title: "Strategy Lab Pro comes with every client account",
+      eyebrow: "Strategy Lab Pro",
+      title: "Found one you like? Run it with the exact settings.",
       body: "Every Arch Public account includes Strategy Lab Pro, the free tier too. It is where you get the exact settings and put a strategy to work.",
       bullets: [
         "The exact settings of every strategy, sized to your capital",
@@ -145,7 +203,7 @@ export const DEFAULT_CONTENT: Omit<SiteContent, "partners"> = {
       ],
     },
     book: {
-      title: "See it working with your capital",
+      title: "See it working with your capital.",
       body: "A 30-minute demo, live, with the assets you trade and the account size you have in mind.",
     },
   },
@@ -194,7 +252,42 @@ export function mergeDeep<T>(base: T, over: unknown): T {
   return out as T;
 }
 
-export function mergeSiteContent(rows: Array<{ key: string; value: Json }>): SiteContent {
+/** Replace {count} in every string of a value (arrays and objects walked). */
+export function fillTokens<T>(value: T, count: number): T {
+  if (typeof value === "string") return value.split(COUNT_TOKEN).join(String(count)) as T;
+  if (Array.isArray(value)) return value.map((v) => fillTokens(v, count)) as T;
+  if (isObj(value)) return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, fillTokens(v, count)])) as T;
+  return value;
+}
+
+/** Market tags from the market_tags row: known values only, and only for published slugs when given. */
+export function readMarketTags(value: unknown, publishedSlugs?: Iterable<string>): Record<string, MarketTag> {
+  const out: Record<string, MarketTag> = {};
+  if (!isObj(value)) return out;
+  const published = publishedSlugs ? new Set(publishedSlugs) : null;
+  for (const [slug, tag] of Object.entries(value)) {
+    if (typeof tag !== "string" || !MARKET_TAGS.includes(tag as MarketTag)) continue;
+    if (published && !published.has(slug)) continue;
+    out[slug] = tag as MarketTag;
+  }
+  return out;
+}
+
+/** The hero case line, only when it was written for this strategy (redesign PRD section 4). */
+export function heroCaseLine(home: Pick<HomeContent, "hero">, heroSlug: string | null | undefined): string | null {
+  const c = home.hero.case;
+  if (!heroSlug || !c?.slug || !c.line?.trim() || c.slug !== heroSlug) return null;
+  return c.line;
+}
+
+export interface MergeOptions {
+  /** Published public slugs: market tags for any other slug are dropped. */
+  publishedSlugs?: Iterable<string>;
+  /** The number of published public strategies, put in place of {count}. Omitted: tokens stay as typed (the editor). */
+  count?: number;
+}
+
+export function mergeSiteContent(rows: Array<{ key: string; value: Json }>, options: MergeOptions = {}): SiteContent {
   const get = (key: string) => rows.find((r) => r.key === key)?.value ?? {};
   const homeRow = get("home");
   const home = mergeDeep(DEFAULT_CONTENT.home, homeRow);
@@ -221,11 +314,13 @@ export function mergeSiteContent(rows: Array<{ key: string; value: Json }>): Sit
       },
     };
   }
-  return {
+  const content: SiteContent = {
     home,
     actions: mergeDeep(DEFAULT_CONTENT.actions, isObj(homeRow.actions) ? homeRow.actions : {}),
     booking: mergeDeep(DEFAULT_CONTENT.booking, bookingRow),
     config: mergeDeep(DEFAULT_CONTENT.config, get("config")),
     partners,
+    marketTags: readMarketTags(get("market_tags"), options.publishedSlugs),
   };
+  return typeof options.count === "number" ? fillTokens(content, options.count) : content;
 }

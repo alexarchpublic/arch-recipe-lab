@@ -33,9 +33,10 @@ export function ResultsBlock({
   scale = true,
 }: {
   strategy: PublicStrategy;
-  disclaimer: string | null;
+  disclaimer?: string | null;
   hidden?: string[];
-  variant?: "full" | "card";
+  /** full: every figure; card: the old card grid; size: the home "your numbers" tiles; page: the strategy page tiles. */
+  variant?: "full" | "card" | "size" | "page";
   /** Follow the visitor's account size (C5 can switch it off). */
   scale?: boolean;
 }) {
@@ -49,6 +50,35 @@ export function ResultsBlock({
   const card = variant === "card";
   const atSize = capital !== s.starting_capital ? `at ${formatMoney(capital)}` : undefined;
   const shortTest = cagr === null && !!displayTestEnd(s) && s.test_years < 1;
+
+  if (variant === "size" || variant === "page") {
+    const page = variant === "page";
+    const tile = (label: string, field: string, raw: number | null, value: string, tone?: "gain" | "loss" | null) => (
+      <div key={field} className={`min-w-0 flex-[1_1_150px] rounded-md bg-surface ${page ? "px-[18px] py-4" : "px-4 py-3.5"}`}>
+        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-muted">{label}</p>
+        <p
+          className={`mt-1.5 font-mono font-semibold tabular-nums ${page ? "text-[22px]" : "text-xl"} ${tone === "gain" ? "text-gain" : tone === "loss" ? "text-loss" : "text-navy"}`}
+          data-field={field}
+          data-raw={raw ?? ""}
+        >
+          {value}
+        </p>
+      </div>
+    );
+    return (
+      <div data-results={s.id} data-version={`v${s.version_number}`} data-slug={s.slug} className="space-y-2">
+        <div className="flex flex-wrap gap-3">
+          {show("net_profit_usd") && tile("Net profit", "net_profit_usd", s.net_profit_usd, formatSignedCurrency(Math.round(scaled.netProfit), { plus: true }), signedTone(scaled.netProfit))}
+          {page && show("ending_value_usd") && tile("Ending value", "ending_value_usd", s.ending_value_usd, formatMoney(scaled.ending))}
+          {scaled.cashProfit !== null && show("cash_profit_usd") &&
+            tile("Cash profit", "cash_profit_usd", s.cash_profit_usd, formatSignedCurrency(Math.round(scaled.cashProfit), { plus: true }))}
+          {scaled.assetQty !== null && scaled.assetQty > 0 && show("asset_qty") &&
+            tile(page ? "Asset accumulated" : "Accumulated", "asset_qty", s.asset_qty, `${formatQuantity(scaled.assetQty, s.asset_class)} ${s.asset}`)}
+        </div>
+        {atSize && <p className="text-xs text-ink-muted">Dollar figures {atSize}. Percentages do not change with size.</p>}
+      </div>
+    );
+  }
 
   const figures = card ? (
     <div className="grid grid-cols-2 gap-2">
