@@ -1,4 +1,6 @@
-// Portfolio types and calculation helpers
+// Portfolio types and calculation helpers. A portfolio position keeps a
+// snapshot of the strategy version it was added at (P12); totals are sums of
+// separate backtests, scaled by one rule (D3, P13, P14).
 
 export type PortfolioStorageKey = "portfolio:v1";
 
@@ -24,6 +26,12 @@ export interface PortfolioRecipeSummary {
   algorithm_inputs?: any;
   display_number?: number | null;
   focus?: string; // Recipe focus (Cash Yielding, Accumulation, Balanced)
+  // Since Phase 2: enough of the pinned version to show what changed (P12).
+  assetClass?: string | null;
+  returnPct?: number | null;
+  cagrPct?: number | null;
+  publishedAt?: string | null;
+  changeType?: string | null;
 }
 
 export interface PortfolioPosition {
@@ -217,3 +225,94 @@ export function perDollarYield(
 }
 
 
+
+// ---------------------------------------------------------------------------
+// What changed since a position was pinned (P12).
+// ---------------------------------------------------------------------------
+
+/** The current published version, as the fields a snapshot keeps. */
+export interface CurrentVersionFields {
+  id: string;
+  version_id: string;
+  version_number: number;
+  change_type: string;
+  change_note: string | null;
+  published_at: string;
+  starting_capital: number;
+  net_profit_usd: number;
+  cash_profit_usd: number | null;
+  asset_qty: number | null;
+  return_pct: number;
+  algorithm_inputs: Record<string, unknown> | null;
+}
+
+export interface FieldChange {
+  field: "starting_capital" | "net_profit" | "cash_profit" | "asset_qty" | "return_pct" | "settings";
+  label: string;
+  before: number | null;
+  after: number | null;
+}
+
+export interface VersionChanges {
+  /** The current version differs from the pinned one. */
+  changed: boolean;
+  /** True when the pinned version is known; portfolios from before Phase 1 have none. */
+  pinnedKnown: boolean;
+  fromVersion: number | null;
+  toVersion: number;
+  figures: FieldChange[];
+  settingsChanged: boolean;
+  changeNote: string | null;
+}
+
+function sameNumber(a: number | null | undefined, b: number | null | undefined): boolean {
+  const x = typeof a === "number" && Number.isFinite(a) ? a : null;
+  const y = typeof b === "number" && Number.isFinite(b) ? b : null;
+  if (x === null || y === null) return x === y;
+  return Math.abs(x - y) < 1e-6 * Math.max(1, Math.abs(x), Math.abs(y));
+}
+
+function stable(v: unknown): string {
+  if (v === null || v === undefined) return "null";
+  if (Array.isArray(v)) return `[${v.map(stable).join(",")}]`;
+  if (typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    return `{${Object.keys(o).sort().filter((k) => o[k] !== undefined).map((k) => `${JSON.stringify(k)}:${stable(o[k])}`).join(",")}}`;
+  }
+  return JSON.stringify(v);
+}
+
+/**
+ * Compares a position's snapshot with the strategy's current published
+ * version. A new version with the same figures and settings (a copy change)
+ * is not a change a client needs to act on (D11).
+ */
+export function versionChanges(snapshot: PortfolioRecipeSummary, current: CurrentVersionFields): VersionChanges {
+  const pinnedKnown = typeof snapshot.versionNumber === "number" && !!snapshot.versionId;
+  const figures: FieldChange[] = [];
+  const check = (field: FieldChange["field"], label: string, before: number | null | undefined, after: number | null) => {
+    if (before === undefined) return; // not kept by older snapshots
+    if (!sameNumber(before, after)) figures.push({ field, label, before: before ?? null, after });
+  };
+  check("starting_capital", "Starting capital", snapshot.baseInitialCapital, current.starting_capital);
+  check("net_profit", "Net profit", snapshot.baseNetProfit, current.net_profit_usd);
+  check("cash_profit", "Cash profit", snapshot.baseCashProfit, current.cash_profit_usd);
+  check("asset_qty", "Asset accumulated", snapshot.assetQty, current.asset_qty);
+  check("return_pct", "Return", snapshot.returnPct, current.return_pct);
+
+  const settingsChanged =
+    snapshot.algorithm_inputs !== undefined && stable(snapshot.algorithm_inputs) !== stable(current.algorithm_inputs);
+  const versionMoved = pinnedKnown && snapshot.versionId !== current.version_id;
+  const changed = figures.length > 0 || settingsChanged;
+
+  return {
+    changed,
+    pinnedKnown,
+    fromVersion: pinnedKnown ? (snapshot.versionNumber as number) : null,
+    toVersion: current.version_number,
+    figures,
+    settingsChanged,
+    // The baseline note is an internal record of the Phase 1 copy, not news for clients.
+    changeNote: (versionMoved || changed) && current.change_type !== "baseline" ? current.change_note : null,
+  };
+}

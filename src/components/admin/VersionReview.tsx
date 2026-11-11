@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { RecipeDetailModal } from "@/components/RecipeDetailModal";
+import { StrategyPreviewModal } from "@/components/StrategyPreviewModal";
 import { PublicChartCrop } from "@/components/admin/PublicChartCrop";
 import {
   type AdminRole,
@@ -369,11 +369,10 @@ export function VersionReview({ group, role, open, onOpenChange, onChanged, onEd
       </Dialog>
 
       {preview && (
-        <RecipeDetailModal
-          recipe={preview}
+        <StrategyPreviewModal
+          strategy={preview}
           open={previewOpen}
           onOpenChange={setPreviewOpen}
-          initialCapital={preview.starting_capital}
         />
       )}
     </>

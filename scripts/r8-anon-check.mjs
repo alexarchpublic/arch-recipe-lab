@@ -97,12 +97,12 @@ if (closed(store)) pass("store schema closed", `HTTP ${store.status}`);
 else fail("store schema closed", `HTTP ${store.status} ${JSON.stringify(store.body).slice(0, 200)}`);
 
 // 6. Admin views and functions are closed.
-for (const view of ["admin_strategy_versions", "admin_extractions", "admin_parity_runs"]) {
+for (const view of ["admin_strategy_versions", "admin_extractions", "admin_parity_runs", "admin_disclosure_history"]) {
   const r = await rest(`${view}?select=*&limit=1`);
   if (closed(r) || (r.status === 200 && Array.isArray(r.body) && r.body.length === 0 && false)) pass(`${view} closed`, `HTTP ${r.status}`);
   else fail(`${view} closed`, `HTTP ${r.status} ${JSON.stringify(r.body).slice(0, 200)}`);
 }
-for (const fn of ["admin_save_draft", "admin_publish", "run_parity_check"]) {
+for (const fn of ["admin_save_draft", "admin_publish", "run_parity_check", "admin_set_disclosure"]) {
   const r = await rest(`rpc/${fn}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
   if (r.status >= 400) pass(`rpc ${fn} refused`, `HTTP ${r.status}`);
   else fail(`rpc ${fn} refused`, `HTTP ${r.status}`);
@@ -127,7 +127,20 @@ const listed = list.ok ? await list.json() : [];
 if (Array.isArray(listed) && listed.length > 0) fail("public chart location not listable", `${listed.length} entries listed`);
 else pass("public chart location not listable", `HTTP ${list.status}`);
 
-// 9. The Pro view: open until the login move, then closed (D6).
+// 9. Disclaimer wording (C2, migration 20261112000001): readable, and only
+//    the wording, never who changed it.
+const disc = await rest("disclosures?select=*");
+if (disc.status === 404 || (disc.status >= 400 && /does not exist|schema cache/i.test(JSON.stringify(disc.body)))) {
+  console.log("INFO  disclosures view not present yet (before 20261112000001); the app shows the default wording");
+} else if (disc.status !== 200 || !Array.isArray(disc.body)) {
+  fail("disclosures readable", `HTTP ${disc.status}`);
+} else {
+  const cols = [...new Set(disc.body.flatMap((r) => Object.keys(r)))].sort().join(",");
+  if (cols && cols !== "body,key,updated_at") fail("disclosures columns", cols);
+  else pass("disclosures readable, wording only", `${disc.body.length} slot(s)`);
+}
+
+// 10. The Pro view: open until the login move, then closed (D6).
 const pro = await rest("strategies_pro?select=id&limit=1");
 const proOpen = pro.status === 200 && Array.isArray(pro.body) && pro.body.length > 0;
 if (proClosed) {

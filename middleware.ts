@@ -15,12 +15,13 @@ export default function middleware(request: Request) {
     return rewrite(new URL("/api/site-og", request.url));
   }
 
-  const match = pathname.match(/^\/recipe\/(\d+)$/);
+  // Strategy pages, and Recipe Lab's old /recipe/N links to them.
+  const match = pathname.match(/^\/(?:strategy|recipe)\/(\d+)$/);
   if (match) {
     return rewrite(new URL(`/api/recipe-og?id=${match[1]}`, request.url));
   }
 }
 
 export const config = {
-  matcher: ["/", "/recipe/:displayNumber"],
+  matcher: ["/", "/strategy/:displayNumber", "/recipe/:displayNumber"],
 };

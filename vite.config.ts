@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import type { IncomingMessage, ServerResponse } from "http";
 import { componentTagger } from "lovable-tagger";
+import { DEFAULT_PRO_SITE_URL } from "./packages/core/src/site";
 
 function parseRecipeScreenshotsDevPlugin(): Plugin {
   return {
@@ -64,11 +65,19 @@ export default defineConfig(({ mode }) => {
     "ANTHROPIC_VISION_MODEL",
     "VITE_SUPABASE_URL",
     "VITE_SUPABASE_PUBLISHABLE_KEY",
+    "VITE_PRO_SITE_URL",
   ]) {
     if (env[key] && !process.env[key]) {
       process.env[key] = env[key];
     }
   }
+
+  // Pro's address is one setting (PRD 13, rename checklist).
+  const proSiteUrl = (env.VITE_PRO_SITE_URL || DEFAULT_PRO_SITE_URL).replace(/\/+$/, "");
+  const proSiteUrlInHtml: Plugin = {
+    name: "pro-site-url",
+    transformIndexHtml: (html) => html.split("%PRO_SITE_URL%").join(proSiteUrl),
+  };
 
   return {
     server: {
@@ -78,6 +87,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       parseRecipeScreenshotsDevPlugin(),
+      proSiteUrlInHtml,
       mode === "development" && componentTagger(),
     ].filter(Boolean),
     resolve: {

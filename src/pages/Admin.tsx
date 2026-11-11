@@ -9,13 +9,14 @@ import { useToast } from "@/hooks/use-toast";
 import { LogOut, Plus, Search, Eye } from "lucide-react";
 import { AdminRecipeCard } from "@/components/AdminRecipeCard";
 import { RecipeForm } from "@/components/RecipeForm";
-import { RecipeDetailModal } from "@/components/RecipeDetailModal";
+import { StrategyPreviewModal } from "@/components/StrategyPreviewModal";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import type { Session, User } from "@supabase/supabase-js";
 import { ADMIN_DENIED_MESSAGE, decideAdminAccess } from "../../lib/adminAccess";
 import { VersionReview } from "@/components/admin/VersionReview";
+import { DisclosureEditor } from "@/components/admin/DisclosureEditor";
 import {
   type AdminRole,
   type ParityRun,
@@ -159,7 +160,7 @@ export default function Admin() {
           <div className="flex items-center gap-4">
             <Button onClick={() => navigate('/')} variant="secondary" className="gap-2">
               <Eye className="h-4 w-4" />
-              View public site
+              View Strategy Lab Pro
             </Button>
             <Button variant="secondary" onClick={handleSignOut} className="gap-2">
               <LogOut className="h-4 w-4" />
@@ -220,9 +221,10 @@ export default function Admin() {
               </Badge>
             )}
           </div>
+          <DisclosureEditor role={role} />
           <Button onClick={handleCreateRecipe} className="gap-2">
             <Plus className="h-4 w-4" />
-            Create recipe
+            Create strategy
           </Button>
         </div>
 
@@ -265,7 +267,7 @@ export default function Admin() {
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingGroup ? 'Edit strategy (saves a draft)' : 'Create New Recipe'}
+              {editingGroup ? 'Edit strategy (saves a draft)' : 'Create new strategy'}
             </DialogTitle>
           </DialogHeader>
           <RecipeForm
@@ -278,12 +280,11 @@ export default function Admin() {
       </Dialog>
 
       {/* Recipe Detail Modal */}
-      <RecipeDetailModal
-        recipe={viewingVersion ? versionToProStrategy(viewingVersion) : null}
-        open={!!viewingVersion}
-        onOpenChange={(open) => !open && setViewingGroup(null)}
-        initialCapital={viewingVersion?.starting_capital}
-      />
+      <StrategyPreviewModal
+          strategy={viewingVersion ? versionToProStrategy(viewingVersion) : null}
+          open={!!viewingVersion}
+          onOpenChange={(open) => !open && setViewingGroup(null)}
+        />
 
       {/* Review, publish and history (A2, A3, A6, A7, D9) */}
       <VersionReview
