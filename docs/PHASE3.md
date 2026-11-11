@@ -34,7 +34,7 @@ with a calendar hold (S11, S14).
 | Captures | `POST /strategy-lab/api/lead` | Booking, alerts and "email me this". Forwarded to HubSpot's form API and recorded in `store.leads` with the outcome. |
 | Refresh | `POST /strategy-lab/api/revalidate` | Called by the admin console with the admin's session; the route asks the store whether the caller is an admin. |
 | Page check | `GET /strategy-lab/api/page-check?slug=` | Returns the figures the page prints. The admin console calls it after each publish. |
-| Indexing | `next.config.mjs` headers, `sitemap.ts`, canonical links | S18: canonical addresses are archpublic.com. Any host other than archpublic.com (by `Host` or `x-forwarded-host`) gets `X-Robots-Tag: noindex`. Set at the edge, so cached pages carry it too. |
+| Indexing | `next.config.mjs` headers, `sitemap.ts`, canonical links | S18: canonical addresses are archpublic.com. Any request not marked by the archpublic.com proxy (header `X-Arch-Proxy`, any value) and not addressed to archpublic.com gets `X-Robots-Tag: noindex`. Set at the edge, so cached pages carry it too. Vercel replaces `x-forwarded-host` with its own host, so that header cannot be used. |
 | Consent | `components/Tracking.tsx` | GA4 (`G-7KS3HK4626`, the existing Strategy Lab property) and HubSpot's tracking code load only after Accept. No advertising pixels. |
 
 Moved into `packages/core`: `siteContent.ts` (the content schema and defaults,
@@ -138,7 +138,7 @@ Strategy Lab's Vercel project (root directory `apps/strategy-lab`):
 | `HUBSPOT_MARKETING_SUBSCRIPTION_ID`, `HUBSPOT_CALLS_SUBSCRIPTION_ID` | Subscription types for the two consent lines (C4) | Recommended |
 | `CANONICAL_ORIGIN` | `https://archpublic.com` (default) | No |
 | `PRO_ORIGINS` | `https://recipes.archpublic.com` (default), allowed to call refresh | No |
-| `INDEX_ALL_HOSTS` | `1` only if the archpublic.com proxy does not pass `x-forwarded-host` | No |
+| `INDEX_ALL_HOSTS` | `1` turns the noindex rule off, if the proxy can neither add `X-Arch-Proxy` nor strip `X-Robots-Tag` | No |
 
 Repository variable `STRATEGY_LAB_URL` turns on the page parity workflow and
 the R8 page checks.
@@ -184,7 +184,9 @@ Each step needs the owner's go-ahead.
 4. **Merge the pull request.** Both projects deploy from `main`.
 5. **HubSpot**: the form and properties above, its ID in `HUBSPOT_FORM_GUID`, the two workflows.
 6. **Hand the owner the Vercel address.** The owner routes `archpublic.com/strategy-lab` to
-   `https://<address>/strategy-lab` by rewrite or proxy, not an iframe (S18).
+   `https://arch-strategy-lab.vercel.app/strategy-lab` by rewrite or proxy, not an iframe (S18). The proxy adds the
+   request header `X-Arch-Proxy: archpublic.com` (or strips `X-Robots-Tag` from responses); without it every page
+   carries noindex.
 7. **After routing**: set `STRATEGY_LAB_URL` (repository variable) and `VITE_STRATEGY_LAB_URL`
    (Pro); check that `curl -I https://archpublic.com/strategy-lab` carries no `X-Robots-Tag`,
    that `/strategy-lab/recipes/<record-id>` lands on the strategy, and that a test booking
