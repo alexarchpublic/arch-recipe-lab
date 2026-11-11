@@ -154,7 +154,7 @@ the form can be built up.
 | --- | --- |
 | `email`, `firstname`, `lastname` | Contact |
 | `purchasing_power` (exists) | Account size entered, in dollars |
-| `partner_name` (exists) | Partner ID |
+| `sl_partner` | Partner ID from a partner page or `?partner=` link (`partner_name` cannot be a form field) |
 | `equitiesetf_algo_interest` (exists) | True when the visitor showed interest in stocks or ETFs |
 | `sl_capture_kind` | booking_started, booking_completed, alert or email_me_this |
 | `sl_account_size_range` | The range chosen in the booking step |
@@ -206,9 +206,11 @@ deployable for 30 days (PRD 13, cutover safety).
   **The address to route to: `https://arch-strategy-lab.vercel.app/strategy-lab`.** Its current production build
   came from this branch before the noindex fix; merging the pull request replaces it with `main`. Page parity
   clean on all 64 pages and R8 page checks pass against it.
-- **HubSpot**: not done. The connector cannot create contact properties or forms, and the HubSpot CLI on this Mac
-  is signed in to another account. Needs the owner in HubSpot (the form and fields below), then `HUBSPOT_FORM_GUID`
-  in the Vercel project.
+- **HubSpot** (10 Nov 2026, with the owner's OK, through a private app token the owner supplied): 14 `sl_` contact
+  fields in the "Strategy Lab" group and the form "Strategy Lab capture" (`33d0daae-18d3-41fd-b77f-51dc3acaa22b`,
+  19 fields, implicit consent to process with the Marketing Information subscription, 226456374). The calls-and-texts
+  consent is kept in `sl_consent_calls` only: the account's one text subscription is SMS Marketing, which is not
+  what the line asks. The two workflows are still the owner's to build in HubSpot.
 
 ## Gate 4
 
