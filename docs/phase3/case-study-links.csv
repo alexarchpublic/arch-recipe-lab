@@ -33,7 +33,7 @@ mrna,3,The round trip,"June 1, 2020 to August 25, 2026",Weekly chart,"+1,187%",7
 msft,1,The whipsaw year,"January 1, 2026 to August 11, 2026",Daily chart,+33.2%,66,MSFT STH 1D Swing,33.2,2026-01-01 to 2026-08-12,yes,exact
 msft,2,The two year grind,"August 1, 2024 to August 11, 2026",Daily chart,+68.4%,65,MSFT STH 1D Swing,68.43,2024-08-01 to 2026-08-11,yes,exact
 msft,3,The full cycle,"November 1, 2021 to August 11, 2026",Weekly chart,+111.5%,64,MSFT LTH 1W Position,111.5,2021-11-01 to 2026-08-11,yes,exact
-mstr,1,Through the entire boom and give-back,"June 16, 2023 to June 17, 2026",Daily chart,+181.5%,47,MSTR Daily 3y,168.01,2023-06-16 to 2026-07-01,yes,figures differ (open: case study window ends before the settings end date)
+mstr,1,Through the entire boom and give-back,"June 16, 2023 to June 17, 2026",Daily chart,+181.5%,47,MSTR Daily 3y,181.529,2023-06-16 to 2026-06-17,yes,corrected to case study (phase 4)
 mstr,2,The great stock that went nowhere,"March 1, 2024 to June 17, 2026",Daily chart,+88.7%,53,MSTR 1d,88.74,2024-03-01 to 2026-06-17,yes,exact
 mstr,3,A profit in a falling market,"January 1, 2026 to June 17, 2026",4-hour chart,+20.2%,52,MSTR 4h,20.22,2026-01-01 to 2026-06-17,yes,exact
 mu,1,The weekly paycheck,"June 1 to September 18, 2026",Weekly chart,+44.2%,89,MU STH 1W Position,44.231,2026-06-01 to 2026-09-18,yes,corrected to case study (phase 4)

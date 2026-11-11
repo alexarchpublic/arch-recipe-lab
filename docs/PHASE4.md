@@ -31,8 +31,9 @@ placement) and `market_filter_used` (value, page).
 
 ## Production, in order (Gates A to C)
 
-1. **Gate A**, any time before step 4: publish the case-study corrections, one
-   approval per strategy (figures in the pull request).
+1. **Gate A**, any time before step 4: publish the seven case-study
+   corrections (#74, #76, #86, #89, #84, #87, #47), one approval per strategy
+   (figures in the pull request).
 2. **Gate C, 1**: apply `20261114000001_public_charts.sql` (comment-stripped,
    then compare function bodies with a local build).
 3. **Gate B / C, 2**: merge the pull request; wait for both Vercel deploys.
@@ -48,18 +49,35 @@ clean, and the migration re-applies cleanly after it).
 
 ## Still open
 
-- **#47 MSTR Daily 3y**: the case study's window ends 17 Jun 2026; the
-  strategy's settings end 1 Jul 2026, and the store refuses a test end that
-  differs from the settings (`test_end_vs_settings`, an error). Correcting it
-  needs either the settings' end date changed (a settings version) or a
-  decision that the case study's window is a chart reading. Draft left on
-  staging, unpublished.
-- **#76**: the case study prints buy and hold (−0.6%), which the store did not
-  hold or show. The rehearsal adds it and shows both benchmarks; Alex to
-  confirm at Gate A.
-- **Q1** (valuation gap without a case study): the pull request lists every
-  public strategy whose test window ends 30+ days before its as-of date with
-  shares still held. No figure changed.
+Decided by Alex, 2026-11-11:
+
+- **#47 MSTR Daily 3y**: use the case study's date. The correction also sets
+  the settings' end date to 17 Jun 2026 (it was 1 Jul), which clears the
+  store's `test_end_vs_settings` error; return derives to +181.5%, as the case
+  study prints. Pro clients see the new end date; the change note says so.
+  Rehearsed and published on staging.
+- **#76**: left to my call. The correction adds buy and hold (−0.6%) and shows
+  both benchmarks, because the case study is the source of truth and prints
+  both.
+- **#74's hero line** is set only after #74's correction is live.
+- **Q1** (valuation gap without a case study): left to my judgement. No figure
+  changed. Screenshot dates and window-end prices show the gap could be
+  material for five strategies, but the store does not hold their cash
+  balance, so which price their figures used cannot be settled from the store;
+  estimating would break P3. They go to research to re-read each backtest at
+  its window end:
+
+  | Strategy | Window end | Close then | Screenshot | Close then | Size if valued at screenshot |
+  | --- | --- | --- | --- | --- | --- |
+  | #22 BTC | 2025-01-01 | $94,384 | 2025-11-05 | ~$103,976 | ~56 pts of +621.1% |
+  | #23 BTC | 2025-01-01 | $94,384 | 2025-11-05 | ~$102,810 | ~56 pts of +691.0% |
+  | #24 BTC | 2025-01-01 | $94,384 | 2025-11-05 | ~$103,229 | ~86 pts of +1,008.0% |
+  | #50 NVDA | 2026-06-01 | $224.36 | 2026-07-08 | $204.12 | ~16 pts of +102.8%, understated |
+  | #53 MSTR | 2026-06-17 | $116.56 | 2026-07-08 | $93.87 | ~27 pts of +88.7%, understated; its chart header shows the window-end close, so it may already be right |
+
+  #72 and #73 match the AAPL case study exactly; #39's chart was taken the day
+  after its window ended. Screenshot prices are the chart headers; window-end
+  closes from Coinbase (BTC-USD) and Stock Analysis, read once on 2026-11-11.
 - **Q2 to Q5** of the PRD: defaults applied (Pro-only #15 to #21 untouched;
   launch market tags as in PRD 7.2; finder, library and proof out of the
   default order; titles shown as stored).
