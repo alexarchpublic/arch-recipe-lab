@@ -117,7 +117,7 @@ export function Finder({ strategies, exchanges, disclaimer, hidden, scale }: { s
           </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {results.map((s) => (
-              <StrategyCard key={s.id} strategy={s} disclaimer={disclaimer} hidden={hidden} scale={scale} />
+              <StrategyCard key={s.id} strategy={s} hidden={hidden} />
             ))}
           </div>
           {matches.length > 6 && (

@@ -50,12 +50,17 @@ export async function getDisclaimer(): Promise<string | null> {
 
 /** Marketing's copy, layout and switches (S12), over the built-in defaults. */
 export async function getSiteContent(): Promise<SiteContent> {
+  // {count} in copy is the number of published public strategies, and market
+  // tags apply only to published slugs (redesign PRD 4, 7.2). Both follow a
+  // publish without a deploy, like the strategies themselves.
+  const strategies = await getStrategies().catch(() => null);
+  const options = strategies ? { count: strategies.length, publishedSlugs: strategies.map((s) => s.slug) } : {};
   try {
     const rows = await rest<Array<{ key: string; value: Record<string, unknown> }>>("site_content?select=key,value", CONTENT_TAG);
-    return mergeSiteContent(rows);
+    return mergeSiteContent(rows, options);
   } catch (e) {
     // Before migration 20261113000001 the defaults stand.
-    if (missingRelation(e)) return mergeSiteContent([]);
+    if (missingRelation(e)) return mergeSiteContent([], options);
     throw e;
   }
 }

@@ -7,7 +7,8 @@ import { assetClassLabel } from "@/lib/strategies";
 import { sendLead } from "./api";
 import { Button, Check, Input } from "./ui";
 
-export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dark = false }: { defaultClasses?: string[]; consentText: string; privacyUrl: string; dark?: boolean }) {
+export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dark = false, id = "alerts" }: { defaultClasses?: string[]; consentText: string; privacyUrl: string; dark?: boolean; id?: string }) {
+  const fieldId = `alert-email-${id}`;
   const [classes, setClasses] = useState<string[]>(defaultClasses.length ? defaultClasses : ["Equities", "ETFs", "Crypto"]);
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
@@ -17,7 +18,9 @@ export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dar
   const toggle = (c: string) => setClasses((cur) => (cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c]));
 
   if (state === "done") {
-    return <p className={`text-sm font-semibold ${dark ? "text-white" : ""}`} role="status">Done. We'll email you when a new {classes.map(assetClassLabel).join(", ").toLowerCase()} strategy publishes.</p>;
+    const names = classes.map((c) => (c === "Equities" ? "stock" : c === "ETFs" ? "ETF" : c.toLowerCase()));
+    const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} or ${names[names.length - 1]}` : names[0];
+    return <p className={`text-sm font-semibold ${dark ? "text-white" : "text-navy"}`} role="status">Done. We'll email you when a new {list} strategy publishes.</p>;
   }
   return (
     <form
@@ -38,25 +41,18 @@ export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dar
         setState("done");
       }}
     >
-      <fieldset className="flex flex-wrap gap-2">
+      <fieldset className="flex flex-wrap gap-x-4 gap-y-1">
         <legend className="sr-only">Asset classes</legend>
         {["Equities", "ETFs", "Crypto"].map((c) => (
-          <button
-            key={c}
-            type="button"
-            aria-pressed={classes.includes(c)}
-            onClick={() => toggle(c)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${
-              classes.includes(c) ? "border-primary bg-primary text-primary-foreground" : dark ? "border-white/30 text-white" : "border-border-strong text-foreground"
-            }`}
-          >
+          <label key={c} className={`inline-flex min-h-[44px] items-center gap-2 text-[15px] font-semibold ${dark ? "text-white" : "text-navy"}`}>
+            <input type="checkbox" checked={classes.includes(c)} onChange={() => toggle(c)} className="h-[18px] w-[18px] accent-[hsl(var(--primary))]" />
             {assetClassLabel(c)}
-          </button>
+          </label>
         ))}
       </fieldset>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Input type="email" required placeholder="you@example.com" aria-label="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="sm:max-w-xs" />
-        <Button type="submit" disabled={state === "busy"}>{state === "busy" ? "Saving…" : "Email me new strategies"}</Button>
+      <div>
+        <label htmlFor={fieldId} className={`block text-[13px] font-bold ${dark ? "text-white" : "text-navy"}`}>Email</label>
+        <Input id={fieldId} type="email" required placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2" />
       </div>
       <input tabIndex={-1} autoComplete="off" aria-hidden className="hidden" value={website} onChange={(e) => setWebsite(e.target.value)} />
       <div className={dark ? "[&_span]:text-white/70" : ""}>
@@ -65,6 +61,9 @@ export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dar
           <a className="underline" href={privacyUrl} target="_blank" rel="noreferrer">Privacy policy</a>
         </Check>
       </div>
+      <Button type="submit" variant="secondary" disabled={state === "busy"} className="min-h-[48px] w-full text-[15px]">
+        {state === "busy" ? "Saving…" : "Email me new strategies"}
+      </Button>
       {error && <p className="text-sm font-semibold text-loss" role="alert">{error}</p>}
     </form>
   );

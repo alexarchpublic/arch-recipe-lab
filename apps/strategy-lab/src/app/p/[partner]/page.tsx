@@ -1,9 +1,11 @@
 // Co-branded partner landing pages (S12), set up by marketing in the admin
 // console with no deploy. Every capture from here carries the partner.
+// Built from the home sections (redesign PRD 6): partner strip, hero, read,
+// top, how, clients, book. The finder no longer shows here.
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PartnerMark } from "@/components/PartnerMark";
-import { BookSection, ClientsSection, FinderSection, Hero, HowSection, TopSection } from "@/components/Sections";
+import { BookSection, ClientsSection, Hero, HowSection, ReadSection, TopSection } from "@/components/Sections";
 import { StickyActions } from "@/components/StickyActions";
 import { getDisclaimer, getSiteContent, getStrategies } from "@/lib/data";
 import { canonicalUrl } from "@/lib/env";
@@ -38,8 +40,8 @@ export default async function PartnerPage({ params }: Props) {
           </div>
         </div>
       )}
-      <Hero home={content.home} hero={hero} disclaimer={disclaimer} scale={content.config.accountSize} eyebrow={`Strategy Lab · ${p.name}`} headline={p.headline} subhead={p.subhead} />
-      <FinderSection strategies={strategies} content={content} disclaimer={disclaimer} />
+      <Hero home={content.home} hero={hero} count={strategies.length} eyebrow={`Strategy Lab · ${p.name}`} headline={p.headline} subhead={p.subhead} source="hero" />
+      <ReadSection home={content.home} />
       <TopSection strategies={strategies} content={content} disclaimer={disclaimer} featured={p.featured.length ? p.featured : undefined} />
       <HowSection home={content.home} />
       <ClientsSection home={content.home} />

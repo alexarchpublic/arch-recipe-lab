@@ -1,26 +1,25 @@
+// Logo, disclaimer (from public.disclosures), links (redesign PRD section 4).
 import Link from "next/link";
 import { DEFAULT_DISCLAIMER } from "@core";
 import type { ActionsContent } from "@/lib/content";
 
+const footLink = "inline-flex min-h-[44px] items-center text-white hover:underline";
+
 export function Footer({ actions, disclaimer }: { actions: ActionsContent; disclaimer: string | null }) {
   return (
-    <footer className="mt-16 bg-navy pb-24 pt-10 text-white/80 sm:pb-10">
-      <div className="container grid gap-8 md:grid-cols-3">
-        <div className="space-y-3">
-          <img src="/strategy-lab/logo-white.png" alt="Arch Public" width={123} height={30} className="h-7 w-auto" />
-          <p className="text-sm">Strategy Lab shows Arch Public's algorithm strategies, with the result of every backtest and how each one trades.</p>
-        </div>
-        <nav className="grid grid-cols-2 gap-2 text-sm" aria-label="Footer">
-          <Link href="/strategies" className="hover:text-white">Strategies</Link>
-          <a href="https://archpublic.com/case-studies" className="hover:text-white">Case studies</a>
-          <a href={actions.startFreeUrl} className="hover:text-white">{actions.startFree}</a>
-          <a href={actions.signInUrl} className="hover:text-white">{actions.signIn}</a>
-          <a href={actions.privacyUrl} className="hover:text-white">Privacy</a>
-          <a href="https://archpublic.com/terms" className="hover:text-white">Terms</a>
-        </nav>
-        <p className="text-xs leading-relaxed text-white/60" data-disclosure="disclaimer">
-          {disclaimer?.trim() || DEFAULT_DISCLAIMER} © {new Date().getFullYear()} Arch Public.
+    <footer data-theme="navy" className="bg-navy-deep pb-28 pt-12 text-white/[0.78] sm:pb-12">
+      <div className="container flex flex-wrap items-center justify-between gap-6">
+        <img src="/strategy-lab/logo-white.png" alt="Arch Public" width={115} height={28} className="h-7 w-auto" />
+        <p className="min-w-0 flex-[1_1_360px] text-[13px] leading-relaxed" data-disclosure="disclaimer">
+          {disclaimer?.trim() || DEFAULT_DISCLAIMER} Figures come from TradingView backtests over each strategy&apos;s own test period. © {new Date().getFullYear()} Arch Public.
         </p>
+        <nav className="flex flex-wrap gap-x-5 gap-y-1 text-sm font-semibold" aria-label="Footer">
+          <Link href="/strategies" className={footLink}>Strategies</Link>
+          <a href="https://archpublic.com/case-studies" className={footLink}>Case studies</a>
+          <a href={actions.signInUrl} className={footLink}>{actions.signIn}</a>
+          <a href={actions.privacyUrl} className={footLink}>Privacy</a>
+          <a href="https://archpublic.com/terms" className={footLink}>Terms</a>
+        </nav>
       </div>
     </footer>
   );

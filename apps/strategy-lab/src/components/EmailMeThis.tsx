@@ -9,9 +9,24 @@ import { sendLead } from "./api";
 import { Button, Check, Input } from "./ui";
 import { useVisitor } from "./useVisitor";
 
-export function EmailMeThis({ slug, startingCapital, consentText, privacyUrl }: { slug: string; startingCapital: number; consentText: string; privacyUrl: string }) {
+export function EmailMeThis({
+  slug,
+  startingCapital,
+  consentText,
+  privacyUrl,
+  source = "strategy",
+  boxed = false,
+}: {
+  slug: string;
+  startingCapital: number;
+  consentText: string;
+  privacyUrl: string;
+  /** Where the form sits, for analytics only (redesign PRD section 8). */
+  source?: string;
+  /** Strategy page: in its own bordered box. */
+  boxed?: boolean;
+}) {
   const v = useVisitor();
-  const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState("");
@@ -19,17 +34,12 @@ export function EmailMeThis({ slug, startingCapital, consentText, privacyUrl }: 
   const [error, setError] = useState("");
   const amount = v?.accountSize ?? startingCapital;
 
-  if (state === "done") return <p className="text-sm font-semibold" role="status">On its way to {email}.</p>;
-  if (!open) {
-    return (
-      <Button variant="secondary" onClick={() => setOpen(true)}>
-        Email me these figures
-      </Button>
-    );
-  }
+  const fieldId = `email-figures-${source}`;
+  const box = boxed ? "rounded-lg border border-line px-6 py-5" : "";
+  if (state === "done") return <p className={`text-sm font-semibold text-navy ${box}`} role="status">On its way to {email}.</p>;
   return (
     <form
-      className="space-y-2"
+      className={`space-y-2.5 ${box}`}
       onSubmit={async (e) => {
         e.preventDefault();
         setError("");
@@ -40,15 +50,22 @@ export function EmailMeThis({ slug, startingCapital, consentText, privacyUrl }: 
           return setError(r.error ?? "Please try again.");
         }
         writeVisitor({ identified: true });
-        track("email_me_this_sent", { strategy: slug, amount: Math.round(amount) });
+        track("email_me_this_sent", { strategy: slug, amount: Math.round(amount), source });
         setState("done");
       }}
     >
-      <p className="text-xs text-muted-foreground">We'll email this strategy's results at {formatMoney(amount)}.</p>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Input type="email" required placeholder="you@example.com" aria-label="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="sm:max-w-xs" />
-        <Button type="submit" disabled={state === "busy"}>{state === "busy" ? "Sending…" : "Send"}</Button>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-0 flex-[1_1_220px]">
+          <label htmlFor={fieldId} className={`block text-navy ${boxed ? "text-sm font-extrabold" : "text-[13px] font-bold"}`}>
+            Email me these figures
+          </label>
+          <Input id={fieldId} type="email" required placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2" />
+        </div>
+        <Button type="submit" disabled={state === "busy"} className="min-h-[48px] px-5 text-[15px]">
+          {state === "busy" ? "Sending…" : "Send"}
+        </Button>
       </div>
+      <p className="text-xs text-ink-muted">We'll email this strategy's results at {formatMoney(amount)}.</p>
       <input tabIndex={-1} autoComplete="off" aria-hidden className="hidden" value={website} onChange={(e) => setWebsite(e.target.value)} />
       <Check checked={consent} onChange={setConsent}>
         {consentText}{" "}

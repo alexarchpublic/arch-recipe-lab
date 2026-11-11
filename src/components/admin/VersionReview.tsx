@@ -7,7 +7,6 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { StrategyPreviewModal } from "@/components/StrategyPreviewModal";
-import { PublicChartCrop } from "@/components/admin/PublicChartCrop";
 import {
   type AdminRole,
   type AdminVersion,
@@ -22,6 +21,7 @@ import {
   versionToProStrategy,
 } from "@/data/adminVersions";
 import { afterPublish } from "@/data/strategyLab";
+import { publicChartScreenshot } from "@core";
 
 interface VersionReviewProps {
   group: StrategyGroup | null;
@@ -73,7 +73,6 @@ export function VersionReview({ group, role, open, onOpenChange, onChanged, onEd
   const [busy, setBusy] = useState<string | null>(null);
   const [blocking, setBlocking] = useState<VersionCheck[] | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [showCrop, setShowCrop] = useState(false);
   const { toast } = useToast();
 
   if (!group) return null;
@@ -88,6 +87,7 @@ export function VersionReview({ group, role, open, onOpenChange, onChanged, onEd
     reviewItems.every((c) => acknowledged.has(c.code));
   const diff = draft ? diffVersions(published, draft) : [];
   const preview = draft ? versionToProStrategy(draft) : null;
+  const publicChart = draft ? publicChartScreenshot(draft.screenshots) : null;
 
   const run = async (label: string, action: () => Promise<void>) => {
     setBusy(label);
@@ -288,17 +288,24 @@ export function VersionReview({ group, role, open, onOpenChange, onChanged, onEd
                 </div>
               </section>
 
-              {/* Public chart image (D9) */}
+              {/* The one screenshot that goes public, whole (redesign P1): the
+                  reviewer sees it before approving. Read-only. */}
               <section className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold">
-                    Public chart image {draft.public_chart_url ? "· set" : "· not set"}
-                  </h4>
-                  <Button size="sm" variant="ghost" onClick={() => setShowCrop((v) => !v)}>
-                    {showCrop ? "Hide" : "Crop chart"}
-                  </Button>
-                </div>
-                {showCrop && <PublicChartCrop draft={draft} onSaved={onChanged} />}
+                <h4 className="text-sm font-semibold">Public chart (shown whole on Strategy Lab)</h4>
+                {publicChart ? (
+                  <>
+                    <a href={publicChart.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md border border-border bg-[#131722]">
+                      <img src={publicChart.url} alt="The chart screenshot Strategy Lab will show" className="block h-auto w-full" />
+                    </a>
+                    <p className="text-xs text-muted-foreground">
+                      {draft.listed_public
+                        ? "Strategy Lab shows this screenshot as uploaded, settings line included. The other screenshots stay in Strategy Lab Pro. If this is not the chart, change the screenshot order (or mark the chart's kind) before approving."
+                        : "Not listed publicly, so Strategy Lab will not show it."}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No screenshots: Strategy Lab will show this strategy without a chart.</p>
+                )}
               </section>
 
               <Separator />

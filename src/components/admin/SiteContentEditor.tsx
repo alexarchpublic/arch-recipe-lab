@@ -4,7 +4,7 @@
 // cannot be stored here: they always come from the published strategy.
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, LayoutTemplate, Plus, Trash2 } from "lucide-react";
-import { ALL_SECTIONS, DEFAULT_CONTENT, type SectionId } from "@core";
+import { ALL_SECTIONS, DEFAULT_CONTENT, DEFAULT_SECTIONS, MARKET_TAGS, MARKET_TAG_LABELS, type MarketTag, type SectionId } from "@core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,9 +20,11 @@ import { STRATEGY_LAB_URL, refreshStrategyLab } from "@/data/strategyLab";
 type Obj = Record<string, unknown>;
 
 const SECTION_LABEL: Record<SectionId, string> = {
+  read: "How to read a chart",
   finder: "Strategy finder",
   library: "Library at a glance",
-  top: "Top strategies",
+  top: "The library (six strategy cards)",
+  size: "Your numbers (account size, email me these figures)",
   how: "How it works",
   proof: "Clients and case studies",
   clients: "What clients get (Pro)",
@@ -117,6 +119,7 @@ export function SiteContentEditor({ role, groups }: { role: AdminRole | null; gr
   const [partnerKey, setPartnerKey] = useState("");
   const [partner, setPartner] = useState<Obj>({});
   const [newSlug, setNewSlug] = useState("");
+  const [tags, setTags] = useState<Obj>({});
   const [rawKey, setRawKey] = useState("home");
   const [raw, setRaw] = useState("");
   const [saving, setSaving] = useState(false);
@@ -127,6 +130,7 @@ export function SiteContentEditor({ role, groups }: { role: AdminRole | null; gr
     setHome(row("home"));
     setBooking(row("booking"));
     setConfig(row("config"));
+    setTags(row("market_tags"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, data]);
   useEffect(() => {
@@ -143,7 +147,7 @@ export function SiteContentEditor({ role, groups }: { role: AdminRole | null; gr
     [groups],
   );
   const partners = (data ?? []).filter((r) => r.key.startsWith("partner:"));
-  const sections = ((get(home, "sections") as SectionId[] | undefined) ?? ALL_SECTIONS).filter((s) => ALL_SECTIONS.includes(s));
+  const sections = ((get(home, "sections") as SectionId[] | undefined) ?? DEFAULT_SECTIONS).filter((s) => ALL_SECTIONS.includes(s));
   const hidden = (get(config, "hiddenFields") as string[] | undefined) ?? [];
 
   const save = async (key: string, value: Obj | null, done?: string) => {
@@ -192,10 +196,14 @@ export function SiteContentEditor({ role, groups }: { role: AdminRole | null; gr
               <TabsTrigger value="booking">Booking and labels</TabsTrigger>
               <TabsTrigger value="switches">Switches</TabsTrigger>
               <TabsTrigger value="partners">Partner pages</TabsTrigger>
+              <TabsTrigger value="markets">Market tags</TabsTrigger>
               <TabsTrigger value="json">Advanced</TabsTrigger>
             </TabsList>
 
             <TabsContent value="home" className="space-y-4 pt-2">
+              <p className="text-xs text-muted-foreground">
+                Write {"{count}"} anywhere in the copy for the number of published strategies; it updates by itself when one is published.
+              </p>
               <Text label="Headline" obj={home} path="hero.headline" onChange={setHome} placeholder={DEFAULT_CONTENT.home.hero.headline} area />
               <Text label="Subhead" obj={home} path="hero.subhead" onChange={setHome} placeholder={DEFAULT_CONTENT.home.hero.subhead} area />
               <div className="space-y-1">
@@ -205,7 +213,18 @@ export function SiteContentEditor({ role, groups }: { role: AdminRole | null; gr
                   {options.map((o) => <option key={o.slug} value={o.slug}>{o.label}</option>)}
                 </select>
               </div>
-              <Text label="Who runs the demo (shown beside the actions)" obj={home} path="trust.demoBy" onChange={setHome} placeholder="e.g. Demos are run by Jane Doe, head of client success" />
+              <div className="space-y-2 rounded-md border border-border p-3">
+                <Label className="text-xs">Hero case line</Label>
+                <p className="text-xs text-muted-foreground">
+                  A sentence written for one strategy. It shows on the hero card only while that strategy is in the hero; otherwise the card shows the strategy&apos;s title. Check it against the strategy&apos;s published figures.
+                </p>
+                <select className="w-full rounded-md border border-input bg-background px-2 py-2 text-sm" value={(get(home, "hero.case.slug") as string) ?? ""} onChange={(e) => setHome(set(home, "hero.case.slug", e.target.value))}>
+                  <option value="">No case line</option>
+                  {options.map((o) => <option key={o.slug} value={o.slug}>{o.label}</option>)}
+                </select>
+                <Text label="Line" obj={home} path="hero.case.line" onChange={setHome} area />
+              </div>
+              <Text label="Who runs the demo (shown in the booking section)" obj={home} path="trust.demoBy" onChange={setHome} placeholder="e.g. Demos are run by Jane Doe, head of client success" />
               <div className="space-y-1">
                 <Label className="text-xs">Top strategies, in order (empty: ranked by return)</Label>
                 <SlugList value={(get(home, "featured") as string[] | undefined) ?? []} options={options} onChange={(v) => setHome(set(home, "featured", v))} />
@@ -321,12 +340,54 @@ export function SiteContentEditor({ role, groups }: { role: AdminRole | null; gr
               )}
             </TabsContent>
 
+            <TabsContent value="markets" className="space-y-3 pt-2">
+              <p className="text-xs text-muted-foreground">
+                A label shown as a chip on a strategy&apos;s card and page, and used by the market filter on the list. A label, not a figure: setting one does not create a strategy version.
+              </p>
+              <div className="max-h-[50vh] overflow-y-auto rounded-md border border-border">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-muted text-left text-xs text-muted-foreground">
+                    <tr>
+                      <th className="px-3 py-2 font-semibold">Strategy</th>
+                      <th className="w-48 px-3 py-2 font-semibold">Market tag</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {options.map((o) => (
+                      <tr key={o.slug} className="border-t border-border">
+                        <td className="px-3 py-1.5">{o.label}</td>
+                        <td className="px-3 py-1.5">
+                          <select
+                            aria-label={`Market tag for ${o.label}`}
+                            className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+                            value={(tags[o.slug] as string) ?? ""}
+                            onChange={(e) => {
+                              const next = { ...tags };
+                              if (e.target.value) next[o.slug] = e.target.value as MarketTag;
+                              else delete next[o.slug];
+                              setTags(next);
+                            }}
+                          >
+                            <option value="">None</option>
+                            {MARKET_TAGS.map((t) => <option key={t} value={t}>{MARKET_TAG_LABELS[t]}</option>)}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <DialogFooter>
+                <Button disabled={disabled} onClick={() => save("market_tags", Object.keys(tags).length ? tags : null, "Market tags saved")}>Publish market tags</Button>
+              </DialogFooter>
+            </TabsContent>
+
             <TabsContent value="json" className="space-y-3 pt-2">
               <p className="text-xs text-muted-foreground">
                 Every key as stored. Fields left out use the defaults. Proof items take title, quote, name, role, href and strategies (slugs).
               </p>
               <select className="rounded-md border border-input bg-background px-2 py-2 text-sm" value={rawKey} onChange={(e) => setRawKey(e.target.value)}>
-                {["home", "booking", "config", ...partners.map((p) => p.key)].map((k) => <option key={k} value={k}>{k}</option>)}
+                {["home", "booking", "config", "market_tags", ...partners.map((p) => p.key)].map((k) => <option key={k} value={k}>{k}</option>)}
               </select>
               <Textarea rows={14} className="font-mono text-xs" value={raw} onChange={(e) => setRaw(e.target.value)} />
               <details className="text-xs">

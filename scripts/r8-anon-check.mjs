@@ -1,8 +1,13 @@
 #!/usr/bin/env node
-// PRD R8: from an anonymous session, confirm that no settings and no
-// uncropped screenshot can be read through the public view or the public
-// image location, and that the store, the base tables and the admin
-// functions are closed. Uses only the public (anon) key, as a visitor would.
+// PRD R8: from an anonymous session, confirm that no settings and no source
+// screenshot other than a strategy's one public chart can be read through the
+// public view, the public image location or the public pages, and that the
+// store, the base tables and the admin functions are closed. Uses only the
+// public (anon) key, as a visitor would.
+//
+// Since the redesign (P1, "we do not want to crop charts ever") each public
+// row carries its chart screenshot, whole, as chart_url. The content rules
+// live in scripts/r8-rules.mjs, tested on fixtures in tests/r8Rules.test.ts.
 //
 //   SUPABASE_URL=https://<ref>.supabase.co SUPABASE_ANON_KEY=<publishable key> node scripts/r8-anon-check.mjs
 //
@@ -26,16 +31,7 @@ if (!url || !key) {
 const allowOpenBase = process.argv.includes("--allow-open-base");
 const proClosed = process.argv.includes("--pro-closed");
 
-// Must match store.public_view_allowlist() in 20261111000001.
-const PUBLIC_COLUMNS = [
-  "id", "display_number", "version_id", "version_number", "slug", "title", "short_name", "asset",
-  "asset_class", "algorithm", "strategy_type", "time_horizon", "focus", "time_frame", "goal", "best_for",
-  "how_it_trades", "up_market_behavior", "down_market_behavior", "basis", "starting_capital", "test_start",
-  "test_end", "fees_slippage", "data_source", "as_of", "net_profit_usd", "cash_profit_usd", "asset_qty",
-  "asset_unit", "buy_hold_pnl_pct", "dca_pnl_pct", "max_drawdown_pct", "benchmark_shown",
-  "ending_value_usd", "return_pct", "test_years", "cagr_pct", "vs_buy_hold_pct", "vs_dca_pct",
-  "public_chart_url",
-];
+import { PUBLIC_COLUMNS, checkPageHtml, checkPublicRows } from "./r8-rules.mjs";
 
 const headers = { apikey: key, Authorization: `Bearer ${key}` };
 let failed = 0;
@@ -66,28 +62,49 @@ if (pub.status !== 200 || !Array.isArray(pub.body)) {
 } else if (pub.body.length === 0) {
   fail("public view has rows", "no rows");
 } else {
-  const cols = Object.keys(pub.body[0]).sort();
-  const extra = cols.filter((c) => !PUBLIC_COLUMNS.includes(c));
+  const cols = [...new Set(pub.body.flatMap((r) => Object.keys(r)))].sort();
   const missing = PUBLIC_COLUMNS.filter((c) => !cols.includes(c));
-  if (extra.length) fail("public view columns", `not on the allowlist: ${extra.join(", ")}`);
+  const problems = checkPublicRows(pub.body);
+  const by = (name) => problems.filter((p) => p.check === name);
+
+  // 1. Exactly the allowlisted columns (chart_url included).
+  if (by("public view columns").length) fail("public view columns", by("public view columns")[0].detail);
   else pass("public view columns", `${cols.length} allowlisted columns, ${pub.body.length} rows`);
   if (missing.length) console.log(`NOTE  public view lacks ${missing.join(", ")}`);
 
-  // 2. No settings or source screenshots anywhere in the values.
-  const text = JSON.stringify(pub.body);
-  if (/recipe-screenshots/.test(text)) fail("no source screenshots in the public view", "a recipe-screenshots URL is present");
-  else pass("no source screenshots in the public view");
-  if (/"(algorithm_inputs|tradeSize|longThreshold|exitThreshold|userInitialCapital|marketWave)"/.test(text)) {
-    fail("no settings in the public view", "a settings key is present");
-  } else pass("no settings in the public view");
-  if (/\b(2030|2999)-\d\d-\d\d\b/.test(text)) fail("no run-setting end years", "a 2030 or 2999 date is present");
+  // 2. A source screenshot only as the row's own chart_url, at most once per
+  //    row; never a setting; never a run-setting year.
+  const shots = by("source screenshots only as chart_url");
+  if (shots.length) fail("source screenshots only as chart_url", shots.slice(0, 3).map((p) => p.detail).join("; "));
+  else pass("source screenshots only as chart_url", `${pub.body.filter((r) => r.chart_url).length} charts`);
+  if (by("no settings in the public view").length) fail("no settings in the public view", by("no settings in the public view")[0].detail);
+  else pass("no settings in the public view");
+  if (by("no run-setting end years").length) fail("no run-setting end years", "a 2030 or 2999 date is present");
   else pass("no run-setting end years");
 
-  // 3. Every public chart image is reachable and lives in the public location.
-  const charts = pub.body.map((r) => r.public_chart_url).filter(Boolean);
-  const outside = charts.filter((u) => !u.includes("/storage/v1/object/public/strategy-public/"));
-  if (outside.length) fail("public charts in the public location", outside.slice(0, 3).join(", "));
-  else pass("public charts in the public location", `${charts.length} charts`);
+  // 3. public_chart_url (unused since P1) stays empty or in the public
+  //    location; every chart_url answers with an image.
+  const pcu = by("public_chart_url in the public location");
+  if (pcu.length) fail("public_chart_url in the public location", pcu.map((p) => p.detail).join(", "));
+  else pass("public_chart_url in the public location", `${pub.body.filter((r) => r.public_chart_url).length} set`);
+  const charts = pub.body.map((r) => [r.display_number, r.chart_url]).filter(([, u]) => u);
+  const badCharts = [];
+  for (let i = 0; i < charts.length; i += 8) {
+    await Promise.all(
+      charts.slice(i, i + 8).map(async ([n, u]) => {
+        try {
+          const r = await fetch(u, { method: "GET", headers: { range: "bytes=0-0" } });
+          const type = r.headers.get("content-type") ?? "";
+          if (!(r.status === 200 || r.status === 206) || !type.startsWith("image/")) badCharts.push(`#${n} HTTP ${r.status} ${type}`);
+          await r.body?.cancel();
+        } catch (e) {
+          badCharts.push(`#${n} ${e instanceof Error ? e.message : e}`);
+        }
+      }),
+    );
+  }
+  if (badCharts.length) fail("every chart_url is an image", badCharts.slice(0, 5).join(", "));
+  else pass("every chart_url is an image", `${charts.length} checked`);
 }
 
 // 4. Settings columns cannot be selected through the public view.
@@ -158,28 +175,26 @@ if (sc.status === 404 || (sc.status >= 400 && /does not exist|schema cache/i.tes
   else pass("site_content readable, copy only", `${sc.body.length} key(s)`);
 }
 
-// 11. The public Strategy Lab pages (S9): no settings, no source screenshots,
-//     no run-setting years, in the HTML or the data shipped with it.
+// 11. The public Strategy Lab pages (S9): no settings, no run-setting years,
+//     and no source screenshot that is not some public row's chart_url, in
+//     the HTML or the data shipped with it (image optimizer URLs included).
 const site = process.env.STRATEGY_LAB_URL?.replace(/\/+$/, "");
 if (site) {
   const slugs = Array.isArray(pub.body) ? pub.body.map((r) => r.slug).filter(Boolean) : [];
   const pick = [slugs[0], slugs[Math.floor(slugs.length / 2)], slugs[slugs.length - 1]].filter(Boolean);
   const paths = ["", "/strategies", ...pick.map((x) => `/${x}`)];
+  const chartUrls = Array.isArray(pub.body) ? pub.body.map((r) => r.chart_url).filter(Boolean) : [];
   let bad = 0;
   for (const path of paths) {
     const r = await fetch(`${site}${path}`, { headers: { "user-agent": "strategy-lab-r8" } });
     const html = r.ok ? await r.text() : "";
-    const problems = [];
-    if (!r.ok) problems.push(`HTTP ${r.status}`);
-    if (/recipe-screenshots/.test(html)) problems.push("a source screenshot URL");
-    if (/algorithm_inputs|strategies_pro|\\"(tradeSize|longThreshold|exitThreshold|userInitialCapital|marketWave)\\"|"(tradeSize|longThreshold|exitThreshold|userInitialCapital|marketWave)"/.test(html)) problems.push("a settings key");
-    if (/\b(2030|2999)-\d\d-\d\d\b/.test(html)) problems.push("a 2030 or 2999 date");
+    const problems = r.ok ? checkPageHtml(html, chartUrls) : [`HTTP ${r.status}`];
     if (problems.length) {
       bad++;
       fail(`Strategy Lab ${path || "/"}`, problems.join(", "));
     }
   }
-  if (!bad) pass("Strategy Lab pages carry no settings", `${paths.length} pages`);
+  if (!bad) pass("Strategy Lab pages carry no settings and only public charts", `${paths.length} pages`);
 } else {
   console.log("INFO  STRATEGY_LAB_URL not set; public pages not checked");
 }
