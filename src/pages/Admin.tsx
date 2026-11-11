@@ -17,6 +17,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { ADMIN_DENIED_MESSAGE, decideAdminAccess } from "../../lib/adminAccess";
 import { VersionReview } from "@/components/admin/VersionReview";
 import { DisclosureEditor } from "@/components/admin/DisclosureEditor";
+import { SiteContentEditor } from "@/components/admin/SiteContentEditor";
 import {
   type AdminRole,
   type ParityRun,
@@ -222,6 +223,7 @@ export default function Admin() {
             )}
           </div>
           <DisclosureEditor role={role} />
+          <SiteContentEditor role={role} groups={groups} />
           <Button onClick={handleCreateRecipe} className="gap-2">
             <Plus className="h-4 w-4" />
             Create strategy
