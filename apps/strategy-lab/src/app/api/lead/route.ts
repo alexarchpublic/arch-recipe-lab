@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     firstname: clip(body.firstName, 80),
     lastname: clip(body.lastName, 80),
     purchasing_power: accountSize ?? undefined,
-    partner_name: clip(body.partner, 80),
+    sl_partner: clip(body.partner, 80),
     equitiesetf_algo_interest: interestClasses.some((c) => c === "Equities" || c === "ETFs") ? "true" : undefined,
     sl_capture_kind: kind,
     sl_account_size_range: rangeLabel,
