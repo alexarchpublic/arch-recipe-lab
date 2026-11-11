@@ -34,7 +34,7 @@ with a calendar hold (S11, S14).
 | Captures | `POST /strategy-lab/api/lead` | Booking, alerts and "email me this". Forwarded to HubSpot's form API and recorded in `store.leads` with the outcome. |
 | Refresh | `POST /strategy-lab/api/revalidate` | Called by the admin console with the admin's session; the route asks the store whether the caller is an admin. |
 | Page check | `GET /strategy-lab/api/page-check?slug=` | Returns the figures the page prints. The admin console calls it after each publish. |
-| Indexing | `middleware.ts`, `sitemap.ts`, canonical links | S18: canonical addresses are archpublic.com. Any host other than archpublic.com gets `X-Robots-Tag: noindex`. |
+| Indexing | `next.config.mjs` headers, `sitemap.ts`, canonical links | S18: canonical addresses are archpublic.com. Any host other than archpublic.com (by `Host` or `x-forwarded-host`) gets `X-Robots-Tag: noindex`. Set at the edge, so cached pages carry it too. |
 | Consent | `components/Tracking.tsx` | GA4 (`G-7KS3HK4626`, the existing Strategy Lab property) and HubSpot's tracking code load only after Accept. No advertising pixels. |
 
 Moved into `packages/core`: `siteContent.ts` (the content schema and defaults,

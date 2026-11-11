@@ -28,6 +28,26 @@ const nextConfig = {
     return [{ source: "/", destination: "/strategy-lab", basePath: false, permanent: false }];
   },
   async headers() {
+    // S18: search sees one copy. Served at archpublic.com/strategy-lab (by the
+    // owner's rewrite or proxy, which passes the visitor's host in
+    // x-forwarded-host) the pages are indexable; at any other address, such as
+    // the Vercel one, they carry noindex. INDEX_ALL_HOSTS=1 turns this off if
+    // the proxy in use passes neither header.
+    const canonical = "(www\\.)?archpublic\\.com";
+    const noindex =
+      process.env.INDEX_ALL_HOSTS === "1"
+        ? []
+        : [
+            {
+              source: "/:path*",
+              basePath: false,
+              missing: [
+                { type: "host", value: canonical },
+                { type: "header", key: "x-forwarded-host", value: canonical },
+              ],
+              headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+            },
+          ];
     return [
       {
         source: "/:path*",
@@ -36,6 +56,7 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
+      ...noindex,
     ];
   },
 };
