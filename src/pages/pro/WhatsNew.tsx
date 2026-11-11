@@ -1,7 +1,7 @@
 // New and updated since your last visit (P9).
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { type ProStrategy, formatDate, proStrategyPath } from "@core";
+import { type ProStrategy, clientChangeNote, formatDate, proStrategyPath } from "@core";
 import { Badge } from "@/components/ui/badge";
 import { ProLayout } from "@/components/pro/ProLayout";
 import { EmptyState, StrategyChips } from "@/components/pro/primitives";
@@ -23,7 +23,7 @@ function ChangeRow({ s, held }: { s: ProStrategy; held: boolean }) {
         <div className="min-w-0 flex-1 space-y-1.5">
           <StrategyChips displayNumber={s.display_number} asset={s.asset} focus={s.focus} horizon={s.time_horizon} />
           <p className="font-extrabold tracking-[-0.02em]">{s.title}</p>
-          {s.change_note && s.change_type !== "baseline" && <p className="text-sm text-muted-foreground">{s.change_note}</p>}
+          {clientChangeNote(s) && <p className="text-sm text-muted-foreground">{clientChangeNote(s)}</p>}
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
           <Badge className={isNew ? "bg-primary hover:bg-primary" : "bg-navy hover:bg-navy"}>{isNew ? "New strategy" : changeLabel(s.change_type)}</Badge>

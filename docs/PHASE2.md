@@ -109,17 +109,26 @@ portfolio key is untouched, so clients find their portfolio as it was.
 - **Production** (`xsoixhltejgyuhedhbdu`): 20261112000001 applied 11 Nov 2026 (UTC) with the owner's OK.
   All R8 checks pass; the latest parity run is clean (76 Pro rows, 62 public rows). The live app does
   not read the new view yet, so nothing a client sees changed.
-- **Next:** the client notice (step 2), then merge (step 4) and the live checks (step 5).
+- **Client notice:** skipped by the owner, 11 Nov 2026. The in-app rename notice is live.
+- **Live** (11 Nov 2026 UTC): PR #5 merged as `a671a7e` and deployed to production. Checked on
+  recipes.archpublic.com: `/recipe/96` redirects (307) to `/strategy/96`; pages and responses carry
+  noindex; link previews show the strategy page; a browser holding a Recipe Lab portfolio opens it
+  unchanged under Portfolios; the strategy page reads the disclaimer from `public.disclosures`; the
+  R8 run after the production deploy passed.
+- **Found live:** the 24 Phase 1 clean-up versions carry reviewer notes, 18 quoting 2030/2999, and
+  Phase 2 showed change notes to clients. Fixed in PR #6 (`clientChangeNote()`).
 - Not yet tried: changing the wording with the admin console's Disclaimer button (needs a signed-in admin).
 
 ## Gate 3
 
-| Item | How it is checked |
-| --- | --- |
-| Redesigned Pro live | Step 4 and 5 above |
-| Old links work | `/recipe/N` redirect in `vercel.json` and the router; checked on the live site |
-| Saved portfolios work | `tests/pro.test.tsx` (P11) and a browser holding a Recipe Lab portfolio |
-| No settings in the public view | R8 in CI after every production deploy and daily |
+| Item | How it is checked | 11 Nov 2026 |
+| --- | --- | --- |
+| Redesigned Pro live | Step 4 and 5 above | Live (`a671a7e`) |
+| Old links work | `/recipe/N` redirect in `vercel.json` and the router; checked on the live site | Pass |
+| Saved portfolios work | `tests/pro.test.tsx` (P11) and a browser holding a Recipe Lab portfolio | Pass |
+| No settings in the public view | R8 in CI after every production deploy and daily | Pass |
+
+Gate 3 passes once PR #6 is live: no client screen may show a run-setting year (D10).
 
 ## Still owed, not code
 

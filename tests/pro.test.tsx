@@ -233,3 +233,25 @@ describe("new since your last visit (P9)", () => {
     delete (globalThis as { localStorage?: unknown }).localStorage;
   });
 });
+
+describe("change notes clients read (P7, D10)", () => {
+  const cleanup =
+    "Phase 1 clean-up: test end 22 Oct 2026 read from the last bar on the chart (11 Nov: live 6h bar). The 2030-01-28 in the settings is the TradingView run setting.";
+
+  it("summarises the Phase 1 review notes and never prints a run-setting year", async () => {
+    const { clientChangeNote, CLEANUP_CLIENT_NOTE } = await import("@core");
+    expect(clientChangeNote({ change_type: "figures", change_note: cleanup })).toBe(CLEANUP_CLIENT_NOTE);
+    expect(clientChangeNote({ change_type: "settings", change_note: "Runs to 2999 now" })).toBeNull();
+    expect(clientChangeNote({ change_type: "baseline", change_note: "Baseline: copied unchanged" })).toBeNull();
+    expect(clientChangeNote({ change_type: "settings", change_note: "Wider exit threshold" })).toBe("Wider exit threshold");
+  });
+
+  it("keeps them off the strategy page and the portfolio update notice", () => {
+    const s = proStrategy({ change_note: cleanup });
+    const html = render(<StrategyDetail strategy={s} capital={s.starting_capital} />);
+    expect(html).not.toMatch(/2030|2999|audit|bar timer/);
+    expect(html).toContain("Test end date set to the last bar on the chart");
+    const c = versionChanges(toPortfolioSummary(proStrategy({ version_id: "v1", version_number: 1, net_profit_usd: 1 })), s);
+    expect(c.changeNote).not.toMatch(/2030/);
+  });
+});
