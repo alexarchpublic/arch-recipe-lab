@@ -72,6 +72,13 @@ connector. Steps 1 to 3 change nothing a client sees.
 Gate 2 passes when every strategy has a published version with no error checks
 (true after step 5) and the parity check has been clean for seven days.
 
+## Production status
+
+Steps 1 to 3 ran on 11 Nov 2026. Production has 76 baseline versions, a clean
+parity check, the daily job, and the 24 clean-up drafts in review; all match
+staging. R8 fails only on "no run-setting end years". The live site is
+unchanged. Next: merge (step 4), then publish the 24.
+
 ## Staging
 
 Steps 1 to 3 have run on staging (`vdtkboqglndanzvzrqsn`). The 24 drafts are in
