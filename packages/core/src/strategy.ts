@@ -292,3 +292,25 @@ export function formatQuantity(qty: number, assetClass: string): string {
 export function basisLabel(s: Pick<PublicStrategy, "basis">): string {
   return s.basis === "live" ? "Live results" : "Backtested results";
 }
+
+// ---------------------------------------------------------------------------
+// Change notes: what a client may read (P7, D10).
+// ---------------------------------------------------------------------------
+
+/** What clients read for the Phase 1 clean-up versions, whose notes are the reviewer's working notes. */
+export const CLEANUP_CLIENT_NOTE =
+  "Test end date set to the last bar on the chart, and CAGR recalculated for the real test period.";
+
+/**
+ * The change note a client may read, or null. The baseline note is an internal
+ * record; the Phase 1 clean-up notes are review notes and get a plain summary;
+ * and no note that names a far-future year (a TradingView run setting) is ever
+ * shown (D10).
+ */
+export function clientChangeNote(s: { change_type?: string | null; change_note?: string | null }): string | null {
+  const note = s.change_note?.trim();
+  if (!note || s.change_type === "baseline") return null;
+  if (/^Phase 1 clean-up:/i.test(note)) return CLEANUP_CLIENT_NOTE;
+  if (/\b(20[3-9]\d|2[1-9]\d\d)\b/.test(note)) return null;
+  return note;
+}

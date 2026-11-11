@@ -1,3 +1,5 @@
+import { clientChangeNote } from "@core";
+
 // Portfolio types and calculation helpers. A portfolio position keeps a
 // snapshot of the strategy version it was added at (P12); totals are sums of
 // separate backtests, scaled by one rule (D3, P13, P14).
@@ -312,7 +314,6 @@ export function versionChanges(snapshot: PortfolioRecipeSummary, current: Curren
     toVersion: current.version_number,
     figures,
     settingsChanged,
-    // The baseline note is an internal record of the Phase 1 copy, not news for clients.
-    changeNote: (versionMoved || changed) && current.change_type !== "baseline" ? current.change_note : null,
+    changeNote: versionMoved || changed ? clientChangeNote(current) : null,
   };
 }

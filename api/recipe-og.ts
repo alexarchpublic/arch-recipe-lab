@@ -101,9 +101,9 @@ export default async function handler(request: Request): Promise<Response> {
 
   const title =
     typeof recipe.display_number === "number"
-      ? `Strategy #${recipe.display_number}: ${recipe.short_name}`
-      : recipe.short_name;
-  const description = `${recipe.asset} · ${recipe.focus} — ${recipe.title}`;
+      ? `Strategy #${recipe.display_number}: ${recipe.title}`
+      : recipe.title;
+  const description = `${recipe.asset} · ${recipe.focus} · ${PRO_NAME}`;
   const pageUrl = proStrategyUrl(displayNumber, PRO_SITE_URL);
 
   return new Response(

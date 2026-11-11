@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
 import {
   type ProStrategy,
+  clientChangeNote,
   displayTestEnd,
   formatDate,
   formatMoney,
@@ -152,7 +153,7 @@ export function StrategyDetail({
           <Row label="Version">{s.version_number}</Row>
           <Row label="Published">{formatDate(s.published_at?.slice(0, 10))}</Row>
           <Row label="Change">{changeLabel(s.change_type)}</Row>
-          {s.change_note && s.change_type !== "baseline" && <Row label="Note">{s.change_note}</Row>}
+          {clientChangeNote(s) && <Row label="Note">{clientChangeNote(s)}</Row>}
         </dl>
       </section>
     </article>
