@@ -100,6 +100,18 @@ Each step needs the owner's go-ahead.
 Rollback: redeploy the previous production build in Vercel. Recipe Lab's
 portfolio key is untouched, so clients find their portfolio as it was.
 
+## Status
+
+- **Staging** (`vdtkboqglndanzvzrqsn`): 20261112000001 applied 11 Nov 2026 (UTC) with the owner's OK. R8 passes the new
+  checks; its one failure there ("no run-setting end years") is the 24 clean-up drafts staging never
+  published, not this migration. The branch, run against staging, reads the wording from
+  `public.disclosures`.
+- **Production** (`xsoixhltejgyuhedhbdu`): 20261112000001 applied 11 Nov 2026 (UTC) with the owner's OK.
+  All R8 checks pass; the latest parity run is clean (76 Pro rows, 62 public rows). The live app does
+  not read the new view yet, so nothing a client sees changed.
+- **Next:** the client notice (step 2), then merge (step 4) and the live checks (step 5).
+- Not yet tried: changing the wording with the admin console's Disclaimer button (needs a signed-in admin).
+
 ## Gate 3
 
 | Item | How it is checked |
