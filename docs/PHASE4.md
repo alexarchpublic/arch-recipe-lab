@@ -9,14 +9,18 @@ TradingView screenshot was uploaded (decision P1, "we do not want to crop
 charts ever"). Every figure still comes from the store and passes the page
 parity and R8 checks.
 
-**Status:** built on branch `phase-4-public-redesign`. Gate A (case-study
-corrections) is done in production; the migration, the merge and the site
-content wait for Alex at Gates B and C (below).
+**Status: live in production, 11 Nov 2026** (pull request #9, merged as
+20db05b). All gates passed with Alex's approval; production checks below.
 
-**Launch date:** _set at Gate C step 4_. Compare demo bookings and "email me
-these figures" per visitor in GA4 and HubSpot for the weeks before and after
-this date (PRD section 8). New GA4 events from launch: `chart_opened` (slug,
-placement) and `market_filter_used` (value, page).
+**Launch date: 11 Nov 2026, 16:46 UTC** on the Vercel address
+(https://arch-strategy-lab.vercel.app/strategy-lab). As of that time
+archpublic.com/strategy-lab still served a different "Strategy Lab" page, not
+this app, so visitors there do not see the redesign yet. For the before/after
+comparison (PRD section 8), use the day archpublic.com/strategy-lab is routed
+to this app, and record it here. Compare demo bookings and "email me these
+figures" per visitor in GA4 and HubSpot for the weeks either side. New GA4
+events: `chart_opened` (slug, placement) and `market_filter_used` (value,
+page).
 
 ## What changed
 
@@ -39,14 +43,24 @@ placement) and `market_filter_used` (value, page).
    #86 v2 +70.2%, #89 v3 +44.2%, #84 v2 +61.7%, #87 v2 +102.8%, #47 v2
    +181.5% (settings end 17 Jun 2026). Store parity clean after each publish;
    Pro checked live (#74, #47).
-2. **Gate C, 1**: apply `20261114000001_public_charts.sql` (comment-stripped,
-   then compare function bodies with a local build).
-3. **Gate B / C, 2**: merge the pull request; wait for both Vercel deploys.
-4. **Gate C, 3**: site content: `home.hero.featured`, `home.hero.case`,
-   `home.featured`, `market_tags` (values in the pull request). Last, because
-   the old app ignores ids it does not know.
-5. Run `scripts/parity-pages.mjs` and `scripts/r8-anon-check.mjs` against
-   production; open home, two strategy pages and the list.
+2. **Gate C, 1: done 16:37 UTC** (Alex: "Run Gate C"). Migration applied as
+   the comment-stripped copy staging got; both views, `run_parity_check` and
+   the allowlist hash identically to staging; parity clean; 62 of 62 public
+   rows have a `chart_url`.
+3. **Gate B / C, 2: done.** Pull request #9 squash-merged as 20db05b straight
+   after; both Vercel production deploys of 20db05b ready by 16:44 UTC.
+4. **Gate C, 3: done 16:46 UTC.** Site content `home` (hero #74 with its case
+   line, the six featured strategies) and `market_tags` (six tags), set through
+   `admin_set_site_content` under Alex's account. Live within a minute.
+5. **Checks against production, 11 Nov 2026:** page parity 64 pages, 62
+   strategies, 0 problems; R8 all pass (62 charts, all images); store parity
+   clean; home, #74, #47 and the list open with charts, no broken images and
+   no sideways scroll at 1440 and 375px. Optimized charts load from
+   `/strategy-lab/_next/image` on the Vercel address (WebP, about 60 KB at
+   1080px). Through archpublic.com the same path returns that site's HTML,
+   because archpublic.com/strategy-lab is not routed here yet: when it is,
+   the proxy must also forward `/strategy-lab/_next/*`, image requests
+   included.
 
 Rollback: revert the merge, then run `scripts/phase4/rollback.sql` (tested on
 a fresh build: views without `chart_url`, the uncropped test back, parity
