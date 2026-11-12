@@ -31,7 +31,7 @@ with a calendar hold (S11, S14).
 | Store reads | `apps/strategy-lab/src/lib/data.ts` | `strategies_public`, `disclosures`, `site_content`, with the publishable key. Nothing else. |
 | Rendering | Pages are generated at build and regenerated every 2 minutes and on demand | R4: a publish shows within 2 minutes even if the console's refresh call fails. |
 | Figures | `ResultsBlock`, `Figure`, `ComparisonBars` | Formatting, scaling and the benchmark rule come from `@core` (R3). Every figure carries `data-field` and `data-raw`, inside a block with `data-results` (strategy id) and `data-version`. |
-| Captures | `POST /strategy-lab/api/lead` | Booking, alerts and "email me this". Forwarded to HubSpot's form API and recorded in `store.leads` with the outcome. |
+| Captures | `apps/strategy-lab/src/components/api.ts`, `src/lib/hubspot.ts` | Booking, alerts and "email me this". The browser sends them straight to HubSpot's form submission address (portal 43848678, form "Strategy Lab capture"), written out in full in `lib/hubspot.ts`. No server of ours is involved, because archpublic.com serves a saved copy of the pages with no server behind it (changed 2026-11-12; until then a `/api/lead` route forwarded captures and also wrote `store.leads`, which no longer receives new rows). |
 | Refresh | `POST /strategy-lab/api/revalidate` | Called by the admin console with the admin's session; the route asks the store whether the caller is an admin. |
 | Page check | `GET /strategy-lab/api/page-check?slug=` | Returns the figures the page prints. The admin console calls it after each publish. |
 | Indexing | `next.config.mjs` headers, `sitemap.ts`, canonical links | S18: canonical addresses are archpublic.com. Any request not marked by the archpublic.com proxy (header `X-Arch-Proxy`, any value) and not addressed to archpublic.com gets `X-Robots-Tag: noindex`. Set at the edge, so cached pages carry it too. Vercel replaces `x-forwarded-host` with its own host, so that header cannot be used. |
@@ -134,8 +134,6 @@ Strategy Lab's Vercel project (root directory `apps/strategy-lab`):
 | Variable | Value | Required |
 | --- | --- | --- |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | The store's address and publishable key (production for Production, staging for Preview) | Yes |
-| `HUBSPOT_FORM_GUID` | The Strategy Lab form in portal 43848678 | For captures to reach HubSpot |
-| `HUBSPOT_MARKETING_SUBSCRIPTION_ID`, `HUBSPOT_CALLS_SUBSCRIPTION_ID` | Subscription types for the two consent lines (C4) | Recommended |
 | `CANONICAL_ORIGIN` | `https://archpublic.com` (default) | No |
 | `PRO_ORIGINS` | `https://recipes.archpublic.com` (default), allowed to call refresh | No |
 | `INDEX_ALL_HOSTS` | `1` turns the noindex rule off, if the proxy can neither add `X-Arch-Proxy` nor strip `X-Robots-Tag` | No |

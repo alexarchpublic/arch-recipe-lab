@@ -40,10 +40,10 @@ export function Select({ children, ...props }: SelectHTMLAttributes<HTMLSelectEl
   );
 }
 
-export function Check({ checked, onChange, children }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode }) {
+export function Check({ checked, onChange, name, children }: { checked: boolean; onChange: (v: boolean) => void; name?: string; children: ReactNode }) {
   return (
     <label className="flex items-start gap-2 text-xs leading-snug text-muted-foreground">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-[hsl(var(--primary))]" />
+      <input type="checkbox" name={name} checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-[hsl(var(--primary))]" />
       <span>{children}</span>
     </label>
   );
