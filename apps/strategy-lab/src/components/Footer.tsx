@@ -1,5 +1,5 @@
 // Logo, disclaimer (from public.disclosures), links (redesign PRD section 4).
-import Link from "next/link";
+import Link from "@/components/Link";
 import { DEFAULT_DISCLAIMER } from "@core";
 import type { ActionsContent } from "@/lib/content";
 
@@ -19,6 +19,7 @@ export function Footer({ actions, disclaimer }: { actions: ActionsContent; discl
           <a href={actions.signInUrl} className={footLink}>{actions.signIn}</a>
           <a href={actions.privacyUrl} className={footLink}>Privacy</a>
           <a href="https://archpublic.com/terms" className={footLink}>Terms</a>
+          <Link href="/older-links" className={footLink}>Older links</Link>
         </nav>
       </div>
     </footer>

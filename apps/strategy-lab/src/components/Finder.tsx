@@ -3,7 +3,7 @@
 // your exchange and account size. Works without an email; the answers stay in
 // the browser and travel with the visitor's first capture.
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/Link";
 import type { PublicStrategy } from "@core";
 import { track } from "@/lib/analytics";
 import { ASSET_CLASSES, FOCI, assetClassLabel, byReturn, focusHelp, focusLabel } from "@/lib/strategies";

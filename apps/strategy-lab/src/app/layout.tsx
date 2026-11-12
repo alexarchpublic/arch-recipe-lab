@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Tracking } from "@/components/Tracking";
 import { getDisclaimer, getSiteContent, getStrategies } from "@/lib/data";
-import { CANONICAL_ORIGIN, GA4_ID, HUBSPOT_PORTAL_ID, canonicalUrl } from "@/lib/env";
+import { CANONICAL_ORIGIN, GA4_ID, HUBSPOT_PORTAL_ID, PUBLIC_PATH, canonicalUrl } from "@/lib/env";
 import { strategyName } from "@/lib/figures";
 
 const sans = Mulish({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
@@ -15,7 +15,8 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", displ
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getSiteContent();
   return {
-    metadataBase: new URL(CANONICAL_ORIGIN),
+    // Under /strategy-lab, so the share images resolve to archpublic.com/strategy-lab/...
+    metadataBase: new URL(`${CANONICAL_ORIGIN}${PUBLIC_PATH}`),
     title: content.home.seo.title,
     description: content.home.seo.description,
     alternates: { canonical: canonicalUrl("/") },

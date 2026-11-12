@@ -1,7 +1,7 @@
 // Strategies, How to read a chart, How it works, Client sign-in, Start free,
 // Book a demo (PRD 5, 9; redesign PRD section 4). Links hide under 860px;
 // both buttons stay at every width.
-import Link from "next/link";
+import Link from "@/components/Link";
 import type { ActionsContent } from "@/lib/content";
 import { BookDemoButton, StartFreeLink } from "./Booking";
 
