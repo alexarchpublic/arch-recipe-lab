@@ -9,7 +9,7 @@ export function Footer({ actions, disclaimer }: { actions: ActionsContent; discl
   return (
     <footer data-theme="navy" className="bg-navy-deep pb-28 pt-12 text-white/[0.78] sm:pb-12">
       <div className="container flex flex-wrap items-center justify-between gap-6">
-        <img src="/strategy-lab/logo-white.png" alt="Arch Public" width={115} height={28} className="h-7 w-auto" />
+        <img src="/logo-white.png" alt="Arch Public" width={115} height={28} className="h-7 w-auto" />
         <p className="min-w-0 flex-[1_1_360px] text-[13px] leading-relaxed" data-disclosure="disclaimer">
           {disclaimer?.trim() || DEFAULT_DISCLAIMER} Figures come from TradingView backtests over each strategy&apos;s own test period. © {new Date().getFullYear()} Arch Public.
         </p>

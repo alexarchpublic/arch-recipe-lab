@@ -6,8 +6,6 @@ import { ACCOUNT_SIZE_RANGES, assetClassLabel, focusLabel, rangeFor } from "@/li
 import { submitToHubSpot, type HubSpotFields } from "@/lib/hubspot";
 import { touchText, readVisitor } from "@/lib/visitor";
 
-export const BASE = "/strategy-lab";
-
 export interface LeadInput {
   kind: "booking_started" | "booking_completed" | "alert" | "email_me_this";
   email: string;

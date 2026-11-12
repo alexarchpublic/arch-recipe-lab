@@ -4,7 +4,7 @@
 // Public: it returns only what the public page already shows.
 import { NextResponse } from "next/server";
 import { parsePageFigures } from "@core";
-import { BASE_PATH, PRO_ORIGINS } from "@/lib/env";
+import { PRO_ORIGINS } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   }
   if (!/^[a-z0-9-]{1,120}$/.test(slug)) return NextResponse.json({ error: "slug required" }, { status: 400, headers });
   // Read the page as a visitor would, from this deployment.
-  const page = `${url.origin}${BASE_PATH}/${slug}`;
+  const page = `${url.origin}/${slug}`;
   const res = await fetch(page, { cache: "no-store", headers: { "user-agent": "strategy-lab-page-check" } });
   const html = res.ok ? await res.text() : "";
   return NextResponse.json({ page, status: res.status, blocks: parsePageFigures(html), at: new Date().toISOString() }, { headers });

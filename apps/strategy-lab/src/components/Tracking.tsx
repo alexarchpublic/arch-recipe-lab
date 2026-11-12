@@ -7,10 +7,17 @@ import { useEffect, useState } from "react";
 import Script from "next/script";
 import { type Consent, readConsent, writeConsent } from "@/lib/analytics";
 import { recordTouch } from "@/lib/visitor";
+import { inFrame } from "@/lib/frame";
 
 export function Tracking({ ga4Id, hubspotPortalId, privacyUrl, partner = "" }: { ga4Id: string; hubspotPortalId: string; privacyUrl: string; partner?: string }) {
   const [consent, setConsent] = useState<Consent | "unknown">("unknown");
+  // On archpublic.com the page runs inside the main site's frame, and the main
+  // site owns consent and analytics (one banner, one GA4 count). The frame's
+  // policy refuses these scripts anyway, so a banner here would ask for a
+  // choice that changes nothing. Touches are still recorded for captures.
+  const [framed, setFramed] = useState(false);
   useEffect(() => {
+    setFramed(inFrame());
     setConsent(readConsent());
     recordTouch(partner);
     const on = (e: Event) => setConsent((e as CustomEvent).detail as Consent);
@@ -18,6 +25,7 @@ export function Tracking({ ga4Id, hubspotPortalId, privacyUrl, partner = "" }: {
     return () => window.removeEventListener("strategy-lab:consent", on);
   }, [partner]);
 
+  if (framed) return null;
   return (
     <>
       {consent === "granted" && (

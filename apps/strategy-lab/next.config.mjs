@@ -1,5 +1,9 @@
-// Strategy Lab (PRD section 9): the public site, server-rendered, served under
-// archpublic.com/strategy-lab by the owner's rewrite (S18). It imports the
+// Strategy Lab (PRD section 9): the public site, server-rendered. archpublic.com
+// serves it under /strategy-lab as a saved copy inside a frame: Arch Public's
+// page engine captures this site from its Vercel address and puts each page
+// at /strategy-lab + the page's own path. So the app is built at the root of
+// its host (no basePath); a build under /strategy-lab came out at
+// archpublic.com/strategy-lab/strategy-lab/<page>. It imports the
 // shared package in packages/core (R3), the same code Strategy Lab Pro uses.
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +13,6 @@ const repoRoot = path.resolve(here, "../..");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  basePath: "/strategy-lab",
   poweredByHeader: false,
   // The repository root holds Pro's ESLint setup; CI typechecks this app instead.
   eslint: { ignoreDuringBuilds: true },
@@ -34,9 +37,17 @@ const nextConfig = {
     config.resolve.modules = [path.join(here, "node_modules"), "node_modules"];
     return config;
   },
-  // The bare Vercel address opens the site rather than a 404.
+  // Addresses from when the app lived under /strategy-lab on this host. The
+  // Pro admin console still calls the two API routes there, so those are
+  // rewritten (a redirect would break its cross-origin preflight); pages move.
   async redirects() {
-    return [{ source: "/", destination: "/strategy-lab", basePath: false, permanent: false }];
+    return [
+      { source: "/strategy-lab", destination: "/", permanent: true },
+      { source: "/strategy-lab/:path((?!api/).*)", destination: "/:path", permanent: true },
+    ];
+  },
+  async rewrites() {
+    return [{ source: "/strategy-lab/api/:path*", destination: "/api/:path*" }];
   },
   async headers() {
     // S18: search sees one copy. Pages reached through the owner's
@@ -52,7 +63,6 @@ const nextConfig = {
         : [
             {
               source: "/:path*",
-              basePath: false,
               missing: [
                 { type: "host", value: canonical },
                 { type: "header", key: "x-arch-proxy" },
