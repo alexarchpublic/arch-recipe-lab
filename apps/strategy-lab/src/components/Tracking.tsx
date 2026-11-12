@@ -1,7 +1,8 @@
 "use client";
 // Consent first (section 12, C4): GA4 and HubSpot's tracking code load only
 // after the visitor accepts. Advertising pixels are not loaded on Strategy Lab
-// pages at all. The banner sits above the phone's sticky actions (S1).
+// pages at all. The banner sits above the phone's sticky actions (S1), and on
+// wider screens bottom-left, clear of archpublic.com's call bubble (bottom-right).
 import { useEffect, useState } from "react";
 import Script from "next/script";
 import { type Consent, readConsent, writeConsent } from "@/lib/analytics";
@@ -32,7 +33,7 @@ export function Tracking({ ga4Id, hubspotPortalId, privacyUrl, partner = "" }: {
         <div
           role="region"
           aria-label="Cookie choice"
-          className="fixed inset-x-0 bottom-[72px] z-40 mx-3 rounded-lg border border-border bg-card p-4 shadow-lg sm:bottom-4 sm:left-auto sm:right-4 sm:mx-0 sm:max-w-sm"
+          className="fixed inset-x-0 bottom-[72px] z-40 mx-3 rounded-lg border border-border bg-card p-4 shadow-lg sm:bottom-4 sm:left-4 sm:right-auto sm:mx-0 sm:max-w-sm"
         >
           <p className="text-sm">
             We use cookies to understand how Strategy Lab is used and to attach your visit to your contact record if you get in touch.{" "}
