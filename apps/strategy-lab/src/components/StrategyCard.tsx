@@ -3,6 +3,7 @@
 // serves the home page, the list page, similar strategies and partner pages.
 import Link from "@/components/Link";
 import { type MarketTag, MARKET_TAG_LABELS, type PublicStrategy, basisLabel, formatTestWindow } from "@core";
+import { studyLinks } from "@/lib/caseStudies";
 import { assetClassLabel, chartFields, focusLabel } from "@/lib/strategies";
 import { ArrowRight, CardChart } from "./Chart";
 import { ComparisonBars } from "./ComparisonBars";
@@ -29,6 +30,20 @@ export function DisclosureLine({ s, className = "" }: { s: PublicStrategy; class
     <p className={`text-xs text-ink-muted ${className}`} data-disclosure="results">
       <span data-disclosure="basis" data-basis={s.basis}>{basisLabel(s).replace(/ results$/, "")}</span> ·{" "}
       <span data-field="test_window">{formatTestWindow(s)}</span>
+    </p>
+  );
+}
+
+/** "From the case study: <title>" under a card (LK2), above the card's own link. Nothing when there is none (LK6). */
+function CardCaseStudy({ s }: { s: PublicStrategy }) {
+  const [origin] = studyLinks(s);
+  if (!origin) return null;
+  return (
+    <p className="relative z-10 text-[13px] leading-snug text-ink-muted">
+      From the case study:{" "}
+      <a href={origin.url} className="font-bold text-primary hover:underline" data-case-study={origin.slug}>
+        {origin.title}
+      </a>
     </p>
   );
 }
@@ -76,6 +91,7 @@ export function StrategyCard({
           )}
           <DisclosureLine s={s} className={hidden.includes("return_pct") ? "" : "mt-3.5"} />
         </div>
+        <CardCaseStudy s={s} />
         <span className="mt-auto inline-flex min-h-[44px] items-center gap-1.5 text-[15px] font-extrabold text-primary" aria-hidden="true">
           View strategy
           <ArrowRight className="h-4 w-4" />

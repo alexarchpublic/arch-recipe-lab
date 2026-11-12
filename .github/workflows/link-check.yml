@@ -1,0 +1,36 @@
+name: Case study link check
+
+# Auto-ingestion LK9: open every link between case studies and both labs, in
+# both directions, and compare them with their record (the case study index
+# and store.case_study_refs). Runs daily after page parity (06:45 UTC), after
+# each production deploy, and on demand. A failure emails the repository's
+# watchers.
+#
+# Needs the two R8 variables (the store's address and publishable key).
+
+on:
+  deployment_status:
+  schedule:
+    - cron: "15 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  links:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' && startsWith(github.event.deployment.environment, 'Production'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Open every case study link in both directions
+        if: ${{ vars.R8_SUPABASE_URL != '' }}
+        env:
+          SUPABASE_URL: ${{ vars.R8_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.R8_SUPABASE_ANON_KEY }}
+        run: node scripts/link-check.mjs
+      - name: Not configured
+        if: ${{ vars.R8_SUPABASE_URL == '' }}
+        run: echo "Set R8_SUPABASE_URL and R8_SUPABASE_ANON_KEY to run this check."

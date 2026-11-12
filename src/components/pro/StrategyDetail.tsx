@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
 import {
   type ProStrategy,
+  caseStudyUrl,
   clientChangeNote,
   displayTestEnd,
   formatDate,
@@ -114,6 +115,8 @@ export function StrategyDetail({
         </section>
       )}
 
+      <CaseStudies strategy={s} />
+
       <section aria-labelledby="assumptions-h">
         <SectionHeading id="assumptions-h">Assumptions</SectionHeading>
         <dl className="divide-y divide-tile-border rounded-md border border-tile-border bg-card">
@@ -152,6 +155,39 @@ export function StrategyDetail({
         </dl>
       </section>
     </article>
+  );
+}
+
+/** The case study the strategy came from, then any others (auto-ingestion LK2, LK5). Nothing when it has none (LK6). */
+function CaseStudies({ strategy: s }: { strategy: ProStrategy }) {
+  const refs = s.case_studies ?? [];
+  if (!refs.length) return null;
+  const [first, ...rest] = refs;
+  const href = (r: (typeof refs)[number]) => caseStudyUrl(r, { source: "strategy_lab_pro", displayNumber: s.display_number });
+  return (
+    <section aria-labelledby="case-h" data-case-studies={refs.length}>
+      <SectionHeading id="case-h">From the case study</SectionHeading>
+      <div className="rounded-md border border-tile-border bg-card p-4">
+        <a href={href(first)} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 font-bold text-primary hover:underline" data-case-study={first.slug}>
+          {first.title}
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+        </a>
+        {first.scenario_title && <p className="mt-1 text-sm text-muted-foreground">Scenario: “{first.scenario_title}”. The case study walks through it chart by chart.</p>}
+        {rest.length > 0 && (
+          <div className="mt-3 border-t border-tile-border pt-3 text-sm">
+            <p className="font-semibold">Also featured in</p>
+            <ul className="mt-1 space-y-1">
+              {rest.map((r) => (
+                <li key={`${r.slug}/${r.scenario_key}`}>
+                  <a href={href(r)} target="_blank" rel="noopener" className="font-semibold text-primary hover:underline" data-case-study={r.slug}>{r.title}</a>
+                  {r.scenario_title && <span className="text-muted-foreground"> · “{r.scenario_title}”</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

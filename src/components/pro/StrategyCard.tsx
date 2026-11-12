@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Check, Image as ImageIcon, Plus } from "lucide-react";
-import { type ProStrategy, proStrategyPath, strategyLine } from "@core";
+import { type ProStrategy, caseStudyUrl, proStrategyPath, strategyLine } from "@core";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -73,6 +73,20 @@ export function StrategyCard({ strategy: s, capital, isNew }: { strategy: ProStr
         </Link>
       ) : (
         <div className="flex flex-1 flex-col">{body}</div>
+      )}
+      {s.case_studies?.[0] && (
+        <p className="px-4 pb-3 text-xs text-muted-foreground">
+          From the case study:{" "}
+          <a
+            href={caseStudyUrl(s.case_studies[0], { source: "strategy_lab_pro", displayNumber: s.display_number })}
+            target="_blank"
+            rel="noopener"
+            className="font-semibold text-primary hover:underline"
+            data-case-study={s.case_studies[0].slug}
+          >
+            {s.case_studies[0].title}
+          </a>
+        </p>
       )}
       <div className="flex items-center gap-2 border-t border-tile-border px-4 py-3">
         <label className={cn("flex items-center gap-2 text-xs font-semibold", full ? "text-muted-foreground/50" : "text-muted-foreground")}>

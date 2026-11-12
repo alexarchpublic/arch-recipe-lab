@@ -4,18 +4,20 @@
 // now, because the dev team chooses Pro's final address at the login move.
 // Override it with PRO_SITE_URL (server) or VITE_PRO_SITE_URL (browser build).
 
-const fromEnv = (): string | undefined => {
+const fromEnv = (name = "PRO_SITE_URL"): string | undefined => {
   try {
     // Edge functions and Node.
     const p = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
-    const v = p?.env?.PRO_SITE_URL || p?.env?.VITE_PRO_SITE_URL;
+    const v = p?.env?.[name] || p?.env?.[`VITE_${name}`];
     if (v) return v;
   } catch {
     // no process in the browser
   }
   try {
-    // Vite replaces import.meta.env at build time.
-    const v = (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.VITE_PRO_SITE_URL;
+    // Vite replaces import.meta.env at build time. Named one by one: Vite only
+    // replaces static property reads.
+    const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+    const v = name === "CASE_STUDIES_URL" ? env?.VITE_CASE_STUDIES_URL : env?.VITE_PRO_SITE_URL;
     if (v) return v;
   } catch {
     // not built by Vite
@@ -44,4 +46,34 @@ export function proStrategyPath(displayNumber: number): string {
 
 export function proStrategyUrl(displayNumber: number, origin: string = PRO_SITE_URL): string {
   return `${origin.replace(/\/+$/, "")}${proStrategyPath(displayNumber)}`;
+}
+
+/**
+ * Where case studies live (auto-ingestion LK7, LK8). archpublic.com serves a
+ * saved copy of the case study site at this path, and every study page is
+ * captured there. Override with CASE_STUDIES_URL or VITE_CASE_STUDIES_URL.
+ */
+export const DEFAULT_CASE_STUDIES_URL = "https://archpublic.com/case-studies";
+export const CASE_STUDIES_URL = (fromEnv("CASE_STUDIES_URL") ?? DEFAULT_CASE_STUDIES_URL).replace(/\/+$/, "");
+
+/** A case study page: "<base>/<slug>/". */
+export function caseStudyPageUrl(slug: string, base: string = CASE_STUDIES_URL): string {
+  return `${base.replace(/\/+$/, "")}/${slug}/`;
+}
+
+/**
+ * The scenario a strategy came from, on its case study page (LK5): the page,
+ * campaign tags naming the lab and the strategy (LK11), the scenario again as
+ * ?scenario= (archpublic.com's frame passes the query on but drops the
+ * anchor; the case study page scrolls to it), then "#<anchor>".
+ */
+export function caseStudyUrl(
+  ref: { slug: string; anchor: string },
+  from: { source: "strategy_lab" | "strategy_lab_pro"; displayNumber?: number | null },
+  base: string = CASE_STUDIES_URL,
+): string {
+  const q = new URLSearchParams({ utm_source: from.source, utm_medium: "web", utm_campaign: "case_study_links" });
+  if (typeof from.displayNumber === "number") q.set("utm_content", `strategy-${from.displayNumber}`);
+  q.set("scenario", ref.anchor);
+  return `${caseStudyPageUrl(ref.slug, base)}?${q.toString()}#${encodeURIComponent(ref.anchor)}`;
 }
