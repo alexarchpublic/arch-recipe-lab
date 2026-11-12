@@ -100,9 +100,9 @@ async function requireAdmin(authHeader: string): Promise<AdminCheck> {
     ? missingFunction && email.endsWith("@archpublic.com")
     : rpc.data === true;
   if (!allowed) {
-    return { status: 403, body: { error: "Admin access required" } };
+    return { error: { status: 403, body: { error: "Admin access required" } } };
   }
-  return null;
+  return { client: supabase };
 }
 
 type ModelReply = { text: string; provider: string; model: string };
