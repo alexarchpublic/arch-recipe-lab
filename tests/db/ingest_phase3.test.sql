@@ -170,4 +170,4 @@ reset role;
 -- Clean up so later test files see the store as before.
 delete from public.recipe_screenshots where image_url like '%/case-studies/msft/%';
 select set_config('request.jwt.claim.sub', '', false);
-cho ingest phase 3 db checks passed
+\echo ingest phase 3 db checks passed
