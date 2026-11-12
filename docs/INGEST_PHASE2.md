@@ -33,7 +33,7 @@ Order matters: the daily check compares the live case study index with the store
 
 1. Phase 1 first: `20261115000001` on production and PR #16 merged. **Done**.
 2. Apply `supabase/migrations/20261116000001_ingest_links.sql` to staging. **Done 12 Nov 2026**: function bodies identical to a local build (md5 of comment-stripped source); 63 links, 60 strategies, 60 origins; #18 to #20 on Oracle Protocol; parity clean (76/62, 63 links); anon and editors cannot sync.
-3. Apply it to production. Check: `select count(*) from store.case_study_refs` is 63, and `public.run_parity_check('manual')` is ok.
+3. Apply it to production. Check: `select count(*) from store.case_study_refs` is 63, and `public.run_parity_check('manual')` is ok. **Done 12 Nov 2026** with the owner's OK: function bodies identical to staging and the local build; 63 links, 60 strategies, 60 origins, #18 to #20 on Oracle Protocol; 53 public and 60 Pro strategies carry links; parity clean (76/62, 63 links); R8 passes; the links match the case study index of alexarchpublic/case-studies#2 one for one.
 4. Merge the case-studies change. Vercel redeploys the case study site with keys in its index and the new link block.
 5. Merge this pull request. Both labs read links from their views; the link check starts running.
 6. Run the link check by hand (Actions, "Case study link check", Run workflow), or locally with the R8 values. Expect 63 scenarios and 53 public links, no problems.
