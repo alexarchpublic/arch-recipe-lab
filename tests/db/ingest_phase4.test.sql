@@ -76,6 +76,23 @@ begin
   end if;
 end $$;
 
+-- 3b. Published, but the number has not reached the case study yet: the next
+--     run saves onto the same strategy, never a second one (NO4).
+insert into run4 select 'a_again', public.pipeline_save_draft('aapl', 'new-scenario', 'c0ffee9', 'ha2', null, pg_temp.fields('Apple test strategy'));
+do $$
+declare r jsonb := (select res from run4 where k = 'a_again');
+begin
+  if (r->>'created')::boolean or r->>'display_number' <> (select res->>'display_number' from run4 where k = 'a_pub2') then
+    raise exception 'a published scenario became a second strategy: %', r;
+  end if;
+  if not (public.pipeline_scenario_state('aapl') @> jsonb_build_array(jsonb_build_object('scenario_key', 'new-scenario',
+          'published_number', (select (res->>'display_number')::int from run4 where k = 'a_pub2')))) then
+    raise exception 'state lacks the published number: %', public.pipeline_scenario_state('aapl');
+  end if;
+end $$;
+select public.pipeline_attach_screenshots((select (res->>'version_id')::uuid from run4 where k = 'a_again'), pg_temp.shots('aapl', 'new-scenario'));
+select (public.pipeline_publish((select (res->>'version_id')::uuid from run4 where k = 'a_again'), 'Alex Author'))->>'published' as republished;
+
 -- 4. A review check on the list (the data window's P&L differs; the case
 --    study's figure stands) is let through and recorded; one off the list holds.
 reset role;
@@ -134,7 +151,7 @@ begin
   n := public.pipeline_record_baseline('aapl', '{"new-scenario": "other"}');
   if n <> 0 then raise exception 'a baseline overwrote a hash'; end if;
   s := public.pipeline_scenario_state('aapl');
-  if not (s @> '[{"scenario_key": "new-scenario", "published_hash": "ha", "ref_hash": "base-a"}]') then
+  if not (s @> '[{"scenario_key": "new-scenario", "published_hash": "ha2", "ref_hash": "base-a"}]') then
     raise exception 'state: %', s;
   end if;
 end $$;

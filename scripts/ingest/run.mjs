@@ -102,8 +102,11 @@ async function plan(a) {
       const src = scenarioSources(dir, scenario.key);
       const hash = scenarioHash(scenario, src.files);
       const stored = state[scenario.key] ?? {};
+      // A scenario the store already published but whose number has not reached
+      // the case study yet carries the store's number (NO2, NO4).
+      const known = typeof scenario.strategyNumber === "number" ? scenario.strategyNumber : stored.published_number ?? null;
       const p = planScenario({
-        study, scenario, hash,
+        study, scenario: { ...scenario, strategyNumber: known ?? undefined }, hash,
         storedHash: stored.draft_hash ?? stored.published_hash ?? stored.ref_hash ?? null,
         hasSources: Object.keys(src.files).length > 0,
         baselineUnrecorded: !!a.live,
@@ -111,6 +114,7 @@ async function plan(a) {
       items.push({
         ...p,
         hash,
+        caseStudyNumber: typeof scenario.strategyNumber === "number" ? scenario.strategyNumber : null,
         sourceDir: src.dir,
         sources: src.files,
         unknownFiles: src.unknown,
@@ -319,7 +323,7 @@ async function write(a) {
   for (const f of readdirSync(join(run, "scenarios")).filter((n) => n.endsWith(".json")).sort()) {
     const res = readJson(join(run, "scenarios", f));
     const it = res.item;
-    const entry = { slug: it.slug, key: it.key, number: it.strategyNumber, title: res.naming?.reply?.title };
+    const entry = { slug: it.slug, key: it.key, number: it.strategyNumber, caseStudyNumber: it.caseStudyNumber ?? it.strategyNumber, title: res.naming?.reply?.title };
     if (res.held || !res.fields) {
       results.push({ ...entry, outcome: "held", reasons: holds(res.findings ?? []).map((h) => h.message) });
       continue;
@@ -372,8 +376,15 @@ async function write(a) {
     pages = await st.refreshAndCheck(client, published, { strategyLab: process.env.STRATEGY_LAB_URL || null });
     for (const r of published) r.pages = pages[r.number];
   }
-  // NO2: the numbers the case studies need written back (new strategies only).
-  const numbers = published.filter((r) => r.created).map((r) => ({ slug: r.slug, key: r.key, number: r.number }));
+  // NO2: every published scenario the case study gave no number, including one
+  // whose strategy an earlier, interrupted run created (NO4).
+  const numbers = published.filter((r) => r.caseStudyNumber == null).map((r) => ({ slug: r.slug, key: r.key, number: r.number }));
+  // And any the store numbered in an earlier run whose write-back did not land.
+  for (const it of runInfo.items) {
+    if (it.caseStudyNumber == null && it.strategyNumber != null && !numbers.some((n) => n.slug === it.slug && n.key === it.key)) {
+      numbers.push({ slug: it.slug, key: it.key, number: it.strategyNumber });
+    }
+  }
   writeJson(join(run, "numbers.json"), numbers);
   writeJson(join(run, "write.json"), {
     target: process.env.PIPELINE_STORE_URL || process.env.STORE_URL, mode: runInfo.mode, at: new Date().toISOString(), author, sync, results,

@@ -17,6 +17,8 @@
 --                                recorded once without writing a version
 --   pipeline_scenario_state      also returns the hash of the published version
 --                                when that version came from this scenario
+--   pipeline_save_draft          a scenario with no number in the case study
+--                                reuses the strategy it was published as (NO4)
 --   run_parity_check             the pipeline may run it (it runs after every
 --                                publish); otherwise unchanged from 20261115000001
 --
@@ -191,6 +193,7 @@ begin
              'display_number', coalesce(ref_r.display_number, draft_r.display_number),
              'ref_hash', ref.source_hash,
              'published_hash', pub.source_hash,
+             'published_number', pub.display_number,
              'draft_version', d.id,
              'draft_hash', d.source_hash,
              'draft_strategy', d.strategy_id) as x
@@ -210,7 +213,7 @@ begin
     ) d on true
     left join public.recipes draft_r on draft_r.id = d.strategy_id
     left join lateral (
-      select v.source_hash from store.strategy_versions v
+      select v.source_hash, r.display_number from store.strategy_versions v join public.recipes r on r.id = v.strategy_id
       where v.source_kind = 'case_study' and v.case_study_slug = p_slug and v.scenario_key = k.scenario_key
         and v.status = 'published'
       limit 1
@@ -366,5 +369,76 @@ begin
   ok := jsonb_array_length(problems) = 0;
   insert into store.parity_runs (trigger, ok, counts, problems) values (p_trigger, ok, counts, problems);
   return jsonb_build_object('ok', ok, 'counts', counts, 'problems', problems);
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 5. A scenario published before its number reached the case study is found
+--    again by its source, never ingested as a second strategy (NO4).
+-- ---------------------------------------------------------------------------
+create or replace function public.pipeline_save_draft(
+  p_slug text, p_scenario_key text, p_commit text, p_hash text, p_number integer, p_fields jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, store, auth
+as $$
+declare
+  who text;
+  strategy uuid;
+  open_draft store.strategy_versions;
+  version uuid;
+  created boolean := false;
+begin
+  perform store.require_role(array['pipeline']);
+  who := public.admin_email();
+  if coalesce(trim(p_slug), '') = '' or coalesce(trim(p_scenario_key), '') = ''
+     or coalesce(trim(p_commit), '') = '' or coalesce(trim(p_hash), '') = '' then
+    raise exception 'A case study draft needs its slug, scenario key, commit and hash.' using errcode = '22023';
+  end if;
+
+  if p_number is not null then
+    select id into strategy from public.recipes where display_number = p_number;
+    if strategy is null then
+      raise exception 'No strategy #% exists.', p_number using errcode = 'P0002';
+    end if;
+  else
+    -- No number in the case study yet: the strategy this scenario already
+    -- became, if any (an open draft, or one published before its number was
+    -- written back), so a scenario never becomes two strategies (NO4).
+    select v.strategy_id into strategy from store.strategy_versions v
+      where v.source_kind = 'case_study' and v.case_study_slug = p_slug and v.scenario_key = p_scenario_key
+        and v.status in ('draft', 'in_review', 'published')
+      order by (v.status = 'published'), v.created_at desc limit 1;
+  end if;
+
+  if strategy is not null then
+    select * into open_draft from store.strategy_versions
+      where strategy_id = strategy and status in ('draft', 'in_review') for update;
+    -- A draft a person opened is theirs. The pipeline holds this strategy
+    -- rather than overwrite it.
+    if open_draft.id is not null and (open_draft.source_kind <> 'case_study' or open_draft.created_by <> who) then
+      raise exception 'Strategy #% has an open draft by %; held.',
+        (select display_number from public.recipes where id = strategy), open_draft.created_by
+        using errcode = '55006';
+    end if;
+  else
+    created := true;
+  end if;
+
+  version := store.save_draft(strategy, p_fields, who, 'editor');
+
+  update store.strategy_versions
+     set source_kind = 'case_study', case_study_slug = p_slug, scenario_key = p_scenario_key,
+         source_commit = p_commit, source_hash = p_hash
+   where id = version;
+
+  select strategy_id into strategy from store.strategy_versions where id = version;
+  return jsonb_build_object(
+    'version_id', version,
+    'strategy_id', strategy,
+    'display_number', (select display_number from public.recipes where id = strategy),
+    'created', created,
+    'checks', (select checks from store.strategy_versions where id = version));
 end;
 $$;
