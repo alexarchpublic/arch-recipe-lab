@@ -9,6 +9,8 @@ import { track } from "@/lib/analytics";
 import { ACCOUNT_SIZE_RANGES, rangeFor } from "@/lib/strategies";
 import { readVisitor, writeVisitor } from "@/lib/visitor";
 import type { BookingContent, ActionsContent } from "@/lib/content";
+import { inFrame } from "@/lib/frame";
+import { publicPageUrl } from "@/lib/hubspot";
 import { sendLead, type LeadSettings } from "./api";
 import { Button, Check, Field, Input, Select } from "./ui";
 
@@ -114,6 +116,31 @@ function readMeeting(data: unknown): MeetingPayload | null {
   return { start, end };
 }
 
+const MEETINGS_LOADER = "https://static.hsappstatic.net/MeetingsEmbed/ex/MeetingsEmbedCode.js";
+
+/**
+ * HubSpot's own scheduler embed: a `meetings-iframe-container` with the link
+ * in `data-src`, filled by HubSpot's loader. archpublic.com's page engine
+ * knows this shape: it lets the loader and calendar through, relays a
+ * completed booking to the main site, and shows a "pick a time" card to a
+ * visitor who has opted out of third parties (a bare iframe of ours would be
+ * blank for them). The loader fills containers present when it runs, so it is
+ * added after the container renders.
+ */
+function Scheduler({ src }: { src: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const host = ref.current;
+    if (!host || host.querySelector("iframe")) return;
+    const script = document.createElement("script");
+    script.src = MEETINGS_LOADER;
+    script.async = true;
+    host.after(script);
+    return () => script.remove();
+  }, [src]);
+  return <div ref={ref} className="meetings-iframe-container min-h-[680px] w-full" data-src={src} />;
+}
+
 function icsFor(m: MeetingPayload, url: string): string | null {
   if (!m.start) return null;
   const fmt = (iso: string) => iso.replace(/[-:]/g, "").replace(/\.\d{3}/, "");
@@ -208,13 +235,16 @@ export function BookingFlow({ strategy, source, inline = false }: { strategy?: s
     return (
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">Pick a time that suits you. It takes about 30 minutes.</p>
-        <iframe title="Choose a time for your demo" src={u.toString()} className="h-[680px] w-full rounded-md border border-border bg-card" />
+        <Scheduler src={u.toString()} />
       </div>
     );
   }
 
   if (step === "done") {
-    const ics = meeting ? icsFor(meeting, typeof window !== "undefined" ? window.location.href : "") : null;
+    // The page engine's frame cannot download files, and HubSpot's own invite
+    // already carries the meeting, so the calendar hold is offered only here.
+    const framed = typeof window !== "undefined" && inFrame();
+    const ics = meeting && !framed ? icsFor(meeting, publicPageUrl()) : null;
     return (
       <div className="space-y-4" role="status">
         <div>
@@ -233,7 +263,7 @@ export function BookingFlow({ strategy, source, inline = false }: { strategy?: s
             <ul className="space-y-1 text-sm">
               {viewed.map((slug) => (
                 <li key={slug}>
-                  <a className="font-semibold text-primary hover:underline" href={`/strategy-lab/${slug}`}>
+                  <a className="font-semibold text-primary hover:underline" href={`/${slug}`}>
                     {names[slug] ?? slug}
                   </a>
                 </li>

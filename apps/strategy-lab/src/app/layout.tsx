@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: content.home.seo.title,
     description: content.home.seo.description,
     alternates: { canonical: canonicalUrl("/") },
-    icons: { icon: "/strategy-lab/favicon.png" },
+    icons: { icon: "/favicon.png" },
     openGraph: { siteName: "Arch Public Strategy Lab", type: "website" },
     twitter: { card: "summary_large_image" },
   };

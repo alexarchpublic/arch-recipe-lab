@@ -12,7 +12,7 @@ export function Header({ actions, partnerName, partnerLogo }: { actions: Actions
     <header data-theme="navy" className="sticky top-0 z-30 border-b border-white/10 bg-navy text-white">
       <div className="container flex min-h-[64px] flex-wrap items-center gap-x-3 gap-y-1 py-2 sm:min-h-[72px] sm:gap-x-4">
         <Link href="/" className="flex shrink-0 items-center gap-3" aria-label="Strategy Lab home">
-          <img src="/strategy-lab/logo-white.png" alt="Arch Public" width={123} height={30} className="h-6 w-auto sm:h-[30px]" />
+          <img src="/logo-white.png" alt="Arch Public" width={123} height={30} className="h-6 w-auto sm:h-[30px]" />
           <span className="hidden border-l border-white/25 pl-3 text-sm font-bold tracking-[0.02em] sm:inline nav:hidden xl:inline">Strategy Lab</span>
           {partnerName && (
             <span className="hidden items-center gap-2 border-l border-white/25 pl-3 text-sm font-semibold md:flex">

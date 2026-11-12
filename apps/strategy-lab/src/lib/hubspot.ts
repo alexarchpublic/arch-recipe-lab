@@ -34,13 +34,23 @@ function cookie(name: string): string | undefined {
   return m ? decodeURIComponent(m[1]) : undefined;
 }
 
+/**
+ * The page's public address. On archpublic.com the page runs inside a frame
+ * from the page engine's own host, so location.href names that host; the
+ * page's canonical link names the address a visitor actually sees.
+ */
+export function publicPageUrl(): string {
+  const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href;
+  return canonical || window.location.href;
+}
+
 export async function submitToHubSpot(fields: HubSpotFields, consent: HubSpotConsent): Promise<HubSpotResult> {
   let list = Object.entries(fields)
     .filter(([, v]) => v !== null && v !== undefined && v !== "")
     .map(([name, value]) => ({ objectTypeId: "0-1", name, value: String(value) }));
 
   const context = Object.fromEntries(
-    Object.entries({ hutk: cookie("hubspotutk"), pageUri: window.location.href, pageName: document.title }).filter(([, v]) => !!v),
+    Object.entries({ hutk: cookie("hubspotutk"), pageUri: publicPageUrl(), pageName: document.title }).filter(([, v]) => !!v),
   );
   const legalConsentOptions = {
     consent: {

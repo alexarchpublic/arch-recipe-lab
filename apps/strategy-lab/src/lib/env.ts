@@ -12,8 +12,9 @@ export const SUPABASE_ANON_KEY = env("SUPABASE_ANON_KEY") ?? env("NEXT_PUBLIC_SU
 
 /** Where the site is meant to be found (S18). Canonical links and the sitemap point here. */
 export const CANONICAL_ORIGIN = (env("CANONICAL_ORIGIN") ?? "https://archpublic.com").replace(/\/+$/, "");
-export const BASE_PATH = "/strategy-lab";
-export const canonicalUrl = (path = "/"): string => `${CANONICAL_ORIGIN}${BASE_PATH}${path === "/" ? "" : path}`;
+/** The path archpublic.com serves the site under. The app itself is built at its host's root. */
+export const PUBLIC_PATH = "/strategy-lab";
+export const canonicalUrl = (path = "/"): string => `${CANONICAL_ORIGIN}${PUBLIC_PATH}${path === "/" ? "" : path}`;
 
 /** Hosts that serve the indexable copy. Any other host (the Vercel address) is marked noindex. */
 export const CANONICAL_HOSTS = (env("CANONICAL_HOSTS") ?? "archpublic.com,www.archpublic.com")
