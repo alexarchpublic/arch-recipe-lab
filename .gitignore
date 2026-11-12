@@ -27,3 +27,6 @@ dist-ssr
 *.sw?
 .vercel
 supabase/.temp/
+
+# Ingestion run folders (scripts/ingest)
+runs/
