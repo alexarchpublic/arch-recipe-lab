@@ -10,14 +10,15 @@ import {
   formatSignedPercent,
   formatTestWindow,
   scaledResults,
+  strategyLine,
   vsBuyHold,
   vsDca,
   type PublicStrategy,
 } from "@core";
 import { canonicalUrl } from "./env";
 
-export function strategyName(s: Pick<PublicStrategy, "display_number" | "short_name" | "asset">): string {
-  return `#${s.display_number} ${s.short_name} (${s.asset})`;
+export function strategyName(s: Pick<PublicStrategy, "display_number" | "title" | "asset">): string {
+  return `#${s.display_number} ${s.title} (${s.asset})`;
 }
 
 export function figuresText(s: PublicStrategy, capital: number | null): string {
@@ -26,7 +27,7 @@ export function figuresText(s: PublicStrategy, capital: number | null): string {
   const bh = vsBuyHold(s);
   const dca = vsDca(s);
   const lines = [
-    `${s.title}: #${s.display_number} ${s.short_name}, ${s.asset}`,
+    `${s.title}: ${strategyLine(s)}`,
     `Backtested results, ${formatTestWindow(s)}`,
     `Starting with ${formatMoney(scaled.beginning)}: ending value ${formatMoney(scaled.ending)}, net profit ${formatSignedCurrency(Math.round(scaled.netProfit))}`,
     scaled.cashProfit !== null ? `Cash profit ${formatSignedCurrency(Math.round(scaled.cashProfit))}` : "",

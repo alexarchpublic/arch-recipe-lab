@@ -147,7 +147,7 @@ export default function Admin() {
     .filter((g) => (showArchived ? true : !g.archivedAt))
     .filter((g) => {
       const v = g.draft ?? g.published ?? g.history[0];
-      return [v.name, v.short_name, v.title, v.asset, v.strategy_type, v.goal, String(g.displayNumber ?? "")]
+      return [v.title, v.asset, v.strategy_type, v.goal, String(g.displayNumber ?? "")]
         .some((t) => (t ?? "").toLowerCase().includes(q));
     });
   const archivedCount = groups.filter((g) => !!g.archivedAt).length;
@@ -275,6 +275,9 @@ export default function Admin() {
           <RecipeForm
             recipe={editingVersion ? versionToFormRecipe(editingVersion) : null}
             role={role}
+            otherTitles={groups
+              .filter((g) => g.published && !g.archivedAt && g.strategyId !== editingVersion?.strategy_id)
+              .map((g) => g.published!.title)}
             onSuccess={handleFormSuccess}
             onCancel={handleFormCancel}
           />

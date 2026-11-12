@@ -68,7 +68,7 @@ export default async function handler(request: Request): Promise<Response> {
   const displayNumber = parseInt(displayNumberParam, 10);
 
   // Reads the Pro view: the base tables are admin-only since Phase 1.
-  const recipeSelect = "title, short_name, asset, focus, goal, display_number, screenshots";
+  const recipeSelect = "title, asset, focus, goal, display_number, screenshots";
 
   const fetchRecipe = (filterArchived: boolean) => {
     let query = supabase

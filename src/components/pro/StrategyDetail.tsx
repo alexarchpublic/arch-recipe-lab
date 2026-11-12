@@ -14,6 +14,7 @@ import {
   scaleFor,
   settingsForDisplay,
   settingsRows,
+  strategyLine,
 } from "@core";
 import { Badge } from "@/components/ui/badge";
 import { isLegacyAlgorithm } from "@/lib/algorithms";
@@ -80,14 +81,8 @@ export function StrategyDetail({
         <StrategyChips displayNumber={s.display_number} asset={s.asset} assetClass={s.asset_class} focus={s.focus} horizon={s.time_horizon} />
         <h1 className="text-balance text-2xl font-extrabold leading-tight tracking-[-0.02em] md:text-3xl">{s.title}</h1>
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-          <span>{s.algorithm}</span>
+          <span>{strategyLine(s)}</span>
           {isLegacyAlgorithm(s.algorithm) && <Badge variant="outline" className="text-[10px]">Legacy</Badge>}
-          {s.time_frame && (
-            <>
-              <span aria-hidden>·</span>
-              <span>{s.time_frame} chart</span>
-            </>
-          )}
           <span aria-hidden>·</span>
           <span>
             Version {s.version_number}, published {formatDate(s.published_at?.slice(0, 10))}
@@ -171,7 +166,7 @@ function Screenshots({ strategy: s }: { strategy: ProStrategy }) {
         rel="noreferrer"
         className="group relative block overflow-hidden rounded-lg border border-border bg-navy"
       >
-        <img src={shot.url} alt={`${s.short_name}: ${shot.kind ?? "screenshot"} ${current + 1}`} className="max-h-[520px] w-full object-contain" />
+        <img src={shot.url} alt={`${s.title}: ${shot.kind ?? "screenshot"} ${current + 1}`} className="max-h-[520px] w-full object-contain" />
         <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/60 px-2 py-1 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
           Open full size <ExternalLink className="h-3 w-3" />
         </span>

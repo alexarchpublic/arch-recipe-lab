@@ -41,6 +41,7 @@ import {
   strategyIdForVersion,
   todayIso,
 } from "@/data/adminVersions";
+import { strategyLine, titleProblems } from "@core";
 import { CRYPTO_ASSETS } from "@/lib/algorithms";
 import { parseRecipeScreenshotsFromFiles } from "@/lib/parseRecipeScreenshotsClient";
 import {
@@ -48,13 +49,15 @@ import {
   RECIPE_SCREENSHOT_LABELS,
   isImportableScreenshotCount,
   type ImportedRecipeDraft,
-} from "@/lib/recipeScreenshotImport";
+} from "@core/extraction";
 
 const TICKER_REGEX = /^[A-Z.-]{1,10}$/;
 
 // Form validation schema
 const recipeSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  // One authored name (auto-ingestion NM1). Recipe Name and Short name are
+  // filled from it by the database.
+  title: z.string().trim().min(1, "Title is required"),
   asset_class: z.enum(["Equities", "ETFs", "Crypto"]).default("Equities"),
   asset: z.string().min(1, "Asset is required"),
   time_horizon: z.enum(["STH", "LTH"]),
@@ -77,8 +80,6 @@ const recipeSchema = z.object({
   algorithm: z.enum(["Intelligence Algorithm","Arbitrage Algorithm","Oracle Protocol","Market Wave"]).default("Market Wave"),
   algorithm_inputs: z.any().optional(),
   // Version (PRD 7): identity, assumptions and the change note
-  title: z.string().optional(),
-  short_name: z.string().optional(),
   slug: z.string().regex(/^$|^[a-z0-9]+(-[a-z0-9]+)*$/, "Lower-case words joined by hyphens").optional(),
   as_of: z.string().optional(),
   test_end_chart: z.string().optional(),
@@ -135,6 +136,8 @@ interface RecipeFormProps {
   recipe?: any;
   /** The signed-in admin's role; a marketing editor saves copy only (A10). */
   role?: AdminRole | null;
+  /** Titles of the other live strategies, for the uniqueness rule (NM6). */
+  otherTitles?: string[];
   /** Called with the saved draft's version id. */
   onSuccess: (versionId?: string) => void;
   onCancel: () => void;
@@ -197,6 +200,7 @@ export function RecipeForm(props: RecipeFormProps) {
 function RecipeFormBody({
   recipe,
   role,
+  otherTitles,
   onSuccess,
   onCancel,
   importedScreenshotFiles,
@@ -252,6 +256,9 @@ function RecipeFormBody({
   const watchedAsOf = watch("as_of");
   const needsChartEnd = runEndIsInFuture(watch("algorithm"), watchedInputs, watchedAsOf || todayIso());
   const selectedAlgorithm = watch("algorithm");
+  const watchedTitle = watch("title");
+  // The naming rules (NM3 to NM6), shown as guidance; they do not block a save.
+  const titleIssues = watchedTitle?.trim() ? titleProblems(watchedTitle, { otherTitles }) : [];
   const selectedAssetClass = watch("asset_class");
   const isEquitiesOrEtf = selectedAssetClass === "Equities" || selectedAssetClass === "ETFs";
 
@@ -609,18 +616,10 @@ function RecipeFormBody({
         <h3 className="text-lg font-semibold">Version</h3>
         <p className="text-sm text-muted-foreground">
           Saving writes a draft. Clients see nothing until an approver publishes it.
-          {isMarketingEditor && " As a marketing editor, only the title, short name, goal and change note are saved."}
+          {isMarketingEditor && " As a marketing editor, only the title, goal and change note are saved."}
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="title">Title</Label>
-          <Input id="title" {...register("title")} placeholder="Defaults to the goal" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="short_name">Short name</Label>
-          <Input id="short_name" {...register("short_name")} placeholder="e.g. MARA LTH 1W Position" />
-        </div>
         {!isMarketingEditor && (
           <>
             <div className="space-y-2">
@@ -699,15 +698,32 @@ function RecipeFormBody({
               <h3 className="text-lg font-semibold">Basic Information</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Recipe Name *</Label>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="title">Title *</Label>
                   <Input
-                    id="name"
-                    {...register("name")}
-                    placeholder="e.g., [BTC] STH Recipe No. 1"
+                    id="title"
+                    {...register("title")}
+                    maxLength={120}
+                    placeholder="e.g. Gold through its record bull run"
                   />
-                  {errors.name && (
-                    <p className="text-sm text-destructive">{errors.name.message}</p>
+                  <p className="text-xs text-muted-foreground">
+                    The strategy's one name, in plain words. Under it, clients see: {" "}
+                    <span className="font-semibold">
+                      {strategyLine({
+                        display_number: typeof recipe?.display_number === "number" ? recipe.display_number : null,
+                        asset: (watch("asset") || "Asset").toUpperCase(),
+                        time_frame: watch("time_frame") ?? null,
+                        algorithm: watch("algorithm") || "Market Wave",
+                      })}
+                    </span>
+                  </p>
+                  {errors.title && (
+                    <p className="text-sm text-destructive">{errors.title.message}</p>
+                  )}
+                  {titleIssues.length > 0 && (
+                    <ul className="list-disc space-y-0.5 pl-5 text-xs text-amber-700 dark:text-amber-400" data-testid="title-issues">
+                      {titleIssues.map((issue) => <li key={issue}>{issue}</li>)}
+                    </ul>
                   )}
                 </div>
 

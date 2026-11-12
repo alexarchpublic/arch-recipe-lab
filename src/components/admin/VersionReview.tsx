@@ -142,7 +142,7 @@ export function VersionReview({ group, role, open, onOpenChange, onChanged, onEd
         <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              #{group.displayNumber} {(draft ?? published ?? group.history[0]).short_name}
+              #{group.displayNumber} {(draft ?? published ?? group.history[0]).title}
             </DialogTitle>
             <DialogDescription>
               {published ? `Published version ${published.version_number}` : "Never published"}

@@ -2,10 +2,10 @@
 // shape, and the chart header against the settings panel. The API runs the
 // bundle, so each check is compared against it too.
 import { describe, expect, it } from "vitest";
-import * as source from "../lib/recipeScreenshotImport";
+import * as source from "../packages/core/src/extraction";
 // @ts-expect-error: plain JS bundle without type declarations
-import * as bundle from "../lib/recipeScreenshotImport.bundle.js";
-import type { RecipeScreenshotExtraction } from "../lib/recipeScreenshotImport";
+import * as bundle from "../lib/extraction.bundle.js";
+import type { RecipeScreenshotExtraction } from "../packages/core/src/extraction";
 
 // MARA LTH 1W Position (#68): the header as printed on the chart screenshot.
 const HEADER =

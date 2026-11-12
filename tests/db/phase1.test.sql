@@ -105,7 +105,7 @@ begin
   if v.status <> 'draft' or v.version_number <> 1 or v.change_type <> 'initial' then
     raise exception 'draft wrong: % % %', v.status, v.version_number, v.change_type;
   end if;
-  if v.asset <> 'TEST' or v.slug <> 'test-sth-1d-swing-' || (select display_number from public.recipes where id = v.strategy_id) then
+  if v.asset <> 'TEST' or v.slug <> 'test-the-publish-flow-' || (select display_number from public.recipes where id = v.strategy_id) then
     raise exception 'identity wrong: % %', v.asset, v.slug;
   end if;
   -- Derived once, at save (D3): return 50%, 1.5 years.

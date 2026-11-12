@@ -30,7 +30,6 @@ async function post(token = "token") {
 
 describe("parse-recipe-screenshots admin gate", () => {
   beforeEach(() => {
-    delete process.env.OPENAI_API_KEY;
     delete process.env.ANTHROPIC_API_KEY;
   });
 
@@ -39,7 +38,7 @@ describe("parse-recipe-screenshots admin gate", () => {
     auth.isAdmin = true;
     const result = await post();
     expect(result.status).toBe(503);
-    expect(result.body.error).toMatch(/needs OPENAI_API_KEY or ANTHROPIC_API_KEY/);
+    expect(result.body.error).toMatch(/needs ANTHROPIC_API_KEY/);
   });
 
   it("refuses a signed-in user who is not on the allowlist", async () => {

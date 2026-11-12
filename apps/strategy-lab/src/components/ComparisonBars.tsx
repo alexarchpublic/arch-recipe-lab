@@ -8,7 +8,7 @@ type Row = { label: string; field: string; value: number; main?: boolean };
 
 /** The strategy, then each benchmark the store shows for it. */
 export function comparisonRows(s: PublicStrategy, { oneBenchmark = false, mainLabel }: { oneBenchmark?: boolean; mainLabel?: string } = {}): Row[] {
-  const rows: Row[] = [{ label: mainLabel ?? s.short_name, field: "return_pct", value: s.return_pct, main: true }];
+  const rows: Row[] = [{ label: mainLabel ?? s.title, field: "return_pct", value: s.return_pct, main: true }];
   if (showsBuyHold(s) && s.buy_hold_pnl_pct !== null) rows.push({ label: `Buy and hold ${s.asset}`, field: "buy_hold_pnl_pct", value: s.buy_hold_pnl_pct });
   if (showsDca(s) && s.dca_pnl_pct !== null) rows.push({ label: `Buying ${s.asset} monthly`, field: "dca_pnl_pct", value: s.dca_pnl_pct });
   return oneBenchmark ? rows.slice(0, 2) : rows;
@@ -42,7 +42,7 @@ export function ComparisonBars({
   const max = Math.max(...rows.map((r) => Math.abs(r.value)), 1e-9);
   const cagr = displayCagr(s);
   return (
-    <div className={`flex flex-col ${sz.gap}`} aria-label={`Return of ${s.short_name} against its benchmarks`} role="group">
+    <div className={`flex flex-col ${sz.gap}`} aria-label={`Return of ${s.title} against its benchmarks`} role="group">
       {rows.map((r) => {
         const width = Math.max((Math.abs(r.value) / max) * 100, r.value === 0 ? 0 : 1.5);
         const tone = r.value < 0 ? "text-loss" : r.main && r.value > 0 ? "text-gain" : "text-navy";

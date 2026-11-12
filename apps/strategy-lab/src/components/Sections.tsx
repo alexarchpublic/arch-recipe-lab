@@ -359,7 +359,7 @@ export function LibrarySection({ strategies, disclaimer }: { strategies: PublicS
               {c.leader && (
                 <div className="mt-3 text-sm" data-results={c.leader.id} data-version={`v${c.leader.version_number}`}>
                   <span className="text-ink-muted">Leading: </span>
-                  <span className="font-semibold text-navy">{c.leader.short_name}</span>{" "}
+                  <span className="font-semibold text-navy">{c.leader.title}</span>{" "}
                   <span className="font-mono font-semibold text-gain" data-field="return_pct" data-raw={c.leader.return_pct}>{formatSignedPercent(c.leader.return_pct)}</span>
                 </div>
               )}
@@ -396,7 +396,7 @@ export function ProofSection({ home, strategies, studies = [] }: { home: HomeCon
                     return s ? (
                       <span key={slug}>
                         {j > 0 && ", "}
-                        <Link href={`/${slug}`} className="font-semibold text-primary hover:underline">{s.short_name}</Link>
+                        <Link href={`/${slug}`} className="font-semibold text-primary hover:underline">{s.title}</Link>
                       </span>
                     ) : null;
                   })}

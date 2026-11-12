@@ -87,7 +87,7 @@ export function AdminRecipeCard({ group, onEdit, onReview, onView, onChanged }: 
     )}>
       <div className="aspect-video overflow-hidden bg-navy">
         {thumbnailUrl ? (
-          <img src={thumbnailUrl} alt={`${v.short_name} thumbnail`} className="h-full w-full object-cover" />
+          <img src={thumbnailUrl} alt={`${v.title} thumbnail`} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-white/50">
             <div className="text-center">
