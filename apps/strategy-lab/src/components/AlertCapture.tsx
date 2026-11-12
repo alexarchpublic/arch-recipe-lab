@@ -5,10 +5,12 @@ import { track } from "@/lib/analytics";
 import { writeVisitor } from "@/lib/visitor";
 import { assetClassLabel } from "@/lib/strategies";
 import { sendLead } from "./api";
+import { useLeadSettings } from "./Booking";
 import { Button, Check, Input } from "./ui";
 
 export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dark = false, id = "alerts" }: { defaultClasses?: string[]; consentText: string; privacyUrl: string; dark?: boolean; id?: string }) {
   const fieldId = `alert-email-${id}`;
+  const lead = useLeadSettings();
   const [classes, setClasses] = useState<string[]>(defaultClasses.length ? defaultClasses : ["Equities", "ETFs", "Crypto"]);
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
@@ -31,7 +33,7 @@ export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dar
         if (!classes.length) return setError("Choose at least one.");
         if (!consent) return setError("Tick the box so we can email you.");
         setState("busy");
-        const r = await sendLead({ kind: "alert", email, alertAssetClasses: classes, consentMarketing: consent, website });
+        const r = await sendLead({ kind: "alert", email, alertAssetClasses: classes, consentMarketing: consent, website }, lead);
         if (!r.ok) {
           setState("idle");
           return setError(r.error ?? "Please try again.");
@@ -45,18 +47,18 @@ export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dar
         <legend className="sr-only">Asset classes</legend>
         {["Equities", "ETFs", "Crypto"].map((c) => (
           <label key={c} className={`inline-flex min-h-[44px] items-center gap-2 text-[15px] font-semibold ${dark ? "text-white" : "text-navy"}`}>
-            <input type="checkbox" checked={classes.includes(c)} onChange={() => toggle(c)} className="h-[18px] w-[18px] accent-[hsl(var(--primary))]" />
+            <input type="checkbox" name="asset_classes" value={c} checked={classes.includes(c)} onChange={() => toggle(c)} className="h-[18px] w-[18px] accent-[hsl(var(--primary))]" />
             {assetClassLabel(c)}
           </label>
         ))}
       </fieldset>
       <div>
         <label htmlFor={fieldId} className={`block text-[13px] font-bold ${dark ? "text-white" : "text-navy"}`}>Email</label>
-        <Input id={fieldId} type="email" required placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2" />
+        <Input id={fieldId} name="email" type="email" required placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2" />
       </div>
-      <input tabIndex={-1} autoComplete="off" aria-hidden className="hidden" value={website} onChange={(e) => setWebsite(e.target.value)} />
+      <input tabIndex={-1} autoComplete="off" aria-hidden className="hidden" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} />
       <div className={dark ? "[&_span]:text-white/70" : ""}>
-        <Check checked={consent} onChange={setConsent}>
+        <Check name="consent_marketing" checked={consent} onChange={setConsent}>
           {consentText}{" "}
           <a className="underline" href={privacyUrl} target="_blank" rel="noreferrer">Privacy policy</a>
         </Check>

@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { Tracking } from "@/components/Tracking";
 import { getDisclaimer, getSiteContent, getStrategies } from "@/lib/data";
 import { CANONICAL_ORIGIN, GA4_ID, HUBSPOT_PORTAL_ID, canonicalUrl } from "@/lib/env";
+import { strategyName } from "@/lib/figures";
 
 const sans = Mulish({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
@@ -28,11 +29,12 @@ export const viewport: Viewport = { themeColor: "#0B1656", width: "device-width"
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [content, disclaimer, strategies] = await Promise.all([getSiteContent(), getDisclaimer(), getStrategies().catch(() => [])]);
-  const names = Object.fromEntries(strategies.map((s) => [s.slug, `#${s.display_number} ${s.short_name} (${s.asset})`]));
+  const names = Object.fromEntries(strategies.map((s) => [s.slug, strategyName(s)]));
+  const assets = Object.fromEntries(strategies.map((s) => [s.slug, [s.asset, s.asset_class] as [string, string]]));
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body>
-        <BookingProvider settings={{ booking: content.booking, actions: content.actions, exchanges: content.home.trust.exchanges, names }}>
+        <BookingProvider settings={{ booking: content.booking, actions: content.actions, exchanges: content.home.trust.exchanges, names, assets }}>
           <Header actions={content.actions} />
           <main className="min-h-[60vh]">{children}</main>
           <Footer actions={content.actions} disclaimer={disclaimer} />

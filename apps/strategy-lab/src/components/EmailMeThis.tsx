@@ -2,23 +2,23 @@
 // "Email me this" (S4): sends the figures at the visitor's account size and
 // captures the contact.
 import { useState } from "react";
-import { formatMoney } from "@core";
+import { formatMoney, type PublicStrategy } from "@core";
+import { figuresText } from "@/lib/figures";
 import { track } from "@/lib/analytics";
 import { writeVisitor } from "@/lib/visitor";
 import { sendLead } from "./api";
+import { useLeadSettings } from "./Booking";
 import { Button, Check, Input } from "./ui";
 import { useVisitor } from "./useVisitor";
 
 export function EmailMeThis({
-  slug,
-  startingCapital,
+  strategy,
   consentText,
   privacyUrl,
   source = "strategy",
   boxed = false,
 }: {
-  slug: string;
-  startingCapital: number;
+  strategy: PublicStrategy;
   consentText: string;
   privacyUrl: string;
   /** Where the form sits, for analytics only (redesign PRD section 8). */
@@ -27,6 +27,9 @@ export function EmailMeThis({
   boxed?: boolean;
 }) {
   const v = useVisitor();
+  const lead = useLeadSettings();
+  const slug = strategy.slug;
+  const startingCapital = strategy.starting_capital;
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState("");
@@ -44,7 +47,10 @@ export function EmailMeThis({
         e.preventDefault();
         setError("");
         setState("busy");
-        const r = await sendLead({ kind: "email_me_this", email, strategyInView: slug, accountSize: amount, consentMarketing: consent, website });
+        const r = await sendLead(
+          { kind: "email_me_this", email, strategyInView: slug, accountSize: amount, figures: figuresText(strategy, amount), consentMarketing: consent, website },
+          lead,
+        );
         if (!r.ok) {
           setState("idle");
           return setError(r.error ?? "Please try again.");
@@ -59,15 +65,15 @@ export function EmailMeThis({
           <label htmlFor={fieldId} className={`block text-navy ${boxed ? "text-sm font-extrabold" : "text-[13px] font-bold"}`}>
             Email me these figures
           </label>
-          <Input id={fieldId} type="email" required placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2" />
+          <Input id={fieldId} name="email" type="email" required placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2" />
         </div>
         <Button type="submit" disabled={state === "busy"} className="min-h-[48px] px-5 text-[15px]">
           {state === "busy" ? "Sending…" : "Send"}
         </Button>
       </div>
       <p className="text-xs text-ink-muted">We'll email this strategy's results at {formatMoney(amount)}.</p>
-      <input tabIndex={-1} autoComplete="off" aria-hidden className="hidden" value={website} onChange={(e) => setWebsite(e.target.value)} />
-      <Check checked={consent} onChange={setConsent}>
+      <input tabIndex={-1} autoComplete="off" aria-hidden className="hidden" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} />
+      <Check name="consent_marketing" checked={consent} onChange={setConsent}>
         {consentText}{" "}
         <a className="underline" href={privacyUrl} target="_blank" rel="noreferrer">Privacy policy</a>
       </Check>

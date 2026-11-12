@@ -23,10 +23,8 @@ export const CANONICAL_HOSTS = (env("CANONICAL_HOSTS") ?? "archpublic.com,www.ar
 
 /** HubSpot (section 12). The portal is Arch Public's; the form is created for Strategy Lab. */
 export const HUBSPOT_PORTAL_ID = env("NEXT_PUBLIC_HUBSPOT_PORTAL_ID") ?? "43848678";
-export const HUBSPOT_FORM_GUID = env("HUBSPOT_FORM_GUID");
-/** Subscription types for the two consent lines (C4). Without them, consent is recorded as a field. */
-export const HUBSPOT_MARKETING_SUBSCRIPTION_ID = env("HUBSPOT_MARKETING_SUBSCRIPTION_ID");
-export const HUBSPOT_CALLS_SUBSCRIPTION_ID = env("HUBSPOT_CALLS_SUBSCRIPTION_ID");
+// The form and its consent subscription are written into lib/hubspot.ts: the
+// browser sends captures straight to HubSpot, so they cannot come from server env.
 
 /** One GA4 property for Strategy Lab (section 12). Fires only after consent. */
 export const GA4_ID = env("NEXT_PUBLIC_GA4_ID") ?? "G-7KS3HK4626";

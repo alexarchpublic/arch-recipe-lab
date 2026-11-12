@@ -9,15 +9,31 @@ import { track } from "@/lib/analytics";
 import { ACCOUNT_SIZE_RANGES, rangeFor } from "@/lib/strategies";
 import { readVisitor, writeVisitor } from "@/lib/visitor";
 import type { BookingContent, ActionsContent } from "@/lib/content";
-import { sendLead } from "./api";
+import { sendLead, type LeadSettings } from "./api";
 import { Button, Check, Field, Input, Select } from "./ui";
 
 export interface BookingSettings {
   booking: BookingContent;
   actions: ActionsContent;
   exchanges: string[];
-  /** slug -> "#41 NVDA Accumulation", for the confirmation. */
+  /** slug -> "#41 NVDA Accumulation (NVDA)", for the confirmation and captures. */
   names: Record<string, string>;
+  /** slug -> [asset, asset class], for captures. */
+  assets: Record<string, [string, string]>;
+}
+
+/** What sendLead needs, from the settings every page carries. */
+export function useLeadSettings(): LeadSettings {
+  const { settings } = useBooking();
+  return useMemo(
+    () => ({
+      names: settings.names,
+      assets: settings.assets,
+      consentMarketingText: settings.booking.consentMarketing,
+      processText: settings.booking.collectionNotice,
+    }),
+    [settings],
+  );
 }
 
 interface OpenOptions {
@@ -122,6 +138,7 @@ function icsFor(m: MeetingPayload, url: string): string | null {
 export function BookingFlow({ strategy, source, inline = false }: { strategy?: string; source: string; inline?: boolean }) {
   const { settings } = useBooking();
   const { booking, exchanges, names } = settings;
+  const lead = useLeadSettings();
   const [step, setStep] = useState<Step>("form");
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -152,11 +169,11 @@ export function BookingFlow({ strategy, source, inline = false }: { strategy?: s
       setMeeting(m);
       setStep("done");
       track("booking_completed", { strategy: strategy ?? null, source });
-      void sendLead({ kind: "booking_completed", email, firstName: first, lastName: last, strategyInView: strategy, meetingStart: m.start });
+      void sendLead({ kind: "booking_completed", email, firstName: first, lastName: last, strategyInView: strategy, meetingStart: m.start }, lead);
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [step, email, first, last, strategy, source]);
+  }, [step, email, first, last, strategy, source, lead]);
 
   const submit = async () => {
     setError("");
@@ -174,7 +191,7 @@ export function BookingFlow({ strategy, source, inline = false }: { strategy?: s
       consentMarketing,
       consentCalls,
       website,
-    });
+    }, lead);
     setBusy(false);
     if (!r.ok) return setError(r.error ?? "Something went wrong. Please try again.");
     writeVisitor({ identified: true });
@@ -246,18 +263,18 @@ export function BookingFlow({ strategy, source, inline = false }: { strategy?: s
       )}
       <div className="grid grid-cols-2 gap-3">
         <Field label="First name">
-          <Input autoComplete="given-name" value={first} onChange={(e) => setFirst(e.target.value)} required />
+          <Input name="firstname" autoComplete="given-name" value={first} onChange={(e) => setFirst(e.target.value)} required />
         </Field>
         <Field label="Last name">
-          <Input autoComplete="family-name" value={last} onChange={(e) => setLast(e.target.value)} />
+          <Input name="lastname" autoComplete="family-name" value={last} onChange={(e) => setLast(e.target.value)} />
         </Field>
       </div>
       <Field label="Email">
-        <Input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Input name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </Field>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Account size you have in mind">
-          <Select value={range} onChange={(e) => setRange(e.target.value)} required>
+          <Select name="account_size_range" value={range} onChange={(e) => setRange(e.target.value)} required>
             <option value="">Choose…</option>
             {ACCOUNT_SIZE_RANGES.map((r) => (
               <option key={r.id} value={r.id}>
@@ -267,7 +284,7 @@ export function BookingFlow({ strategy, source, inline = false }: { strategy?: s
           </Select>
         </Field>
         <Field label="Exchange or brokerage">
-          <Select value={exchange} onChange={(e) => setExchange(e.target.value)}>
+          <Select name="exchange" value={exchange} onChange={(e) => setExchange(e.target.value)}>
             <option value="">Not sure yet</option>
             {exchanges.map((x) => (
               <option key={x} value={x}>
@@ -280,8 +297,8 @@ export function BookingFlow({ strategy, source, inline = false }: { strategy?: s
       </div>
       <input tabIndex={-1} autoComplete="off" aria-hidden className="hidden" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} />
       <div className="space-y-2 pt-1">
-        <Check checked={consentMarketing} onChange={setConsentMarketing}>{booking.consentMarketing}</Check>
-        <Check checked={consentCalls} onChange={setConsentCalls}>{booking.consentCalls}</Check>
+        <Check name="consent_marketing" checked={consentMarketing} onChange={setConsentMarketing}>{booking.consentMarketing}</Check>
+        <Check name="consent_calls" checked={consentCalls} onChange={setConsentCalls}>{booking.consentCalls}</Check>
       </div>
       <p className="text-[11px] leading-snug text-muted-foreground">
         {booking.collectionNotice}{" "}

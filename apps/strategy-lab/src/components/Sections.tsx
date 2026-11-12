@@ -222,7 +222,7 @@ export function SizeSection({ home, hero, content }: { home: HomeContent; hero: 
           </div>
           {content.config.emailMeThis && (
             <div className="mt-5 border-t border-line pt-5">
-              <EmailMeThis slug={hero.slug} startingCapital={hero.starting_capital} consentText={content.booking.consentMarketing} privacyUrl={content.actions.privacyUrl} source="size" />
+              <EmailMeThis strategy={hero} consentText={content.booking.consentMarketing} privacyUrl={content.actions.privacyUrl} source="size" />
             </div>
           )}
           <BasisWindowLine s={hero} tested className="mt-3.5 !text-xs" />

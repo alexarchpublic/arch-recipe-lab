@@ -191,7 +191,7 @@ export default async function StrategyPage({ params }: Props) {
         </div>
         {cfg.accountSize && cfg.emailMeThis && (
           <div className="mt-4">
-            <EmailMeThis slug={s.slug} startingCapital={s.starting_capital} consentText={content.booking.consentMarketing} privacyUrl={content.actions.privacyUrl} source="strategy" boxed />
+            <EmailMeThis strategy={s} consentText={content.booking.consentMarketing} privacyUrl={content.actions.privacyUrl} source="strategy" boxed />
           </div>
         )}
       </section>
