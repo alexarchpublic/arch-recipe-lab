@@ -169,7 +169,6 @@ describe("form to draft fields", () => {
   });
 
   const form = {
-    name: "[MARA] LTH 1W Position",
     asset_class: "Equities",
     asset: "mara",
     time_horizon: "LTH",
@@ -203,7 +202,9 @@ describe("form to draft fields", () => {
     expect(f.test_end_source).toBe("chart_last_bar");
     expect(f.benchmark_shown).toBe("both");
     expect(f.title).toBe(form.goal); // blank title defaults to the goal
-    expect(f.short_name).toBe("MARA LTH 1W Position");
+    // One authored name (NM1): the database fills name and short_name.
+    expect("name" in f).toBe(false);
+    expect("short_name" in f).toBe(false);
     expect(f.extraction_id).toBe("x-1");
     expect("slug" in f).toBe(false); // blank slug: the database keeps or makes one
     expect("cagr" in f).toBe(false); // derived in the database (D3)
@@ -220,7 +221,7 @@ describe("form to draft fields", () => {
 
   it("sends copy only for a marketing editor (A10)", () => {
     const f = formToVersionFields({ ...form, title: "Better title" }, { ...opts, role: "marketing_editor" });
-    expect(Object.keys(f).sort()).toEqual(["change_note", "goal", "short_name", "title"]);
+    expect(Object.keys(f).sort()).toEqual(["change_note", "goal", "title"]);
     expect(f.title).toBe("Better title");
   });
 });

@@ -17,6 +17,7 @@ import {
   formatTestWindow,
   showsBuyHold,
   showsDca,
+  strategyLine,
 } from "@core";
 import { AccountSize } from "@/components/AccountSize";
 import { AlertCapture } from "@/components/AlertCapture";
@@ -53,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const s = await getStrategy(slug).catch(() => null);
   if (!s) return { title: "Strategy not found · Strategy Lab", robots: { index: false } };
   const title = `${s.title} · ${s.asset} strategy | Arch Public Strategy Lab`;
-  const description = `How Arch Public's ${s.short_name} strategy trades ${s.asset}, with its backtest chart, its results against ${s.benchmark_shown === "none" ? "its starting capital" : "its benchmark"} and what it would have done at your account size.`;
+  const description = `How Arch Public's ${s.title} strategy trades ${s.asset}, with its backtest chart, its results against ${s.benchmark_shown === "none" ? "its starting capital" : "its benchmark"} and what it would have done at your account size.`;
   return {
     title,
     description,
@@ -199,7 +200,7 @@ export default async function StrategyPage({ params }: Props) {
   });
   const asideAfter = blocks.length; // the side panel goes here on phones
   if (caseStudies.length) {
-    blocks.push({ key: "case", node: <CaseStudyLinks links={caseStudies} short={`Strategy #${s.display_number}, ${s.short_name},`} /> });
+    blocks.push({ key: "case", node: <CaseStudyLinks links={caseStudies} short={`Strategy #${s.display_number}, ${s.title},`} /> });
   }
   if (showHow) {
     blocks.push({
@@ -303,8 +304,7 @@ export default async function StrategyPage({ params }: Props) {
           </div>
           <h1 className="mt-3.5 max-w-[860px] text-[clamp(32px,3.8vw,52px)] font-black leading-[1.05] tracking-[-0.022em] text-navy">{s.title}</h1>
           <p className="mt-2.5 text-[15px] text-ink-muted">
-            Strategy #{s.display_number} · {s.short_name} · {s.algorithm}
-            {s.time_frame ? ` · ${s.time_frame} chart` : ""}
+            {strategyLine(s)}
           </p>
           {goal && <p className="mt-2 max-w-3xl text-base text-ink">{goal}</p>}
           <p className="mt-3 text-[13px] text-ink-muted" data-disclosure="results">

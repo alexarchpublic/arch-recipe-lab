@@ -7,7 +7,7 @@
 // other source screenshot (the labelled settings panels) and every setting
 // stays out of the public view and the public pages.
 
-/** Must match store.public_view_allowlist() (20261111000001, chart_url added in 20261114000001). */
+/** Must match store.public_view_allowlist() (20261111000001; chart_url added in 20261114000001, case_studies in 20261115000001). */
 export const PUBLIC_COLUMNS = [
   "id", "display_number", "version_id", "version_number", "slug", "title", "short_name", "asset",
   "asset_class", "algorithm", "strategy_type", "time_horizon", "focus", "time_frame", "goal", "best_for",
@@ -15,7 +15,7 @@ export const PUBLIC_COLUMNS = [
   "test_end", "fees_slippage", "data_source", "as_of", "net_profit_usd", "cash_profit_usd", "asset_qty",
   "asset_unit", "buy_hold_pnl_pct", "dca_pnl_pct", "max_drawdown_pct", "benchmark_shown",
   "ending_value_usd", "return_pct", "test_years", "cagr_pct", "vs_buy_hold_pct", "vs_dca_pct",
-  "public_chart_url", "chart_url",
+  "public_chart_url", "chart_url", "case_studies",
 ];
 
 export const SETTINGS_KEYS = /"(algorithm_inputs|tradeSize|longThreshold|exitThreshold|userInitialCapital|marketWave|screenshots)"/;

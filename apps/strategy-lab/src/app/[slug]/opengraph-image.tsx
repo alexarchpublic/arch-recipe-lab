@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { basisLabel, formatSignedPercent, formatTestWindow } from "@core";
+import { basisLabel, formatSignedPercent, formatTestWindow, strategyLine } from "@core";
 import { ShareCard } from "@/components/ShareImage";
 import { getStrategy } from "@/lib/data";
 
@@ -18,7 +18,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     <ShareCard
       eyebrow={`${s.asset} · ${s.algorithm}`}
       title={s.title}
-      line={`Strategy #${s.display_number} · ${s.short_name}`}
+      line={strategyLine(s)}
       figure={formatSignedPercent(s.return_pct)}
       figureLabel={`Return, ${formatTestWindow(s)}`}
       basis={basisLabel(s)}

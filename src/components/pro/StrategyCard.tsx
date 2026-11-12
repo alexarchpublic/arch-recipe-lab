@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Check, Image as ImageIcon, Plus } from "lucide-react";
-import { type ProStrategy, proStrategyPath } from "@core";
+import { type ProStrategy, proStrategyPath, strategyLine } from "@core";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -57,10 +57,7 @@ export function StrategyCard({ strategy: s, capital, isNew }: { strategy: ProStr
       <div className="space-y-3 p-4 pb-3">
         <StrategyChips displayNumber={s.display_number} asset={s.asset} focus={s.focus} horizon={s.time_horizon} />
         <h3 className="text-balance text-lg font-extrabold leading-snug tracking-[-0.02em]">{s.title}</h3>
-        <p className="text-xs font-semibold text-muted-foreground">
-          {s.algorithm}
-          {s.time_frame ? ` · ${s.time_frame}` : ""}
-        </p>
+        <p className="text-xs font-semibold text-muted-foreground">{strategyLine(s)}</p>
       </div>
       <div className="flex-1 px-4 pb-3">
         <StrategyResults strategy={s} capital={capital} variant="card" />

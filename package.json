@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "test:db": "scripts/db-test.sh"
+    "test:db": "scripts/db-test.sh",
+    "build:reader": "esbuild packages/core/src/extraction.ts --bundle --format=esm --platform=node --target=node20 --log-level=warning --banner:js=\"// Generated from packages/core/src/extraction.ts by npm run build:reader. Do not edit by hand.\" --outfile=lib/extraction.bundle.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -77,6 +78,7 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
+    "esbuild": "^0.21.5",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

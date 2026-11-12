@@ -113,7 +113,7 @@ export default function Browse() {
     const q = query.trim().toLowerCase();
     const assets = filters.assets.filter((a) => availableAssets.includes(a));
     const filtered = pool.filter((s) => {
-      if (q && ![s.short_name, s.title, s.goal, s.asset, s.strategy_type, String(s.display_number ?? "")].some((t) => t?.toLowerCase().includes(q))) return false;
+      if (q && ![s.title, s.goal, s.asset, s.strategy_type, String(s.display_number ?? "")].some((t) => t?.toLowerCase().includes(q))) return false;
       if (assets.length && !assets.includes(s.asset)) return false;
       if (filters.focuses.length && !filters.focuses.includes(s.focus)) return false;
       if (filters.timeHorizons.length && !filters.timeHorizons.includes(s.time_horizon)) return false;

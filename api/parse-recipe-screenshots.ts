@@ -6,8 +6,8 @@ import {
   buildRecipeFromExtraction,
   classifyKindsFromFilenames,
   validateExtractionShape,
-} from "../lib/recipeScreenshotImport.bundle.js";
-import type { RecipeScreenshotExtraction } from "../lib/recipeScreenshotImport";
+} from "../lib/extraction.bundle.js";
+import type { RecipeScreenshotExtraction } from "../packages/core/src/extraction";
 
 export const config = {
   runtime: "nodejs",
@@ -107,52 +107,8 @@ async function requireAdmin(authHeader: string): Promise<AdminCheck> {
 
 type ModelReply = { text: string; provider: string; model: string };
 
-async function extractWithOpenAI(images: IncomingImage[]): Promise<ModelReply | null> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
-  const model = process.env.OPENAI_VISION_MODEL || "gpt-4o";
-
-  const content: Array<Record<string, unknown>> = [
-    { type: "text", text: RECIPE_SCREENSHOT_EXTRACTION_PROMPT },
-  ];
-  images.forEach((image, index) => {
-    const mime = image.mimeType || "image/jpeg";
-    content.push({
-      type: "text",
-      text: `Image ${index + 1} filename: ${image.filename || `image-${index + 1}`}`,
-    });
-    content.push({
-      type: "image_url",
-      image_url: {
-        url: `data:${mime};base64,${image.data}`,
-        detail: "high",
-      },
-    });
-  });
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0,
-      response_format: { type: "json_object" },
-      messages: [{ role: "user", content }],
-    }),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`OpenAI vision failed (${response.status}): ${errText.slice(0, 400)}`);
-  }
-
-  const payload = await response.json();
-  return { text: payload.choices?.[0]?.message?.content ?? "", provider: "openai", model: payload.model ?? model };
-}
-
+// Claude reads the screenshots (auto-ingestion EX8: the OpenAI path is gone).
+// The model is named here; a change re-runs the known-answer set first (EX9).
 const ANTHROPIC_VISION_MODELS = [
   process.env.ANTHROPIC_VISION_MODEL,
   "claude-sonnet-4-6",
@@ -233,12 +189,11 @@ async function parseScreenshots(authHeader: string, rawBody: unknown): Promise<J
   const admin = await requireAdmin(authHeader);
   if (admin.error) return admin.error;
 
-  if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return {
       status: 503,
       body: {
-        error:
-          "Screenshot import needs OPENAI_API_KEY or ANTHROPIC_API_KEY on the server (Vercel env, and local .env for npm run dev).",
+        error: "Screenshot import needs ANTHROPIC_API_KEY on the server (Vercel env, and local .env for npm run dev).",
       },
     };
   }
@@ -255,22 +210,9 @@ async function parseScreenshots(authHeader: string, rawBody: unknown): Promise<J
     return { status: 400, body: { error: "Each screenshot must include image data" } };
   }
 
-  let reply: ModelReply | null = null;
-  let lastError: unknown;
-  try {
-    if (process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
-      reply = await extractWithAnthropic(images);
-    } else {
-      reply = (await extractWithOpenAI(images)) || (await extractWithAnthropic(images));
-    }
-  } catch (error) {
-    lastError = error;
-    if (process.env.ANTHROPIC_API_KEY && process.env.OPENAI_API_KEY) {
-      reply = await extractWithAnthropic(images);
-    }
-  }
+  const reply = await extractWithAnthropic(images);
   if (!reply?.text) {
-    throw lastError instanceof Error ? lastError : new Error("Vision provider returned an empty result");
+    throw new Error("Claude returned an empty result");
   }
 
   const extraction = extractJsonObject(reply.text);

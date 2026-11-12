@@ -3,7 +3,7 @@ import {
   isImportableScreenshotCount,
   orderFilesByKinds,
   type ScreenshotImportResult,
-} from "@/lib/recipeScreenshotImport";
+} from "@core/extraction";
 
 const MAX_VISION_EDGE = 1280;
 const MIN_VISION_WIDTH = 640;

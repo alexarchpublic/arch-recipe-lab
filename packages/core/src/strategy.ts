@@ -4,6 +4,21 @@
 // Figures are not computed here. The database derives return, CAGR and the
 // benchmark deltas once, at save (D3); this module reads them.
 
+/**
+ * A case study a strategy appears in (auto-ingestion LK1, LK2): one per
+ * scenario, the origin first. The case study page address is built from the
+ * slug and the anchor by each front end.
+ */
+export interface CaseStudyRef {
+  slug: string;
+  title: string;
+  scenario_key: string;
+  anchor: string;
+  scenario_title: string | null;
+  published_on: string | null;
+  role: "origin" | "featured";
+}
+
 /** A row of public.strategies_public: what anyone may see (D6, D7). */
 export interface PublicStrategy {
   id: string;
@@ -11,7 +26,9 @@ export interface PublicStrategy {
   version_id: string;
   version_number: number;
   slug: string;
+  /** The one authored name (auto-ingestion NM1). Show strategyLine() under it. */
   title: string;
+  /** Filled from the title since migration 20261115000001; not shown. */
   short_name: string;
   asset: string;
   asset_class: "Equities" | "ETFs" | "Crypto";
@@ -53,6 +70,8 @@ export interface PublicStrategy {
    * The view picks it: kind "chart" first, else the first by order, else null.
    */
   chart_url: string | null;
+  /** Case study links, origin first; empty when none (migration 20261115000001). */
+  case_studies?: CaseStudyRef[];
 }
 
 export interface SourceScreenshot {

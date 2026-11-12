@@ -47,6 +47,12 @@ export interface AdminVersion extends Omit<ProStrategy, "id" | "strategy_created
   approved_by: string | null;
   published_at: string | null;
   superseded_at: string | null;
+  /** Where the version came from (migration 20261115000001); absent before it is applied. */
+  source_kind?: "manual" | "case_study";
+  case_study_slug?: string | null;
+  scenario_key?: string | null;
+  source_commit?: string | null;
+  source_hash?: string | null;
 }
 
 export interface StrategyGroup {
@@ -79,7 +85,7 @@ export const PUBLIC_VIEW_FIELDS = [
   "test_end", "fees_slippage", "data_source", "as_of", "net_profit_usd", "cash_profit_usd", "asset_qty",
   "asset_unit", "buy_hold_pnl_pct", "dca_pnl_pct", "max_drawdown_pct", "benchmark_shown",
   "ending_value_usd", "return_pct", "test_years", "cagr_pct", "vs_buy_hold_pct", "vs_dca_pct",
-  "public_chart_url", "chart_url",
+  "public_chart_url", "chart_url", "case_studies",
 ] as const;
 
 /** Fields a version may carry from the form (store.editable_fields). */
@@ -103,7 +109,7 @@ export const COPY_FIELDS = [
 
 /** Fields compared in the review diff (A6), in display order. */
 export const DIFF_FIELDS = [
-  "title", "short_name", "slug", "goal", "listed_public", "basis", "starting_capital", "test_start", "test_end",
+  "title", "slug", "goal", "listed_public", "basis", "starting_capital", "test_start", "test_end",
   "test_end_source", "as_of", "net_profit_usd", "cash_profit_usd", "asset_qty", "buy_hold_pnl_pct",
   "dca_pnl_pct", "max_drawdown_pct", "benchmark_shown", "return_pct", "cagr_pct", "vs_buy_hold_pct",
   "vs_dca_pct", "time_frame", "entry_trade", "exit_trade", "algorithm_inputs", "public_chart_url",
@@ -284,7 +290,6 @@ export function versionToFormRecipe(v: AdminVersion): Record<string, unknown> {
     cagr: v.legacy_cagr ?? undefined,
     // Version section
     title: v.title,
-    short_name: v.short_name,
     slug: v.slug,
     as_of: v.as_of,
     test_end_chart: v.test_end_source === "chart_last_bar" ? v.test_end : "",
@@ -380,7 +385,6 @@ export function benchmarkShownFor(
 }
 
 export interface FormValues {
-  name: string;
   asset_class: string;
   asset: string;
   time_horizon: string;
@@ -398,9 +402,9 @@ export interface FormValues {
   net_profit?: string;
   algorithm: string;
   algorithm_inputs?: SettingsInputs;
+  /** The one authored name (auto-ingestion NM1). */
+  title: string;
   // Version section
-  title?: string;
-  short_name?: string;
   slug?: string;
   as_of?: string;
   test_end_chart?: string;
@@ -425,11 +429,12 @@ const blankToNull = (v: string | undefined | null) => (v === undefined || v === 
  */
 export function formToVersionFields(data: FormValues, opts: FieldOptions): Record<string, unknown> {
   const asOf = blankToNull(data.as_of) ?? todayIso();
+  // One authored name (NM1): the database fills the old name and short name
+  // columns from the title, so the form sends neither.
   const title = blankToNull(data.title) ?? data.goal;
-  const shortName = blankToNull(data.short_name) ?? data.name.replace(/^\s*\[([^\]]+)\]\s*/, "$1 ").trim();
 
   if (opts.role === "marketing_editor") {
-    const copy: Record<string, unknown> = { title, short_name: shortName, goal: data.goal };
+    const copy: Record<string, unknown> = { title, goal: data.goal };
     const note = blankToNull(data.change_note);
     if (note) copy.change_note = note;
     return copy;
@@ -441,7 +446,6 @@ export function formToVersionFields(data: FormValues, opts: FieldOptions): Recor
   const chartEnd = blankToNull(data.test_end_chart);
 
   const fields: Record<string, unknown> = {
-    name: data.name,
     asset,
     asset_class: data.asset_class,
     algorithm: data.algorithm,
@@ -451,7 +455,6 @@ export function formToVersionFields(data: FormValues, opts: FieldOptions): Recor
     time_frame: data.time_frame ?? null,
     goal: data.goal,
     title,
-    short_name: shortName,
     listed_public: data.listed_public ?? true,
     as_of: asOf,
     starting_capital: data.initial_capital ?? null,

@@ -28,3 +28,4 @@ run -f tests/db/phase1.test.sql
 run -f tests/db/phase2.test.sql
 run -f tests/db/phase3.test.sql
 run -f tests/db/phase4.test.sql
+run -f tests/db/ingest_phase1.test.sql

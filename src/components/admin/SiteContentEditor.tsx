@@ -142,7 +142,7 @@ export function SiteContentEditor({ role, groups }: { role: AdminRole | null; gr
     () =>
       groups
         .filter((g) => g.published && !g.archivedAt && g.published.listed_public)
-        .map((g) => ({ slug: g.published!.slug, label: `#${g.displayNumber} ${g.published!.short_name} (${g.published!.asset})` }))
+        .map((g) => ({ slug: g.published!.slug, label: `#${g.displayNumber} ${g.published!.title} (${g.published!.asset})` }))
         .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true })),
     [groups],
   );
