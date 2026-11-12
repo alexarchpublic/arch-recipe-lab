@@ -11,12 +11,14 @@
 //   report  the run report (GR4), as Markdown, plus the settings comparison
 //           that is Phase 3's acceptance test.
 //
-//   node scripts/ingest/run.mjs plan --case-studies ../case-studies --out runs/x [--slug msft,aapl] [--since <sha>] [--keys msft/full-cycle,...] [--compare] [--state]
+//   node scripts/ingest/run.mjs plan --case-studies ../case-studies --out runs/x [--slug msft,aapl] [--since <sha>] [--keys msft/full-cycle,...] [--compare] [--state] [--live]
 //   node scripts/ingest/run.mjs read --run runs/x [--parallel 2] [--keys slug/key,...] [--redo | --naming-only]
-//   node scripts/ingest/run.mjs write --run runs/x
+//   node scripts/ingest/run.mjs write --run runs/x [--author <name>] [--sync-index <case-studies.json url>]
 //   node scripts/ingest/run.mjs report --run runs/x
 //
-// Nothing here publishes. Publishing and the number write-back are Phase 4.
+// A dry run (the default) saves drafts only. A live run (plan --live) publishes
+// each strategy that passes, refreshes both labs, checks them, and lists the new
+// numbers in numbers.json for the case study write-back (Phase 4).
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -81,6 +83,7 @@ async function plan(a) {
     live = await liveStrategies();
   } else log("STORE_URL/STORE_ANON_KEY not set: no live titles for the uniqueness rule, no comparison.");
 
+  if (a.live && !a.state) throw new Error("A live run needs --state: it compares each scenario with what the store recorded (TR3, TR4, BF2).");
   let stateClient = null;
   if (a.state) {
     const { pipelineClient } = await import("./store.mjs");
@@ -101,8 +104,9 @@ async function plan(a) {
       const stored = state[scenario.key] ?? {};
       const p = planScenario({
         study, scenario, hash,
-        storedHash: stored.draft_hash ?? stored.ref_hash ?? null,
+        storedHash: stored.draft_hash ?? stored.published_hash ?? stored.ref_hash ?? null,
         hasSources: Object.keys(src.files).length > 0,
+        baselineUnrecorded: !!a.live,
       });
       items.push({
         ...p,
@@ -122,7 +126,7 @@ async function plan(a) {
     caseStudies: root,
     commit: a.commit ?? headCommit(root),
     createdAt: new Date().toISOString(),
-    mode: "dry-run",
+    mode: a.live ? "live" : "dry-run",
     compare: !!a.compare,
     liveTitles: live.map((s) => ({ number: s.display_number, title: s.title })),
     stored: a.compare
@@ -284,20 +288,41 @@ async function read(a) {
 async function write(a) {
   const run = resolve(a.run);
   const runInfo = readJson(join(run, "run.json"));
-  const { attachScreenshots, pipelineClient, recordExtraction, saveDraft } = await import("./store.mjs");
-  const client = await pipelineClient();
+  const live = runInfo.mode === "live";
+  const st = await import("./store.mjs");
+  const client = await st.pipelineClient({ allowProduction: live });
+  const author = a.author || process.env.INGEST_AUTHOR || "unknown";
   const results = [];
+
+  // LK1: links follow the live case study index, which carries the numbers
+  // an earlier run wrote back. A run therefore links what the run before it published.
+  let sync = null;
+  if (a["sync-index"]) {
+    const res = await fetch(a["sync-index"], { cache: "no-store" });
+    if (!res.ok) throw new Error(`Case study index ${a["sync-index"]}: HTTP ${res.status}`);
+    sync = await st.syncCaseStudyRefs(client, await res.json());
+    log("links synced:", JSON.stringify(sync).slice(0, 200));
+  }
+
+  // BF2: numbered scenarios with no recorded hash get one, and nothing else.
+  const baselines = {};
+  for (const it of runInfo.items.filter((x) => x.action === "baseline")) (baselines[it.slug] ??= {})[it.key] = it.hash;
+  for (const [slug, hashes] of Object.entries(baselines)) {
+    const n = await st.recordBaseline(client, slug, hashes);
+    for (const key of Object.keys(hashes)) results.push({ slug, key, number: runInfo.items.find((x) => x.slug === slug && x.key === key)?.strategyNumber, outcome: "baseline", recorded: n > 0 });
+  }
+
   for (const f of readdirSync(join(run, "scenarios")).filter((n) => n.endsWith(".json")).sort()) {
     const res = readJson(join(run, "scenarios", f));
     const it = res.item;
-    const entry = { slug: it.slug, key: it.key, number: it.strategyNumber };
+    const entry = { slug: it.slug, key: it.key, number: it.strategyNumber, title: res.naming?.reply?.title };
     if (res.held || !res.fields) {
-      results.push({ ...entry, outcome: "held", reasons: holds(res.findings).map((h) => h.message) });
+      results.push({ ...entry, outcome: "held", reasons: holds(res.findings ?? []).map((h) => h.message) });
       continue;
     }
     try {
       const images = Object.entries(it.sources).map(([kind, s]) => ({ filename: s.file, kind, sha256: s.sha256, bytes: s.bytes }));
-      const extractionId = await recordExtraction(client, {
+      const extractionId = await st.recordExtraction(client, {
         strategyId: null,
         model: res.reading.model,
         promptVersion: runInfo.promptVersion,
@@ -309,19 +334,47 @@ async function write(a) {
         schemaErrors: res.schemaErrors,
         lastBarDate: res.result?.lastBarDate ?? null,
       });
-      const saved = await saveDraft(client, {
+      const saved = await st.saveDraft(client, {
         slug: it.slug, key: it.key, commit: runInfo.commit, hash: it.hash, number: it.strategyNumber,
         fields: { ...res.fields, extraction_id: extractionId },
       });
-      if (saved.created) await attachScreenshots(client, { versionId: saved.version_id, slug: it.slug, key: it.key, files: it.sources });
-      results.push({ ...entry, outcome: saved.created ? "new draft" : "draft", number: saved.display_number, version: saved.version_id, extractionId, checks: saved.checks });
+      const out = { ...entry, outcome: saved.created ? "new draft" : "draft", number: saved.display_number, version: saved.version_id, extractionId, checks: saved.checks, created: saved.created };
+      // New screenshots: always for a new strategy; for a changed scenario when publishing (PB5).
+      if (saved.created || live) {
+        try {
+          await st.attachScreenshots(client, { versionId: saved.version_id, slug: it.slug, key: it.key, files: it.sources });
+        } catch (e) {
+          if (!/originates in another case study/.test(e.message)) throw e;
+          out.note = "Screenshots kept: the strategy originates in another case study.";
+        }
+      }
+      if (live) {
+        const pub = await st.publish(client, saved.version_id, author);
+        if (pub.published) Object.assign(out, { outcome: "published", slug_page: pub.slug, listedPublic: pub.listed_public, acknowledged: pub.acknowledged, parityOk: pub.parity_ok });
+        else Object.assign(out, { outcome: "held", reasons: pub.blocking.map((b) => `${b.code}: ${b.message}`) });
+      }
+      results.push(out);
     } catch (e) {
       // 55006: a person has a draft open on this strategy. Hold this one only (GR2).
       results.push({ ...entry, outcome: e.code === "55006" ? "held" : "failed", reasons: [e.message] });
     }
     log(it.slug, it.key, results.at(-1).outcome);
   }
-  writeJson(join(run, "write.json"), { target: process.env.PIPELINE_STORE_URL || process.env.STORE_URL, at: new Date().toISOString(), results });
+
+  // PB3: refresh the public pages, then check that both labs show each number and title.
+  const published = results.filter((r) => r.outcome === "published");
+  let pages = null;
+  if (published.length) {
+    pages = await st.refreshAndCheck(client, published, { strategyLab: process.env.STRATEGY_LAB_URL || null });
+    for (const r of published) r.pages = pages[r.number];
+  }
+  // NO2: the numbers the case studies need written back (new strategies only).
+  const numbers = published.filter((r) => r.created).map((r) => ({ slug: r.slug, key: r.key, number: r.number }));
+  writeJson(join(run, "numbers.json"), numbers);
+  writeJson(join(run, "write.json"), {
+    target: process.env.PIPELINE_STORE_URL || process.env.STORE_URL, mode: runInfo.mode, at: new Date().toISOString(), author, sync, results,
+  });
+  log(`${published.length} published, ${results.filter((r) => r.outcome === "held").length} held, ${numbers.length} numbers to write back`);
 }
 
 // ---------------------------------------------------------------------------
@@ -332,12 +385,34 @@ function cell(v) {
 function report(a) {
   const run = resolve(a.run);
   const runInfo = readJson(join(run, "run.json"));
-  const writes = existsSync(join(run, "write.json")) ? readJson(join(run, "write.json")).results : [];
+  const writeInfo = existsSync(join(run, "write.json")) ? readJson(join(run, "write.json")) : null;
+  const writes = writeInfo?.results ?? [];
+  const live = runInfo.mode === "live";
   const res = runInfo.items.map((it) => (existsSync(itemFile(run, it)) ? readJson(itemFile(run, it)) : { item: it }));
   const L = [];
-  L.push(`# Case study ingestion, dry run`, "");
+  L.push(live ? "# Case study ingestion" : "# Case study ingestion, dry run", "");
   L.push(`Commit ${runInfo.commit.slice(0, 12)} · ${runInfo.createdAt.slice(0, 16).replace("T", " ")} UTC · model ${runInfo.model} · reader prompt ${runInfo.promptVersion} · naming prompt ${runInfo.namingPromptVersion} · pipeline ${runInfo.pipelineVersion}`, "");
-  L.push("Nothing was published. Phase 3 reads, names and checks, and saves drafts to staging only.", "");
+  if (!live) L.push("Nothing was published. A dry run reads, names and checks, and saves drafts only.", "");
+  const pub = writes.filter((w) => w.outcome === "published");
+  if (live) {
+    const heldN = writes.filter((w) => w.outcome === "held" || w.outcome === "failed").length;
+    L.push(`${pub.length} published, ${heldN} held or failed${writeInfo?.sync ? `; links synced (${writeInfo.sync.links ?? "?"} links)` : ""}.`, "");
+  }
+  if (pub.length) {
+    L.push("## Published", "", "| # | Title | Strategy Lab Pro | Strategy Lab | Checks let through |", "| --- | --- | --- | --- | --- |");
+    for (const w of pub) {
+      const pg = w.pages ?? {};
+      const lab = w.listedPublic === false ? "Pro only" : pg.publicPage === "ok" ? `[page](${pg.url})` : `${pg.publicPage ?? "not checked"}${pg.publicView === false ? ", not in the view" : ""}`;
+      L.push(`| ${w.number} | ${cell(w.title)} | ${pg.pro ? "shows it" : "MISSING"} | ${cell(lab)} | ${cell((w.acknowledged ?? []).join(", ")) || "none"} |`);
+    }
+    L.push("");
+  }
+  const heldW = writes.filter((w) => w.outcome === "held" || w.outcome === "failed");
+  if (heldW.length) {
+    L.push("## Held", "", "Each stays a draft (or unread) until the case study or the draft is fixed; the rest of the study went ahead (GR2, GR5).", "", "| Scenario | # | Why |", "| --- | --- | --- |");
+    for (const w of heldW) L.push(`| ${cell(`${w.slug} / ${w.key}`)} | ${w.number ?? ""} | ${cell((w.reasons ?? []).join("; "))} |`);
+    L.push("");
+  }
 
   const read = res.filter((r) => r.result || r.findings);
   const held = read.filter((r) => r.held);

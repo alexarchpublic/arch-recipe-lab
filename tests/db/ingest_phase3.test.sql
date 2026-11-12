@@ -118,7 +118,7 @@ begin
 end $$;
 
 -- 6. An existing strategy (a numbered scenario): a draft on top of its
---    published version, but its screenshots stay until publish (Phase 4).
+--    published version. (Screenshot rules for published strategies: ingest_phase4.)
 insert into run3 select 'upd', public.pipeline_save_draft('msft', 'two-year-grind', 'abc123', 'hash-3',
                                                          (select n from ids3 where k = 'existing'),
                                                          pg_temp.fields('Microsoft through a two-year grind'));
@@ -128,12 +128,6 @@ begin
   if (r->>'created')::boolean or (r->>'display_number')::int <> (select n from ids3 where k = 'existing') then
     raise exception 'update draft: %', r;
   end if;
-  begin
-    perform public.pipeline_attach_screenshots((r->>'version_id')::uuid,
-      '[{"url": "https://x.supabase.co/storage/v1/object/public/recipe-screenshots/case-studies/msft/two-year-grind/chart.png", "kind": "chart"}]');
-    raise exception 'screenshots of a published strategy were replaced';
-  exception when object_in_use then null;
-  end;
   perform public.pipeline_record_extraction((r->>'strategy_id')::uuid, 'anthropic', 'claude-sonnet-4-6', '2026-11-11.1',
     '[]', '{}', '{}', '[]', '[]', '[]', '2026-08-11');
 end $$;

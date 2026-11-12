@@ -221,7 +221,7 @@ export function fingerprintInput(scenario: CaseStudyScenario, fileHashes: Record
   return JSON.stringify({ figures, files });
 }
 
-export type ScenarioAction = "new" | "update" | "skip" | "unchanged" | "draft-study";
+export type ScenarioAction = "new" | "update" | "skip" | "unchanged" | "draft-study" | "baseline";
 
 export interface ScenarioPlan {
   slug: string;
@@ -243,6 +243,11 @@ export function planScenario(opts: {
   hash: string;
   storedHash: string | null;
   hasSources: boolean;
+  /**
+   * BF2: a numbered scenario with no recorded hash is recorded as the baseline
+   * instead of read (a live run). A dry run reads it, to compare with the store.
+   */
+  baselineUnrecorded?: boolean;
 }): ScenarioPlan {
   const { study, scenario } = opts;
   const base = {
@@ -257,6 +262,9 @@ export function planScenario(opts: {
     return { ...base, action: "skip", reason: "No source screenshots in sources/" + base.key + " (TR2, Q5)." };
   }
   if (base.strategyNumber === null) return { ...base, action: "new", reason: "No strategy number yet." };
+  if (!opts.storedHash && opts.baselineUnrecorded) {
+    return { ...base, action: "baseline", reason: "Already a strategy; its hash is recorded as the baseline, nothing is written (BF2)." };
+  }
   if (opts.storedHash && opts.storedHash === opts.hash) {
     return { ...base, action: "unchanged", reason: "Figures and screenshots match the last run (TR4)." };
   }

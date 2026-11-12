@@ -97,3 +97,70 @@ export async function attachScreenshots(client, { versionId, slug, key, files })
   if (error) throw new Error(`pipeline_attach_screenshots: ${error.message}`);
   return data;
 }
+
+/** Phase 4: publish a pipeline draft. Errors and off-list review checks hold it (GR3). */
+export async function publish(client, versionId, author) {
+  const { data, error } = await client.rpc("pipeline_publish", { p_version: versionId, p_author: author });
+  if (error) throw new Error(`pipeline_publish: ${error.message}`);
+  return data;
+}
+
+export async function syncCaseStudyRefs(client, index) {
+  const { data, error } = await client.rpc("pipeline_sync_case_study_refs", { p_index: index });
+  if (error) throw new Error(`pipeline_sync_case_study_refs: ${error.message}`);
+  return data;
+}
+
+export async function recordBaseline(client, slug, hashes) {
+  const { data, error } = await client.rpc("pipeline_record_baseline", { p_slug: slug, p_hashes: hashes });
+  if (error) throw new Error(`pipeline_record_baseline: ${error.message}`);
+  return data;
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const htmlText = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/**
+ * PB3: ask Strategy Lab to refresh (as the pipeline), then confirm each
+ * published strategy on both labs: the Pro view shows its number and title,
+ * and a public one's page shows them too. Pro reads its view live, so the
+ * view is Pro's page check. Returns { <number>: { pro, publicView, publicPage } }.
+ */
+export async function refreshAndCheck(client, published, { strategyLab = null, tries = 8, waitMs = 15_000 } = {}) {
+  const out = {};
+  const numbers = published.map((r) => r.number);
+  const { data: pro } = await client.from("strategies_pro").select("display_number, title, slug").in("display_number", numbers);
+  const { data: pub } = await client.from("strategies_public").select("display_number, title, slug").in("display_number", numbers);
+  for (const r of published) {
+    const p = (pro ?? []).find((x) => x.display_number === r.number);
+    const q = (pub ?? []).find((x) => x.display_number === r.number);
+    out[r.number] = {
+      pro: !!p && p.title === r.title,
+      publicView: r.listedPublic ? !!q && q.title === r.title : null,
+      publicPage: r.listedPublic ? "not checked" : null,
+      slug: q?.slug ?? p?.slug ?? null,
+    };
+  }
+  if (!strategyLab) return out;
+  const base = strategyLab.replace(/\/+$/, "");
+  const { data: session } = await client.auth.getSession();
+  const res = await fetch(`${base}/api/revalidate`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${session.session?.access_token ?? ""}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ scope: "strategies" }),
+  }).catch((e) => ({ ok: false, status: e.message }));
+  const refreshed = res.ok;
+  for (const r of published.filter((x) => x.listedPublic)) {
+    const o = out[r.number];
+    let found = false;
+    for (let i = 0; i < tries && !found && o.slug; i++) {
+      if (i) await sleep(waitMs);
+      const page = await fetch(`${base}/${o.slug}`, { cache: "no-store", headers: { "user-agent": "strategy-ingestion-check" } }).catch(() => null);
+      const html = page?.ok ? await page.text() : "";
+      found = html.includes(`Strategy #${r.number}`) && (html.includes(htmlText(r.title)) || html.includes(r.title.replace(/'/g, "&#x27;")) || html.includes(r.title));
+    }
+    o.publicPage = found ? "ok" : refreshed ? "missing" : `missing (refresh failed: HTTP ${res.status})`;
+    o.url = `${base}/${o.slug}`;
+  }
+  return out;
+}

@@ -130,6 +130,9 @@ describe("what to do with each scenario (TR3, TR4, TR5)", () => {
     expect(p.planScenario({ ...base, hasSources: false }).action).toBe("skip");
     expect(p.planScenario({ ...base, study: { ...study, status: "draft" } }).action).toBe("draft-study");
     expect(p.planScenario({ ...base, scenario: { ...scenario, key: undefined } }).action).toBe("skip");
+    expect(p.planScenario({ ...base, baselineUnrecorded: true }).action).toBe("baseline");
+    expect(p.planScenario({ ...base, storedHash: "old", baselineUnrecorded: true }).action).toBe("update");
+    expect(p.planScenario({ ...base, scenario: { ...scenario, strategyNumber: undefined }, baselineUnrecorded: true }).action).toBe("new");
   });
 });
 
