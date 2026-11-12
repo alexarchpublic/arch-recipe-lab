@@ -7,7 +7,7 @@
 // point of Lighthouse performance against main). Only ChartLink is a client
 // component, for the chart_opened event.
 import { getImageProps } from "next/image";
-import Link from "next/link";
+import Link from "@/components/Link";
 import type { PublicStrategy } from "@core";
 import { ChartLink } from "./ChartLink";
 

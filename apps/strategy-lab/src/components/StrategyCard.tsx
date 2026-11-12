@@ -1,7 +1,7 @@
 // A strategy in a list (redesign PRD section 6): its chart, chips, title, the
 // strategy's return beside one benchmark, and the disclosure line. One card
 // serves the home page, the list page, similar strategies and partner pages.
-import Link from "next/link";
+import Link from "@/components/Link";
 import { type MarketTag, MARKET_TAG_LABELS, type PublicStrategy, basisLabel, formatTestWindow } from "@core";
 import { assetClassLabel, chartFields, focusLabel } from "@/lib/strategies";
 import { ArrowRight, CardChart } from "./Chart";

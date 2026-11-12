@@ -2,7 +2,7 @@
 // section 5). Results and mechanism, never settings. The chart leads.
 // Server-rendered at a readable address and regenerated after each publish.
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/Link";
 import { notFound } from "next/navigation";
 import {
   type PublicStrategy,

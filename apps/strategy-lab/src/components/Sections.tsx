@@ -1,7 +1,7 @@
 // Home page sections (redesign PRD section 4). Order and copy come from site
 // content (S12), where marketing can override them; figures come from the
 // published strategies. The hero always renders first.
-import Link from "next/link";
+import Link from "@/components/Link";
 import { type PublicStrategy, DisclaimerSlot, basisLabel, formatMoney, formatSignedPercent, formatTestWindow, heroCaseLine } from "@core";
 import type { HomeContent, ProofItem, SiteContent } from "@/lib/content";
 import { assetClassLabel, chartFields, classCounts, librarySummary, topStrategies } from "@/lib/strategies";

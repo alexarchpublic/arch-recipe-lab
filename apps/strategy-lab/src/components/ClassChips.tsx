@@ -2,7 +2,7 @@
 // Asset-class chips with live counts ("All 62", "Stocks 39", ...). On the home
 // page they are links to the filtered list; on the list page they filter in
 // place. Either way a click is a market_filter_used event (redesign PRD 8).
-import Link from "next/link";
+import Link from "@/components/Link";
 import { track } from "@/lib/analytics";
 import type { ClassCount } from "@/lib/strategies";
 
