@@ -3,7 +3,7 @@
 // clients, book.
 import { BookSection, ClientsSection, FinderSection, Hero, HowSection, LibrarySection, ProofSection, ReadSection, SizeSection, TopSection } from "@/components/Sections";
 import { StickyActions } from "@/components/StickyActions";
-import { getCaseStudyLinks } from "@/lib/caseStudies";
+import { studyLinks } from "@/lib/caseStudies";
 import { getDisclaimer, getSiteContent, getStrategies } from "@/lib/data";
 import type { ProofItem } from "@/lib/content";
 import { heroStrategy } from "@/lib/strategies";
@@ -11,16 +11,13 @@ import { heroStrategy } from "@/lib/strategies";
 export const revalidate = 120;
 
 export default async function Home() {
-  const [strategies, content, disclaimer, links] = await Promise.all([getStrategies(), getSiteContent(), getDisclaimer(), getCaseStudyLinks()]);
+  const [strategies, content, disclaimer] = await Promise.all([getStrategies(), getSiteContent(), getDisclaimer()]);
   // Case studies that use a published strategy, newest first.
-  const byNumber = new Map(strategies.map((s) => [s.display_number, s.slug]));
   const studyMap = new Map<string, ProofItem & { published: string }>();
-  for (const [n, list] of links) {
-    const slug = byNumber.get(n);
-    if (!slug) continue;
-    for (const l of list) {
-      const item = studyMap.get(l.slug) ?? { title: l.title, href: l.studyUrl, strategies: [], published: l.published };
-      if (!item.strategies!.includes(slug)) item.strategies!.push(slug);
+  for (const s of strategies) {
+    for (const l of studyLinks(s)) {
+      const item = studyMap.get(l.slug) ?? { title: l.title, href: l.studyUrl, strategies: [], published: l.published ?? "" };
+      if (!item.strategies!.includes(s.slug)) item.strategies!.push(s.slug);
       studyMap.set(l.slug, item);
     }
   }

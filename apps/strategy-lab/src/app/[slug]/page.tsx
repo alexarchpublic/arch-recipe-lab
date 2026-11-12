@@ -31,7 +31,7 @@ import { SettingsLabel } from "@/components/SettingsLabel";
 import { StickyActions } from "@/components/StickyActions";
 import { Chip, MarketChip, StrategyCard } from "@/components/StrategyCard";
 import { ViewTracker } from "@/components/ViewTracker";
-import { getCaseStudyLinks } from "@/lib/caseStudies";
+import { studyLinks } from "@/lib/caseStudies";
 import { getDisclaimer, getSiteContent, getStrategies, getStrategy } from "@/lib/data";
 import { canonicalUrl } from "@/lib/env";
 import { assetClassLabel, chartFields, focusHelp, focusLabel, horizonLabel, relatedStrategies, testLength } from "@/lib/strategies";
@@ -132,10 +132,10 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export default async function StrategyPage({ params }: Props) {
   const { slug } = await params;
-  const [all, content, disclaimer, studies] = await Promise.all([getStrategies(), getSiteContent(), getDisclaimer(), getCaseStudyLinks()]);
+  const [all, content, disclaimer] = await Promise.all([getStrategies(), getSiteContent(), getDisclaimer()]);
   const s = all.find((x) => x.slug === slug);
   if (!s) notFound();
-  const caseStudies = s.display_number !== null ? studies.get(s.display_number) ?? [] : [];
+  const caseStudies = studyLinks(s);
   const related = relatedStrategies(all, s, 3);
   const cfg = content.config;
   const tag = content.marketTags[s.slug];

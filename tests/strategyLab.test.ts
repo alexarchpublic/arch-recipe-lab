@@ -93,33 +93,6 @@ describe("public helpers", () => {
   });
 });
 
-describe("case study links", () => {
-  it("maps each strategy number to the scenarios that show it, newest study first", async () => {
-    const { getCaseStudyLinks } = await import("../apps/strategy-lab/src/lib/caseStudies");
-    const manifest = {
-      studies: [
-        { slug: "old", title: "Old study", url: "https://archpublic.com/case-studies/old/", published: "2026-06-01", strategies: [{ number: 41, scenario: "A", anchor: "scenario-2", window: "2022 to 2026" }] },
-        { slug: "new", title: "New study", url: "https://archpublic.com/case-studies/new/", published: "2026-09-01", strategies: [{ number: 41, scenario: "B", anchor: "scenario-1" }, { number: "x", scenario: "bad", anchor: "scenario-3" }] },
-        { slug: "none", title: "No links", url: "u", published: "2026-10-01" },
-      ],
-    };
-    const real = globalThis.fetch;
-    globalThis.fetch = (async () => new Response(JSON.stringify(manifest))) as typeof fetch;
-    try {
-      const links = await getCaseStudyLinks();
-      expect([...links.keys()]).toEqual([41]);
-      expect(links.get(41)!.map((l) => [l.slug, l.url])).toEqual([
-        ["new", "https://archpublic.com/case-studies/new/#scenario-1"],
-        ["old", "https://archpublic.com/case-studies/old/#scenario-2"],
-      ]);
-      globalThis.fetch = (async () => new Response("down", { status: 503 })) as typeof fetch;
-      expect((await getCaseStudyLinks()).size).toBe(0);
-    } finally {
-      globalThis.fetch = real;
-    }
-  });
-});
-
 describe("redesign: site content", () => {
   it("orders the home sections read, top, size, how, clients, book by default", () => {
     const c = mergeSiteContent([]);
