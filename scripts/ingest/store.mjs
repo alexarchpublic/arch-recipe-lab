@@ -86,10 +86,18 @@ export async function attachScreenshots(client, { versionId, slug, key, files })
     const f = files[kind];
     if (!f) continue;
     const path = `case-studies/${slug}/${key}/${f.sha256.slice(0, 12)}-${f.file}`;
-    const { error } = await client.storage.from("recipe-screenshots").upload(path, readFileSync(f.path), {
-      contentType: "image/png", upsert: false,
-    });
-    if (error && !/exists|duplicate/i.test(error.message)) throw new Error(`Upload ${path}: ${error.message}`);
+    let error = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt) await new Promise((r) => setTimeout(r, 5000 * attempt));
+      ({ error } = await client.storage.from("recipe-screenshots").upload(path, readFileSync(f.path), {
+        contentType: "image/png", upsert: false,
+      }));
+      if (!error || /exists|duplicate/i.test(error.message)) {
+        error = null;
+        break;
+      }
+    }
+    if (error) throw new Error(`Upload ${path}: ${error.message}`);
     const { data } = client.storage.from("recipe-screenshots").getPublicUrl(path);
     images.push({ url: data.publicUrl, kind, order: images.length, sha256: f.sha256 });
   }

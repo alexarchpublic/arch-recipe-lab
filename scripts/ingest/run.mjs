@@ -298,9 +298,13 @@ async function write(a) {
   // an earlier run wrote back. A run therefore links what the run before it published.
   let sync = null;
   if (a["sync-index"]) {
-    const res = await fetch(a["sync-index"], { cache: "no-store" });
-    if (!res.ok) throw new Error(`Case study index ${a["sync-index"]}: HTTP ${res.status}`);
-    sync = await st.syncCaseStudyRefs(client, await res.json());
+    let index;
+    if (/^https?:\/\//.test(a["sync-index"])) {
+      const res = await fetch(a["sync-index"], { cache: "no-store" });
+      if (!res.ok) throw new Error(`Case study index ${a["sync-index"]}: HTTP ${res.status}`);
+      index = await res.json();
+    } else index = readJson(resolve(a["sync-index"])); // a built site/case-studies.json
+    sync = await st.syncCaseStudyRefs(client, index);
     log("links synced:", JSON.stringify(sync).slice(0, 200));
   }
 
