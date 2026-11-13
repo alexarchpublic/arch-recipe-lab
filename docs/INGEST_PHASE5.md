@@ -5,7 +5,7 @@ phases row 5. Each item ships on its own.
 
 | Item | What | State |
 | --- | --- | --- |
-| BF3 | One plain title for each older live strategy | This document |
+| BF3 | One plain title for each older live strategy | Live in production 2026-11-13 (below) |
 | EX10 | The admin screen's manual upload goes through the same reader and checks | Not started; only if the owner wants it now |
 | BF5 | Older scenarios with no strategy | Needs the owner's screenshots in `content/<slug>/sources/<key>/`; the live workflow picks them up |
 | PB4 | archpublic.com refresh hook | Needs Arch Public's dev team (Q4); request drafted only |
@@ -75,13 +75,31 @@ Any refusal raises, so nothing is left behind. The database tests are in
    unchanged (old slug still resolves), R8 and the link check pass, and each
    case study's link block shows the new titles after its next refresh.
 
+### Done, 13 November 2026
+
+- Named: 76 strategies in about 15 minutes (four at a time, claude-sonnet-4-6 on
+  the subscription, naming prompt 2026-11-12.2). All passed the rules on the
+  first try: no fallbacks, no clashes. 60 from their case study, 16 from stored
+  fields. Seven titles edited by hand after the naming step (#22, #29, #47, #53,
+  #60, #68, #69), each marked on the review page with the reason.
+- Approved: the owner's one look (Q3), "Approve the list", 2026-11-13. The list
+  as approved is `docs/ingest-phase5/bf3-approved-list.json`.
+- Staging: migration applied (function md5 741b745f1536b1570eab1d77da5bd26a);
+  50 renamed, 26 held by staging's leftover drafts, as designed.
+- Production: migration applied on the owner's OK (same md5; anon cannot
+  execute). 76 published, 0 held. Every new version is change type copy, keeps
+  its page address, and is identical to the one before in every other column
+  (figures, settings, screenshots, extraction, source). Parity ok; 79 distinct
+  titles; no STH, LTH, YTD, hour codes or "scalp" left in any live title.
+  Strategy Lab refreshed through /api/revalidate as the pipeline: all 76 show
+  the new title on the Pro view, all 62 public ones on their page at the same
+  address.
+
 ### Known
 
-- #85 has an open draft (the `sellOnDownTrend` settings correction prepared for
-  the owner; version 3, source manual). `pipeline_publish_copy` holds it and
-  never touches it. Rename it after that draft is published or discarded, with
-  `--numbers 85`, or, only with the owner's OK, put the new title into that
-  same draft in the admin screen before he publishes it.
+- #85 had an open settings draft while the list was made; it was gone by the
+  production run, so #85 was renamed with the rest. The function holds any
+  strategy with an open draft and never touches the draft.
 - The case study pages read titles from `strategy-lab-pages.json`, which the
   case-studies refresh script rewrites from the views. Until that runs, the
   case study link blocks show the old titles.
