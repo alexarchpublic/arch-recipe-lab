@@ -3,10 +3,33 @@
 // refresh (R4, A8), and by the case study pipeline after it publishes (PB3).
 // The caller must be signed in with a role on the admin list: the caller
 // sends its own session token and this route asks the store which role it has.
+//
+// The old addresses are server redirects fixed at build (next.config.mjs), so
+// a refresh cannot add one. When the store's list differs from this build's
+// (a strategy published, retired or given a new page address), the route
+// starts a new production deploy through the Vercel deploy hook in
+// STRATEGY_LAB_DEPLOY_HOOK (PRD 13, Redirects). Refresh archpublic.com's copy
+// only once that deploy is live.
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { PRO_ORIGINS, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/env";
 import { CONTENT_TAG, STRATEGIES_TAG } from "@/lib/data";
+import { allMoved } from "@/lib/moved";
+import { movedKey, readMoved } from "@/lib/moved-list.mjs";
+
+/** Starts a deploy when the old addresses in the store differ from this build's. */
+async function deployIfMoved(): Promise<string> {
+  try {
+    const live = await readMoved(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (movedKey(live) === movedKey(allMoved())) return "not needed";
+    const hook = process.env.STRATEGY_LAB_DEPLOY_HOOK?.trim();
+    if (!hook) return "needed, but STRATEGY_LAB_DEPLOY_HOOK is not set";
+    const res = await fetch(hook, { method: "POST", cache: "no-store" });
+    return res.ok ? "started" : `failed: HTTP ${res.status}`;
+  } catch (e) {
+    return `failed: ${e instanceof Error ? e.message : String(e)}`;
+  }
+}
 
 export const dynamic = "force-dynamic";
 
@@ -47,5 +70,6 @@ export async function POST(request: Request) {
   if (what.scope !== "content") revalidateTag(STRATEGIES_TAG);
   if (what.scope !== "strategies") revalidateTag(CONTENT_TAG);
   revalidatePath("/", "layout");
-  return NextResponse.json({ ok: true, at: new Date().toISOString() }, { headers });
+  const deploy = what.scope === "content" ? "not needed" : await deployIfMoved();
+  return NextResponse.json({ ok: true, at: new Date().toISOString(), deploy }, { headers });
 }
