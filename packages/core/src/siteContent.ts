@@ -220,7 +220,7 @@ export const DEFAULT_CONTENT: Omit<SiteContent, "partners" | "marketTags"> = {
     responseTime: "",
     confirmationNote: "You'll get a calendar invitation and a reminder before the call. Each email has a link to reschedule.",
     settingsLabel: "Exact settings come with every client account, the free tier included, in Strategy Lab Pro.",
-    consentMarketing: "Email me about new strategies and Arch Public news. Unsubscribe at any time.",
+    consentMarketing: "We'll also email you new strategies and Arch Public news. Unsubscribe at any time.",
     consentCalls: "You may call or text me about my demo.",
     collectionNotice:
       "We attach the strategies you looked at and your earlier visits to this site to your contact record, so the person you speak to can prepare.",

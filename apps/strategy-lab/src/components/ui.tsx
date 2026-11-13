@@ -40,6 +40,14 @@ export function Select({ children, ...props }: SelectHTMLAttributes<HTMLSelectEl
   );
 }
 
+/**
+ * The email notice under each capture form (fixes PRD, fix 6, Alex 13 Nov):
+ * everyone who leaves an email gets the campaigns, so there is no tickbox.
+ */
+export function Notice({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <p className={`text-xs leading-snug text-muted-foreground ${className}`}>{children}</p>;
+}
+
 export function Check({ checked, onChange, name, children }: { checked: boolean; onChange: (v: boolean) => void; name?: string; children: ReactNode }) {
   return (
     <label className="flex items-start gap-2 text-xs leading-snug text-muted-foreground">

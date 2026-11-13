@@ -6,14 +6,13 @@ import { writeVisitor } from "@/lib/visitor";
 import { assetClassLabel } from "@/lib/strategies";
 import { sendLead } from "./api";
 import { useLeadSettings } from "./Booking";
-import { Button, Check, Input } from "./ui";
+import { Button, Input, Notice } from "./ui";
 
 export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dark = false, id = "alerts" }: { defaultClasses?: string[]; consentText: string; privacyUrl: string; dark?: boolean; id?: string }) {
   const fieldId = `alert-email-${id}`;
   const lead = useLeadSettings();
   const [classes, setClasses] = useState<string[]>(defaultClasses.length ? defaultClasses : ["Equities", "ETFs", "Crypto"]);
   const [email, setEmail] = useState("");
-  const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState("");
   const [state, setState] = useState<"idle" | "busy" | "done">("idle");
   const [error, setError] = useState("");
@@ -30,9 +29,8 @@ export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dar
         e.preventDefault();
         setError("");
         if (!classes.length) return setError("Choose at least one.");
-        if (!consent) return setError("Tick the box so we can email you.");
         setState("busy");
-        const r = await sendLead({ kind: "alert", email, alertAssetClasses: classes, consentMarketing: consent, website }, lead);
+        const r = await sendLead({ kind: "alert", email, alertAssetClasses: classes, website }, lead);
         if (!r.ok) {
           setState("idle");
           return setError(r.error ?? "Please try again.");
@@ -57,10 +55,10 @@ export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dar
       </div>
       <input tabIndex={-1} autoComplete="off" aria-hidden className="hidden" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} />
       <div className={dark ? "[&_span]:text-white/70" : ""}>
-        <Check name="consent_marketing" checked={consent} onChange={setConsent}>
+        <Notice>
           {consentText}{" "}
           <a className="underline" href={privacyUrl} target="_blank" rel="noreferrer">Privacy policy</a>
-        </Check>
+        </Notice>
       </div>
       <Button type="submit" variant="secondary" disabled={state === "busy"} className="min-h-[48px] w-full text-[15px]">
         {state === "busy" ? "Saving…" : "Email me new strategies"}

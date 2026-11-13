@@ -18,7 +18,6 @@ export interface LeadInput {
   strategyInView?: string;
   /** "Email me this": the figures text (lib/figures.ts). */
   figures?: string;
-  consentMarketing?: boolean;
   consentCalls?: boolean;
   meetingStart?: string;
   website?: string;
@@ -81,7 +80,8 @@ export async function sendLead(input: LeadInput, settings: LeadSettings): Promis
   };
 
   const r = await submitToHubSpot(fields, {
-    marketing: !!input.consentMarketing,
+    // Every capture opts in to marketing; the forms say so in a notice (fixes PRD, fix 6, Alex 13 Nov).
+    marketing: true,
     marketingText: settings.consentMarketingText,
     processText: settings.processText,
   });
