@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { comparePageToStore, parsePageFigures } from "@core";
 import { DEFAULT_CONTENT, DEFAULT_SECTIONS, fillTokens, formatSignedCurrency, formatSignedPercent, heroCaseLine, mergeSiteContent, publicChartScreenshot } from "@core";
-import { rangeFor, relatedStrategies, testLength, topStrategies } from "../apps/strategy-lab/src/lib/strategies";
+import { byNewest, heroStrategy, latestStudyBest, rangeFor, relatedStrategies, testLength, topStrategies } from "../apps/strategy-lab/src/lib/strategies";
 
 const html = `
 <div data-results="a1" data-version="v2" data-slug="nvda">
@@ -81,10 +81,49 @@ describe("public helpers", () => {
     expect(testLength(0.5)).toBe("6 months");
     expect(testLength(1.5)).toBe("1 yr 6 mo");
   });
-  it("takes marketing's featured list, skipping strategies no longer published", () => {
-    const all = [s({ slug: "a", return_pct: 5 }), s({ slug: "b", return_pct: 50 })];
-    expect(topStrategies(all, ["gone", "a"]).map((x: { slug: string }) => x.slug)).toEqual(["a"]);
-    expect(topStrategies(all, []).map((x: { slug: string }) => x.slug)).toEqual(["b", "a"]);
+  it("takes marketing's featured list, skipping strategies no longer published; otherwise the newest", () => {
+    const all = [s({ slug: "a", return_pct: 5, display_number: 9 }), s({ slug: "b", return_pct: 50, display_number: 3 })];
+    expect(topStrategies(all, ["gone", "b"]).map((x: { slug: string }) => x.slug)).toEqual(["b"]);
+    expect(topStrategies(all, []).map((x: { slug: string }) => x.slug)).toEqual(["a", "b"]);
+  });
+  it("orders newest first by strategy number (fixes PRD, fixes 2 and 3)", () => {
+    const rows = [{ display_number: 41 }, { display_number: 101 }, { display_number: null }, { display_number: 99 }];
+    expect([...rows].sort(byNewest).map((r) => r.display_number)).toEqual([101, 99, 41, null]);
+  });
+  describe("hero (fixes PRD, fix 1)", () => {
+    const study = (slug: string, published_on: string | null) => ({ slug, published_on, title: slug, scenario_key: "k", anchor: "a", scenario_title: null, role: "origin" });
+    const nvda = [
+      s({ slug: "n99", display_number: 99, return_pct: 25.5, vs_buy_hold_pct: 33.5, case_studies: [study("movements-nvda-2026", "2026-11-11")] }),
+      s({ slug: "n100", display_number: 100, return_pct: 28.5, vs_buy_hold_pct: 36.7, case_studies: [study("movements-nvda-2026", "2026-11-11")] }),
+      s({ slug: "n101", display_number: 101, return_pct: 21.8, vs_buy_hold_pct: 30.6, case_studies: [study("movements-nvda-2026", "2026-11-11")] }),
+    ];
+    const older = [
+      s({ slug: "nvda41", display_number: 41, return_pct: 1192.4, case_studies: [study("nvda", "2026-06-22")] }),
+      s({ slug: "intc74", display_number: 74, return_pct: 95.9, case_studies: [study("intc", "2026-08-01")] }),
+      s({ slug: "none", display_number: 12, return_pct: 2000, case_studies: [] }),
+    ];
+    const all = [...older, ...nvda];
+    it("picks the best strategy of the newest case study", () => {
+      expect((latestStudyBest(all) as unknown as { slug: string }).slug).toBe("n100");
+      expect((heroStrategy(all, "") as unknown as { slug: string }).slug).toBe("n100");
+    });
+    it("lets a pin override it, and ignores a pin no longer published", () => {
+      expect((heroStrategy(all, "intc74") as unknown as { slug: string }).slug).toBe("intc74");
+      expect((heroStrategy(all, "gone") as unknown as { slug: string }).slug).toBe("n100");
+    });
+    it("breaks a return tie on the margin over buy and hold, then the lower number", () => {
+      const tie = [
+        s({ slug: "t1", display_number: 7, return_pct: 10, vs_buy_hold_pct: 5, case_studies: [study("x", "2026-11-12")] }),
+        s({ slug: "t2", display_number: 8, return_pct: 10, vs_buy_hold_pct: 9, case_studies: [study("x", "2026-11-12")] }),
+        s({ slug: "t3", display_number: 6, return_pct: 10, vs_buy_hold_pct: 9, case_studies: [study("x", "2026-11-12")] }),
+      ];
+      expect((latestStudyBest(tie) as unknown as { slug: string }).slug).toBe("t3");
+    });
+    it("falls back to the highest return when no strategy has a dated case study", () => {
+      const bare = [s({ slug: "a", return_pct: 5 }), s({ slug: "b", return_pct: 50, case_studies: [study("y", null)] })];
+      expect(latestStudyBest(bare)).toBeNull();
+      expect((heroStrategy(bare, "") as unknown as { slug: string }).slug).toBe("b");
+    });
   });
   it("relates by asset, then class and focus", () => {
     const me = s({ slug: "me", asset: "BTC" });
@@ -110,7 +149,7 @@ describe("redesign: site content", () => {
     const live = mergeSiteContent(rows, { count: 62 });
     expect(live.home.hero.subhead.startsWith("62 backtested strategies")).toBe(true);
     expect(live.home.top.title).toBe("All 62 of them");
-    expect(live.home.top.subtitle).toContain("Six of the 62");
+    expect(live.home.top.subtitle).toContain("latest six of the 62");
     expect(live.partners.acme.subhead).toContain("62 backtested");
     expect(JSON.stringify(live)).not.toContain("{count}");
     const editor = mergeSiteContent(rows);

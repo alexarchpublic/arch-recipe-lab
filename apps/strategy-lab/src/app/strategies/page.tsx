@@ -44,7 +44,7 @@ export default async function StrategiesPage() {
         {content.config.alerts && (
           <section className="mt-14 rounded-lg border border-line bg-card p-6 sm:p-8" aria-labelledby="alerts-h">
             <h2 id="alerts-h" className="text-[22px] font-extrabold text-navy">Tell me when new strategies publish</h2>
-            <p className="mt-2 text-[15px] text-ink">One email when a strategy publishes in the asset classes you choose.</p>
+            <p className="mt-2 text-[15px] text-ink">Our new-strategies email, about once a month. Tell us the asset classes you follow.</p>
             <div className="mt-4 max-w-md">
               <AlertCapture id="list" consentText={content.booking.consentMarketing} privacyUrl={content.actions.privacyUrl} />
             </div>
