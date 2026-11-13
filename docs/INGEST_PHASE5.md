@@ -7,7 +7,7 @@ phases row 5. Each item ships on its own.
 | --- | --- | --- |
 | BF3 | One plain title for each older live strategy | Live in production 2026-11-13 (below) |
 | EX10 | The admin screen's manual upload goes through the same reader and checks | Not started; only if the owner wants it now |
-| BF5 | Older scenarios with no strategy | Needs the owner's screenshots in `content/<slug>/sources/<key>/`; the live workflow picks them up |
+| BF5 | Older scenarios with no strategy | 9 ready scenarios staged (below); the rest need screenshots or another reader |
 | PB4 | archpublic.com refresh hook | Needs Arch Public's dev team (Q4); request drafted only |
 
 ## BF3: rename the older strategies
@@ -104,3 +104,20 @@ Any refusal raises, so nothing is left behind. The database tests are in
   case-studies refresh script rewrites from the views. Until that runs, the
   case study link blocks show the old titles.
 - archpublic.com's saved copies change only when they are recaptured (PB4).
+
+## BF5: older scenarios with no strategy
+
+On 13 Nov 2026, 56 of the 122 case study scenarios had no strategy number. None matches one of the 16 live strategies without a case study (#22 to #31, #36 to #40, #60), so each would be a new strategy.
+
+| Group | Scenarios | What it needs |
+| --- | --- | --- |
+| Market Wave, screenshots on hand | 10: AMD (3), BRR (3), Bitcoin Market Wave stack legs 1 and 2, Movements IREN and INTC | Sources added in case-studies (branch `bf5-ready-sources`); the owner's screenshot sets match the case study charts pixel for pixel |
+| Market Wave, no screenshots | 7: Movements TSLA (daily), Ride the Market Wave (6) | The owner's chart, settings and data window screenshots |
+| Other algorithms | 39: the 2025 Intelligence, Arbitrage and Oracle studies and the Bitcoin treasury essays | The reader covers Market Wave only (A13); about 10 of these are not backtests at all |
+
+Two pipeline fixes came out of the staging dry run:
+
+- **Ticker from the company name.** TradingView's header names the company, not the symbol, and Claude read ProCap Financial's logo initials ("PC") as BRR's ticker, which held all three BRR scenarios. When the header's company is the case study's (`sameCompany`), the case study's ticker is stored and the finding is a note (`ticker_from_name`); any other mismatch still holds.
+- **Time frames the store does not have.** The reader filed any time frame it did not know as 1 Hour, so BRR's 15 minute scenario would have been stored as hourly. Such a reading now holds (`time_frame_unsupported`). BRR's 15 minute sources stay out of the case-studies branch until the store has a 15 minute time frame.
+
+Staging dry run (production reads, staging drafts): 9 new drafts (#102 to #110 on staging), every return equal to its case study's, no holds; warnings only for Claude's last-bar date and DCA rounding (the case study's figure is stored). Production order: merge this, then the case-studies branch; its deploy runs the live workflow, which publishes the 9.
