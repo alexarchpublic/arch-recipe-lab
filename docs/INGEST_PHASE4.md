@@ -43,7 +43,7 @@ Total pipeline time on staging, after the deploy: under 3 minutes. In GitHub Act
 
 ## Rollout to production (each step needs the owner's go-ahead)
 
-1. Apply `20261117000001_ingest_pipeline_drafts.sql` then `20261118000001_ingest_pipeline_publish.sql` to production; compare function fingerprints with staging; parity check.
+1. Apply `20261117000001_ingest_pipeline_drafts.sql` then `20261118000001_ingest_pipeline_publish.sql` to production; compare function fingerprints with staging; parity check. **Done 12 Nov 2026** with the owner's OK: production started where staging did (the 20261115 parity check, no pipeline objects, 76 Pro, 62 public, 63 links, parity clean). After both files: the ten affected functions are identical to staging (md5 of `prosrc`); parity clean with the same counts; anon cannot call the pipeline functions; R8 passes. No pipeline account exists in production yet, so nothing can call them.
 2. Create the production pipeline account (as on staging, its own password), and put its login in the case-studies repository secrets.
 3. Merge alexarchpublic/arch-recipe-lab#18 (Strategy Lab's refresh route must accept the pipeline before a live run).
 4. Case-studies settings: `CLAUDE_CODE_OAUTH_TOKEN` (owner runs `claude setup-token`), `RECIPE_LAB_DEPLOY_KEY`, `PIPELINE_*` for production, `STORE_*`, `PIPELINE_STORE_*` (production), `STRATEGY_LAB_URL=https://arch-strategy-lab.vercel.app`, `CASE_STUDIES_INDEX_URL=https://arch-case-studies.vercel.app/case-studies.json`, `INGEST_OWNER`. Then merge alexarchpublic/case-studies#3.
