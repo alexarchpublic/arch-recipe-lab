@@ -32,3 +32,4 @@ run -f tests/db/ingest_phase1.test.sql
 run -f tests/db/ingest_phase2.test.sql
 run -f tests/db/ingest_phase3.test.sql
 run -f tests/db/ingest_phase4.test.sql
+run -f tests/db/ingest_phase5.test.sql
