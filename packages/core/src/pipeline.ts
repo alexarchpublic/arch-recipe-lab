@@ -343,7 +343,19 @@ export function checkScenario(opts: {
   const ticker = scenarioTicker(study, scenario);
   const read = (extraction.ticker ?? "").trim().toUpperCase();
   if (ticker && read && ticker !== read) {
-    hold("ticker", `The screenshots show ${read}; the case study says ${ticker}.`);
+    // TradingView's header names the company, not the symbol; the symbol Claude
+    // reports may be the logo's initials (ProCap Financial's "PC" for BRR). When
+    // the header's company is the case study's, the case study's ticker stands.
+    const company = scenarioCompany(study, scenario);
+    if (sameCompany(extraction.assetName, company)) {
+      note("ticker_from_name", `The chart names ${extraction.assetName}, the case study's company; Claude read its symbol as ${read}, so the case study's ticker ${ticker} is stored.`);
+    } else {
+      hold("ticker", `The screenshots show ${read}; the case study says ${ticker}.`);
+    }
+  }
+  // The reader files any time frame it does not know as 1 Hour; the store has only five.
+  if (extraction.timeFrame && !isStoredTimeFrame(extraction.timeFrame)) {
+    hold("time_frame_unsupported", `The chart is on ${extraction.timeFrame}, a time frame the store does not have (1W, 1D, 6H, 4H, 1H).`);
   }
   const figures = scenarioFigures(scenario);
   if (figures.timeFrame && result.recipe.time_frame !== figures.timeFrame) {
@@ -530,6 +542,20 @@ export function fallbackTitle(assetName: string, scenarioTitle: string): string 
 }
 
 /** How a company is said, for titles: "Microsoft Corp." → "Microsoft". */
+/** Whether a chart time frame as read ("4h", "1D", "15") is one the store has. */
+export function isStoredTimeFrame(raw: string): boolean {
+  const t = raw.trim().toLowerCase().replace(/\s+/g, " ");
+  return /^(1 ?w|1 week|weekly|w|1 ?d|1 day|daily|d|6 ?h|6 hours?|360|4 ?h|4 hours?|240|1 ?h|1 hour|hourly|60|60 ?m)$/.test(t);
+}
+
+/** Whether the chart header's company name is the case study's company ("ProCap Financial, Inc." and "ProCap Financial"). */
+export function sameCompany(read: string | null | undefined, company: string | null | undefined): boolean {
+  const norm = (x: string | null | undefined) => plainAssetName(x, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+  const a = norm(read);
+  const b = norm(company);
+  return a.length >= 3 && b.length >= 3 && a === b;
+}
+
 export function plainAssetName(name: string | null | undefined, ticker: string): string {
   const n = (name ?? "").trim();
   if (!n) return ticker;
@@ -615,8 +641,10 @@ export function draftFields(opts: DraftOptions): Record<string, unknown> {
   // The store requires test end <= as-of, and the as-of is the case study's date.
   const asOfDate = study.published && study.published < today ? study.published : today;
   const futureEnd = !!end && end > asOfDate;
+  // The case study's ticker, where it gives one, over the symbol Claude read (see ticker_from_name).
+  const asset = scenarioTicker(study, scenario) ?? r.asset;
   const fields: Record<string, unknown> = {
-    asset: r.asset,
+    asset,
     asset_class: r.asset_class,
     algorithm: "Market Wave",
     strategy_type: "Market Wave",
@@ -632,7 +660,7 @@ export function draftFields(opts: DraftOptions): Record<string, unknown> {
     net_profit_usd: net,
     cash_profit_usd: figures.realizedProfit !== null ? preferScreen(figures.realizedProfit, [st.realizedProfit], "money") : r.cash_profit ?? null,
     asset_qty: figures.sharesHeld !== null ? preferScreen(figures.sharesHeld, [st.currentShares], "count") : firstNum(r.asset_accumulated),
-    asset_unit: r.asset,
+    asset_unit: asset,
     buy_hold_pnl_pct: buyHold,
     dca_pnl_pct: dca,
     benchmark_shown: benchmark,

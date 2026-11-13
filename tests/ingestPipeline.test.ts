@@ -154,9 +154,29 @@ describe("what holds a strategy", () => {
   it("holds on a missing screenshot, a failed read, the wrong ticker or time frame", () => {
     expect(p.holds(check({ sourceKinds: ["chart", "stats"] })).map((f) => f.code)).toEqual(["missing_screenshot"]);
     expect(p.holds(check({ extraction: null, result: null, readError: "usage limit" })).map((f) => f.code)).toEqual(["unreadable"]);
-    expect(p.holds(check({ study: { ...study, ticker: "AAPL" } })).map((f) => f.code)).toEqual(["ticker"]);
+    expect(p.holds(check({ study: { ...study, ticker: "AAPL", company: "Apple" } })).map((f) => f.code)).toEqual(["ticker"]);
     expect(p.holds(check({ scenario: { ...scenario, chart: "Daily chart" } })).map((f) => f.code)).toEqual(["time_frame"]);
     expect(p.holds(check({ schemaErrors: ["settings.scope: expected a number"] })).map((f) => f.code)).toEqual(["schema"]);
+  });
+
+  it("takes the case study's ticker when the chart names its company but the symbol read differs", () => {
+    const logo = { ...reading, ticker: "MS" };
+    const findings = check({ extraction: logo, result: p.buildRecipeFromExtraction(logo) });
+    expect(p.holds(findings)).toEqual([]);
+    expect(findings.map((f) => f.code)).toContain("ticker_from_name");
+    const fields = p.draftFields({ study, scenario, result: p.buildRecipeFromExtraction(logo), extraction: logo,
+      naming: { title: "t", summary: "s", description: "d" }, asOf: "2026-11-12" });
+    expect(fields).toMatchObject({ asset: "MSFT", asset_unit: "MSFT" });
+    expect(p.sameCompany("ProCap Financial, Inc.", "ProCap Financial")).toBe(true);
+    expect(p.sameCompany("Microsoft Corp.", "Apple")).toBe(false);
+    expect(p.sameCompany(null, "Apple")).toBe(false);
+  });
+
+  it("holds a chart on a time frame the store does not have", () => {
+    const quarter = { ...reading, timeFrame: "15" };
+    expect(p.holds(check({ extraction: quarter, result: p.buildRecipeFromExtraction(quarter) })).map((f) => f.code)).toContain("time_frame_unsupported");
+    for (const ok of ["1W", "1D", "6h", "4h", "1h", "4 Hours", "240"]) expect(p.isStoredTimeFrame(ok)).toBe(true);
+    for (const no of ["15", "15m", "30m", "2h", "12h", "1M"]) expect(p.isStoredTimeFrame(no)).toBe(false);
   });
 
   it("holds when the chart header and the settings panel disagree (A9)", () => {
