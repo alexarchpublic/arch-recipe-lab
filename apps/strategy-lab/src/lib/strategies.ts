@@ -67,14 +67,56 @@ export function pickBySlug(all: PublicStrategy[], slugs: string[]): PublicStrate
   return slugs.map((slug) => map.get(slug)).filter((s): s is PublicStrategy => !!s);
 }
 
+/**
+ * Newest first. Strategy numbers come from a store sequence at first publish
+ * and are never reused, so this order never moves when a title or figure is
+ * edited (fixes PRD, fixes 2 and 3).
+ */
+export function byNewest(a: Pick<PublicStrategy, "display_number">, b: Pick<PublicStrategy, "display_number">): number {
+  return (b.display_number ?? 0) - (a.display_number ?? 0);
+}
+
+/** Marketing's pinned list when set (an override); otherwise the newest published. */
 export function topStrategies(all: PublicStrategy[], featured: string[], n = 6): PublicStrategy[] {
   const chosen = pickBySlug(all, featured);
   if (chosen.length) return chosen.slice(0, n);
-  return [...all].sort(byReturn).slice(0, n);
+  return [...all].sort(byNewest).slice(0, n);
 }
 
+/**
+ * The best-performing public strategy of the newest case study (fixes PRD,
+ * fix 1). Newest = the latest published_on among the strategies' case study
+ * links; a study whose strategies are all Pro-only never reaches this list, so
+ * the next newest study is used. Best = highest total return, then the larger
+ * margin over buy and hold, then the lower strategy number.
+ */
+export function latestStudyBest(all: PublicStrategy[]): PublicStrategy | null {
+  const studies = new Map<string, { published: string; members: PublicStrategy[] }>();
+  for (const s of all) {
+    for (const ref of s.case_studies ?? []) {
+      if (!ref.published_on) continue;
+      const entry = studies.get(ref.slug) ?? { published: ref.published_on, members: [] };
+      if (ref.published_on > entry.published) entry.published = ref.published_on;
+      if (!entry.members.includes(s)) entry.members.push(s);
+      studies.set(ref.slug, entry);
+    }
+  }
+  const latest = [...studies.entries()].sort(([sa, a], [sb, b]) => b.published.localeCompare(a.published) || sa.localeCompare(sb))[0];
+  if (!latest) return null;
+  const margin = (s: PublicStrategy) => s.vs_buy_hold_pct ?? Number.NEGATIVE_INFINITY;
+  return (
+    [...latest[1].members].sort(
+      (a, b) =>
+        byReturn(a, b) ||
+        (margin(b) === margin(a) ? 0 : margin(b) > margin(a) ? 1 : -1) ||
+        (a.display_number ?? Number.MAX_SAFE_INTEGER) - (b.display_number ?? Number.MAX_SAFE_INTEGER),
+    )[0] ?? null
+  );
+}
+
+/** A pinned strategy when marketing set one (an override); else the latest case study's best; else the highest return. */
 export function heroStrategy(all: PublicStrategy[], slug: string): PublicStrategy | null {
-  return pickBySlug(all, slug ? [slug] : [])[0] ?? [...all].sort(byReturn)[0] ?? null;
+  return pickBySlug(all, slug ? [slug] : [])[0] ?? latestStudyBest(all) ?? [...all].sort(byReturn)[0] ?? null;
 }
 
 export interface ClassSummary {

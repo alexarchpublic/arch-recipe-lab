@@ -20,9 +20,8 @@ export function AlertCapture({ defaultClasses = [], consentText, privacyUrl, dar
   const toggle = (c: string) => setClasses((cur) => (cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c]));
 
   if (state === "done") {
-    const names = classes.map((c) => (c === "Equities" ? "stock" : c === "ETFs" ? "ETF" : c.toLowerCase()));
-    const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} or ${names[names.length - 1]}` : names[0];
-    return <p className={`text-sm font-semibold ${dark ? "text-white" : "text-navy"}`} role="status">Done. We'll email you when a new {list} strategy publishes.</p>;
+    // Interim (fixes PRD, fix 6): the monthly email until per-publish alerts by asset class exist.
+    return <p className={`text-sm font-semibold ${dark ? "text-white" : "text-navy"}`} role="status">Done. You'll get our new-strategies email, about once a month.</p>;
   }
   return (
     <form

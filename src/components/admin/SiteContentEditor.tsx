@@ -208,8 +208,11 @@ export function SiteContentEditor({ role, groups }: { role: AdminRole | null; gr
               <Text label="Subhead" obj={home} path="hero.subhead" onChange={setHome} placeholder={DEFAULT_CONTENT.home.hero.subhead} area />
               <div className="space-y-1">
                 <Label className="text-xs">Strategy in the hero</Label>
+                <p className="text-xs text-muted-foreground">
+                  Leave on automatic and the hero shows the best-performing strategy of the latest case study, and moves by itself when a new one publishes. Choosing a strategy pins it and overrides that.
+                </p>
                 <select className="w-full rounded-md border border-input bg-background px-2 py-2 text-sm" value={(get(home, "hero.featured") as string) ?? ""} onChange={(e) => setHome(set(home, "hero.featured", e.target.value))}>
-                  <option value="">The highest return</option>
+                  <option value="">Automatic: best of the latest case study</option>
                   {options.map((o) => <option key={o.slug} value={o.slug}>{o.label}</option>)}
                 </select>
               </div>
@@ -226,7 +229,7 @@ export function SiteContentEditor({ role, groups }: { role: AdminRole | null; gr
               </div>
               <Text label="Who runs the demo (shown in the booking section)" obj={home} path="trust.demoBy" onChange={setHome} placeholder="e.g. Demos are run by Jane Doe, head of client success" />
               <div className="space-y-1">
-                <Label className="text-xs">Top strategies, in order (empty: ranked by return)</Label>
+                <Label className="text-xs">Library strategies on the home page, in order (empty: the six newest; a list here pins them and overrides that)</Label>
                 <SlugList value={(get(home, "featured") as string[] | undefined) ?? []} options={options} onChange={(v) => setHome(set(home, "featured", v))} />
               </div>
               <div className="space-y-1">

@@ -10,7 +10,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import type { MarketTag } from "@core";
 import { DisclaimerSlot, MARKET_TAGS, MARKET_TAG_LABELS } from "@core";
 import { track } from "@/lib/analytics";
-import { type ListRow, FOCI, classCounts, focusLabel, horizonLabel } from "@/lib/strategies";
+import { type ListRow, FOCI, byNewest, classCounts, focusLabel, horizonLabel } from "@/lib/strategies";
 import { AccountSize } from "./AccountSize";
 import { ClassChips } from "./ClassChips";
 import { Select } from "./ui";
@@ -29,7 +29,9 @@ interface Filters {
   sort: Sort;
 }
 
-const EMPTY: Filters = { class: "", market: "", asset: "", focus: "", horizon: "", algorithm: "", sort: "return" };
+// Newest first by default (fixes PRD, fix 3); `?sort=return` and older links keep working.
+const DEFAULT_SORT: Sort = "newest";
+const EMPTY: Filters = { class: "", market: "", asset: "", focus: "", horizon: "", algorithm: "", sort: DEFAULT_SORT };
 
 export function StrategyList({
   strategies,
@@ -56,7 +58,7 @@ export function StrategyList({
       focus: p.get("focus") ?? "",
       horizon: p.get("horizon") ?? "",
       algorithm: p.get("algorithm") ?? "",
-      sort: (["return", "cagr", "newest", "number"].includes(p.get("sort") ?? "") ? p.get("sort") : "return") as Sort,
+      sort: (["return", "cagr", "newest", "number"].includes(p.get("sort") ?? "") ? p.get("sort") : DEFAULT_SORT) as Sort,
     });
   }, []);
 
@@ -65,7 +67,7 @@ export function StrategyList({
     if (patch.class !== undefined) next.asset = "";
     setF(next);
     const p = new URLSearchParams();
-    Object.entries(next).forEach(([k, v]) => v && !(k === "sort" && v === "return") && p.set(k, v));
+    Object.entries(next).forEach(([k, v]) => v && !(k === "sort" && v === DEFAULT_SORT) && p.set(k, v));
     window.history.replaceState(null, "", `${window.location.pathname}${p.toString() ? `?${p}` : ""}`);
   };
 
@@ -89,12 +91,13 @@ export function StrategyList({
     switch (f.sort) {
       case "cagr":
         return out.sort((a, b) => cagr(b) - cagr(a) || byReturn(a, b));
-      case "newest":
-        return out.sort((a, b) => b.as_of.localeCompare(a.as_of) || byReturn(a, b));
+      case "return":
+        return out.sort(byReturn);
       case "number":
         return out.sort((a, b) => (a.display_number ?? 0) - (b.display_number ?? 0));
       default:
-        return out.sort(byReturn);
+        // Newest: strategy numbers are given at first publish and never reused.
+        return out.sort(byNewest);
     }
   }, [strategies, f, marketTags]);
 
@@ -136,9 +139,9 @@ export function StrategyList({
           {algorithms.map((a) => <option key={a} value={a}>{a}</option>)}
         </Select>
         <Select aria-label="Sort" className={selectCls} value={f.sort} onChange={(e) => update({ sort: e.target.value as Sort })}>
+          <option value="newest">Newest</option>
           <option value="return">Highest return</option>
           <option value="cagr">Highest CAGR</option>
-          <option value="newest">Newest</option>
           <option value="number">Strategy number</option>
         </Select>
       </div>

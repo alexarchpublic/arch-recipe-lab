@@ -47,7 +47,7 @@ export interface HomeContent {
     eyebrow: string;
     headline: string;
     subhead: string;
-    /** Slug of the strategy shown in the hero. Empty: the highest return. */
+    /** A pinned hero strategy, by slug (an override). Empty: the best strategy of the latest case study. */
     featured: string;
     /**
      * A line written for one strategy. Shown on the hero case card only while
@@ -65,7 +65,7 @@ export interface HomeContent {
     demoBy: string;
   };
   sections: SectionId[];
-  /** Top strategies, by slug, in order. Empty: ranked by return. */
+  /** Pinned library strategies, by slug, in order (an override). Empty: the six newest. */
   featured: string[];
   top: { eyebrow: string; title: string; subtitle: string };
   /** "Your numbers" (section id size): account size and "email me these figures". */
@@ -168,8 +168,8 @@ export const DEFAULT_CONTENT: Omit<SiteContent, "partners" | "marketTags"> = {
     featured: [],
     top: {
       eyebrow: "The library",
-      title: "It does not need a rising market.",
-      subtitle: "Six of the {count}, in falling, sideways and rising markets. Open any one for its full chart and figures.",
+      title: "The newest strategies.",
+      subtitle: "The latest six of the {count}, each with its full chart and figures.",
     },
     size: {
       eyebrow: "Your numbers",

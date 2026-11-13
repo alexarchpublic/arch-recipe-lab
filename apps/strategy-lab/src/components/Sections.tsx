@@ -312,7 +312,7 @@ export function BookSection({ home, content, source = "book-section" }: { home: 
         {content.config.alerts && (
           <div className="min-w-0 flex-[2_1_320px] rounded-lg border border-line bg-surface p-6 sm:p-8">
             <h3 className="text-[22px] font-extrabold text-navy">Not ready for a call?</h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-ink">Get an email when a new strategy publishes in the asset classes you follow.</p>
+            <p className="mt-2 text-[15px] leading-relaxed text-ink">Get our new-strategies email, about once a month. Tell us the asset classes you follow.</p>
             <div className="mt-4">
               <AlertCapture consentText={content.booking.consentMarketing} privacyUrl={content.actions.privacyUrl} />
             </div>
