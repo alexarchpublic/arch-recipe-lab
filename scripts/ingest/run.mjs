@@ -39,6 +39,7 @@ import {
   namingPrompt,
   plainAssetName,
   planScenario,
+  scenarioCompany,
   scenarioFigures,
   settingsSummary,
   validateExtractionShape,
@@ -187,6 +188,11 @@ async function readOne(runInfo, it, previous = null) {
     if (!Array.isArray(extraction.imageKinds) || extraction.imageKinds.length !== order.length) extraction.imageKinds = order;
     result = buildRecipeFromExtraction(extraction);
   } catch (e) {
+    // A bad or expired Claude sign-in fails every scenario the same way: stop
+    // the run and say so, rather than report each one as held.
+    if (/\b401\b|authenticat|OAuth access token|invalid x-api-key|not logged in|login/i.test(e.message)) {
+      throw new Error(`Claude sign-in failed, so nothing was read. Check CLAUDE_CODE_OAUTH_TOKEN (make a new one with \`claude setup-token\`). ${e.message}`);
+    }
     readError = e.message;
   } finally {
     rmSync(work, { recursive: true, force: true });
@@ -203,7 +209,7 @@ async function readOne(runInfo, it, previous = null) {
     const taken = runInfo.liveTitles.filter((t) => t.number !== own).map((t) => t.title).concat(runInfo.takenInRun ?? []);
     const input = {
       asset: result.recipe.asset,
-      assetName: plainAssetName(study.company ?? extraction.assetName, result.recipe.asset),
+      assetName: plainAssetName(scenarioCompany(study, scenario) ?? extraction.assetName, result.recipe.asset),
       timeFrame: result.recipe.time_frame,
       studyTitle: study.title ?? study.slug,
       scenarioTitle: scenario.title ?? it.key,

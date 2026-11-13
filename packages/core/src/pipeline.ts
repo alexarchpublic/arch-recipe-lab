@@ -71,6 +71,8 @@ export interface CaseStudy {
   slug: string;
   status?: string;
   ticker?: string | null;
+  /** Movements studies: [{ ticker, company }]. One entry means every scenario is on that ticker. */
+  tickers?: Array<{ ticker?: string; company?: string }> | null;
   company?: string | null;
   title?: string;
   product?: string;
@@ -189,8 +191,16 @@ export function scenarioFigures(scenario: CaseStudyScenario): ScenarioFigures {
 
 /** The ticker the case study gives a scenario: its own, else the study's. */
 export function scenarioTicker(study: CaseStudy, scenario: CaseStudyScenario): string | null {
-  const t = (scenario.ticker ?? study.ticker ?? "").trim().toUpperCase();
+  const only = Array.isArray(study.tickers) && study.tickers.length === 1 ? study.tickers[0]?.ticker : null;
+  const t = (scenario.ticker ?? study.ticker ?? only ?? "").trim().toUpperCase();
   return t || null;
+}
+
+/** The company the case study names for a scenario's ticker, for plain titles. */
+export function scenarioCompany(study: CaseStudy, scenario: CaseStudyScenario): string | null {
+  const t = scenarioTicker(study, scenario);
+  const listed = (study.tickers ?? []).find((x) => (x?.ticker ?? "").toUpperCase() === t)?.company;
+  return (listed ?? study.company ?? null) || null;
 }
 
 /** Market Wave is the only algorithm the reader covers (A13). */
@@ -362,14 +372,17 @@ export function checkScenario(opts: {
   if (figures.returnPct === null) warn("no_return", "The case study states no strategy return for this scenario; the data window's is stored.");
 
   const run = runEnd(result.recipe.algorithm_inputs);
+  // The figures are as of the case study's date, so a settings end after it
+  // (a far-future year, or a day or two past the valuation) is not the test end.
   const today = opts.today ?? new Date().toISOString().slice(0, 10);
-  if (run && run > today) {
+  const asOf = study.published && study.published < today ? study.published : today;
+  if (run && run > asOf) {
     // EX6: the test end is the case study's window end, which the case study
     // states; the chart's last bar, as Claude reads it, is the cross-check.
     // On 12 Nov 2026 that reading was off by days to months in 6 of 8 runs.
     const bar = result.lastBarDate;
     if (figures.windowEnd) {
-      note("future_end", `The settings run to ${run}; the test end stored is the case study's window end, ${figures.windowEnd}.`);
+      note("future_end", `The settings run to ${run}, past the case study's date (${asOf}); the test end stored is its window end, ${figures.windowEnd}.`);
       if (bar && Math.abs(daysBetween(bar, figures.windowEnd)) > 7) {
         warn("end_vs_window", `Claude read the chart's last bar as ${bar}, more than a week from the case study's window end (${figures.windowEnd}); the case study's date is stored.`);
       }
@@ -599,7 +612,9 @@ export function draftFields(opts: DraftOptions): Record<string, unknown> {
   const start = runStart(ai);
   const end = runEnd(ai);
   const today = opts.asOf ?? new Date().toISOString().slice(0, 10);
-  const futureEnd = !!end && end > today;
+  // The store requires test end <= as-of, and the as-of is the case study's date.
+  const asOfDate = study.published && study.published < today ? study.published : today;
+  const futureEnd = !!end && end > asOfDate;
   const fields: Record<string, unknown> = {
     asset: r.asset,
     asset_class: r.asset_class,
