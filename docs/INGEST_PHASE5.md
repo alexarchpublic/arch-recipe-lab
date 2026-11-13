@@ -7,7 +7,7 @@ phases row 5. Each item ships on its own.
 | --- | --- | --- |
 | BF3 | One plain title for each older live strategy | Live in production 2026-11-13 (below) |
 | EX10 | The admin screen's manual upload goes through the same reader and checks | Not started; only if the owner wants it now |
-| BF5 | Older scenarios with no strategy | 9 ready scenarios staged (below); the rest need screenshots or another reader |
+| BF5 | Older scenarios with no strategy | 8 live in production 2026-11-13 (#102, #104 to #110); #103 waits on the owner (below); the rest need screenshots or another reader |
 | PB4 | archpublic.com refresh hook | Needs Arch Public's dev team (Q4); request drafted only |
 
 ## BF3: rename the older strategies
@@ -121,3 +121,20 @@ Two pipeline fixes came out of the staging dry run:
 - **Time frames the store does not have.** The reader filed any time frame it did not know as 1 Hour, so BRR's 15 minute scenario would have been stored as hourly. Such a reading now holds (`time_frame_unsupported`). BRR's 15 minute sources stay out of the case-studies branch until the store has a 15 minute time frame.
 
 Staging dry run (production reads, staging drafts): 9 new drafts (#102 to #110 on staging), every return equal to its case study's, no holds; warnings only for Claude's last-bar date and DCA rounding (the case study's figure is stored). Production order: merge this, then the case-studies branch; its deploy runs the live workflow, which publishes the 9.
+
+### Production, 13 Nov 2026
+
+arch-recipe-lab#24 merged (5714a3f), then case-studies#8 (4646758). The deploy's live run (43489597021, 19:10 to 19:26 UTC) read 9, published 8 and held 1; write-back 9706806; report case-studies#9. The follow-up run linked all 8 (74 links, 71 strategies); Pro 87, public 73; link check passed.
+
+| # | Title | Study |
+| --- | --- | --- |
+| 102 | Trading AMD near the all time high | amd |
+| 104 | AMD's getting paid year | amd |
+| 105 | Buying Bitcoin in a falling market, below cost | bitcoin-market-wave-stack |
+| 106 | Harvesting cash from MicroStrategy's fall | bitcoin-market-wave-stack |
+| 107 | ProCap Financial accumulation through the fall | brr |
+| 108 | ProCap Financial, buying dips, banking gains | brr |
+| 109 | Four swings through IREN's decline | movements-iren-intc-tsla |
+| 110 | Two Intel dips, one rally, out before the fall | movements-iren-intc-tsla |
+
+**#103 (AMD, the cool-off rehearsal) is held** on `roi_vs_pnl`: TradingView's data window is not self-consistent. Its top half (600 shares worth $292,530, total P&L $221,900) is priced at a later bar, while the strategy value ($157,866, +57.87%) is at the window end. Claude read every digit correctly, and the case study prints the same figures, so the draft is right by EX5. The dry run never met this check, because a dry run saves drafts without publishing. To clear it: the owner reviews and publishes draft #103 in the admin screen, or retakes the data window screenshot at the window's last bar. Until then each case studies deploy reads it again (about 2 minutes) and files a report.
