@@ -13,7 +13,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test:db": "scripts/db-test.sh",
-    "build:reader": "esbuild packages/core/src/extraction.ts --bundle --format=esm --platform=node --target=node20 --log-level=warning --banner:js=\"// Generated from packages/core/src/extraction.ts by npm run build:reader. Do not edit by hand.\" --outfile=lib/extraction.bundle.js"
+    "build:reader": "esbuild packages/core/src/extraction.ts --bundle --format=esm --platform=node --target=node20 --log-level=warning --banner:js=\"// Generated from packages/core/src/extraction.ts by npm run build:reader. Do not edit by hand.\" --outfile=lib/extraction.bundle.js",
+    "build:pipeline": "esbuild packages/core/src/pipeline.ts --bundle --format=esm --platform=node --target=node20 --log-level=warning --banner:js=\"// Generated from packages/core/src/pipeline.ts by npm run build:pipeline. Do not edit by hand.\" --outfile=lib/pipeline.bundle.js",
+    "ingest": "node scripts/ingest/run.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

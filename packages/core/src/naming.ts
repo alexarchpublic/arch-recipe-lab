@@ -61,6 +61,7 @@ const CODE_PATTERNS: Array<[RegExp, string]> = [
   [/\barb\b/i, "Arb"],
   [/\bYTD\b/i, "YTD"],
   [/\b\d+\s?(m|min|h|hr|d|w|wk|mo)\b/i, "a time frame code such as 1H or 1W"],
+  [/\b(\d+|one|four|six)[- ]?(minute|hour|day|week)s?\b|\b(hourly|daily|weekly) chart\b/i, "the chart's time frame (it shows as its own label)"],
   [/[[\]]/, "brackets"],
   [/\b(market wave|intelligence algorithm|arbitrage algorithm|oracle protocol)\b/i, "the algorithm name"],
 ];
