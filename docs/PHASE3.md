@@ -15,7 +15,7 @@ It replaces the Lovable app and its second database.
 | All strategies, with filters and sort kept in the address, the account-size view and the alert sign-up | `/strategy-lab/strategies` | S4, S5, S15 |
 | A strategy: results with basis label and disclaimer, the account-size view and "email me these figures", the chart or its benchmark comparison, how it trades, the settings label (Start free), similar strategies, booking about this strategy | `/strategy-lab/<slug>` | S6 to S9, D10, D12 |
 | Partner landing pages, set up in the admin console | `/strategy-lab/p/<partner>` | S12 |
-| Old addresses | `/strategy-lab/recipes` and `/strategy-lab/recipes/<record-id>` redirect (308) to the list and to the strategy's page | 13, Redirects |
+| Old addresses | `/strategy-lab/recipes`, `/strategy-lab/recipes/<record-id>` and `/strategy-lab/strategy/<number>` are server redirects (307) to the list and to the strategy's page, made at build from the store (`next.config.mjs`) and listed on `/strategy-lab/older-links` so archpublic.com's copy keeps them as redirects. A publish that changes the list starts a deploy through the hook in `STRATEGY_LAB_DEPLOY_HOOK`. `scripts/check-redirects.mjs` checks every one on a live deploy. | 13, Redirects |
 
 Book a demo is in the header and, on a phone, in a bar fixed to the bottom
 (S1). It opens in place: name, email, account size (prefilled from what the

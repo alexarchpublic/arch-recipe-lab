@@ -1,11 +1,13 @@
 // Older links: every address the old Strategy Lab used, and the short
-// /strategy/<number> links, each to its hand-off page. Linked from the footer
-// so archpublic.com's page engine, which finds pages by following links,
-// captures every hand-off page (PRD 13, Redirects).
+// /strategy/<number> links, each a server redirect to the strategy's page
+// (next.config.mjs). Linked from the footer with a plain link, because
+// archpublic.com's page engine finds addresses only by following links: an old
+// address no page links to is never kept as a redirect (PRD 13, Redirects).
+// The list is the one this build redirects (lib/moved.ts).
 import { allMoved } from "@/lib/moved";
 import { canonicalUrl } from "@/lib/env";
 
-export const revalidate = 120;
+export const dynamic = "force-static";
 
 export const metadata = {
   title: "Older Strategy Lab links",
@@ -13,8 +15,8 @@ export const metadata = {
   robots: { index: false, follow: true },
 };
 
-export default async function OlderLinks() {
-  const moved = await allMoved().catch(() => []);
+export default function OlderLinks() {
+  const moved = allMoved();
   return (
     <section className="container py-12">
       <h1 className="text-2xl font-extrabold">Older Strategy Lab links</h1>
