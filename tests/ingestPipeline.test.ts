@@ -172,6 +172,20 @@ describe("what holds a strategy", () => {
     expect(findings.find((f) => f.code === "figure_differs")?.message).toMatch(/strategy return/);
   });
 
+  it("a settings end a day past the case study's date also takes the case study's end (store: test end <= as-of)", () => {
+    const nvda = JSON.parse(JSON.stringify(reading));
+    Object.assign(nvda.settings, { startYear: 2026, startMonth: 1, startDay: 1, endYear: 2026, endMonth: 11, endDay: 12 });
+    nvda.chartIndicatorParameters = "100,000 0 -2 3.4 1 1 100 100 46.5 50 3 6.8 7.3 0 0 2,026 1 1 0 30 2,026 11 12";
+    nvda.lastBarDate = null;
+    const st = { ...study, published: "2026-11-11" };
+    const sc = { ...scenario, window: "Jan 1 to Nov 11, 2026" };
+    const res = p.buildRecipeFromExtraction(JSON.parse(JSON.stringify(nvda)));
+    const f = p.checkScenario({ study: st, scenario: sc, sourceKinds: ["chart", "settings", "stats"], extraction: nvda, result: res, schemaErrors: [], today: "2026-11-13" });
+    expect(p.holds(f)).toEqual([]);
+    const fields = p.draftFields({ study: st, scenario: sc, result: res, naming: { title: "t", summary: "s", description: "d" }, asOf: "2026-11-13" });
+    expect(fields).toMatchObject({ as_of: "2026-11-11", test_start: "2026-01-01", test_end: "2026-11-11", test_end_source: "chart_last_bar" });
+  });
+
   it("a far-future settings end takes the case study's end date; the chart's last bar only cross-checks it (EX6)", () => {
     const noBar = { ...reading, lastBarDate: null };
     const noBarResult = () => p.buildRecipeFromExtraction(JSON.parse(JSON.stringify(noBar)));
