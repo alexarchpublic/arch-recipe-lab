@@ -17,9 +17,10 @@ const PUBLIC_PATH = "/strategy-lab";
 const local = (p) => (p.startsWith(`${PUBLIC_PATH}/`) ? p.slice(PUBLIC_PATH.length) : p);
 const problems = [];
 
-const listRes = await fetch(`${site}/redirects.json`, { cache: "no-store" });
-if (!listRes.ok) {
-  console.error(`/redirects.json: HTTP ${listRes.status}`);
+const listRes = await fetch(`${site}/redirects.json`, { cache: "no-store", redirect: "manual" });
+if (listRes.status !== 200) {
+  const to = listRes.headers.get("location") ?? "";
+  console.error(`/redirects.json: HTTP ${listRes.status}${/vercel\.com\/(sso-api|login)/.test(to) ? " (the deploy is behind Vercel's sign-in; check the production address instead)" : ""}`);
   process.exit(2);
 }
 const list = (await listRes.json()).redirects.map((r) => ({ from: local(r.from), to: local(r.to) }));
