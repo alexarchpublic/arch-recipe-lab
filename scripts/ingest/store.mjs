@@ -33,7 +33,7 @@ export async function pipelineClient({ allowProduction = false } = {}) {
   const url = process.env.PIPELINE_STORE_URL || need("STORE_URL");
   const key = process.env.PIPELINE_STORE_URL ? need("PIPELINE_STORE_ANON_KEY") : need("STORE_ANON_KEY");
   if (url.includes(PRODUCTION_REF) && !allowProduction) {
-    throw new Error("Phase 3 writes to staging only; the pipeline's store address is production.");
+    throw new Error("A dry run writes to staging only; the pipeline's store address is production. Use plan --live to publish there.");
   }
   const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const { error } = await client.auth.signInWithPassword({ email: need("PIPELINE_EMAIL"), password: need("PIPELINE_PASSWORD") });
