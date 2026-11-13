@@ -88,7 +88,7 @@ async function plan(a) {
   let stateClient = null;
   if (a.state) {
     const { pipelineClient } = await import("./store.mjs");
-    stateClient = await pipelineClient();
+    stateClient = await pipelineClient({ allowProduction: !!a.live });
   }
 
   const items = [];
