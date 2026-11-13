@@ -96,7 +96,7 @@ export function StrategyList({
       case "number":
         return out.sort((a, b) => (a.display_number ?? 0) - (b.display_number ?? 0));
       default:
-        // Newest: strategy numbers are given at first publish and never reused.
+        // Newest: the latest case study each strategy appears in (newestOn).
         return out.sort(byNewest);
     }
   }, [strategies, f, marketTags]);
