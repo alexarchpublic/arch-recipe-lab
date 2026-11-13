@@ -102,6 +102,14 @@ describe("what a scenario states", () => {
     expect(p.chartLabelTimeFrame("Bitcoin price and Strategy's purchases")).toBeNull();
   });
 
+  it("reads a Movements study's single ticker and company from its tickers list", () => {
+    const movements: CaseStudy = { slug: "movements-nvda-2026", tickers: [{ ticker: "NVDA", company: "Nvidia" }], product: "Market Wave Algorithm for Equities" };
+    expect(p.scenarioTicker(movements, { key: "a" })).toBe("NVDA");
+    expect(p.scenarioCompany(movements, { key: "a" })).toBe("Nvidia");
+    expect(p.scenarioTicker({ ...movements, tickers: [{ ticker: "IREN" }, { ticker: "INTC" }] }, { key: "a" })).toBeNull();
+    expect(p.scenarioTicker(study, scenario)).toBe("MSFT");
+  });
+
   it("covers Market Wave only, and asks a mixed study to name the scenario's algorithm", () => {
     expect(p.scenarioIsMarketWave(study, scenario)).toBe(true);
     const mixed = { ...study, product: "Intelligence Algorithm, Market Wave and Tax-Loss Harvesting" };

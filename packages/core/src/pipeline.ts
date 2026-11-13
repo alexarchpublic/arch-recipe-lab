@@ -71,6 +71,8 @@ export interface CaseStudy {
   slug: string;
   status?: string;
   ticker?: string | null;
+  /** Movements studies: [{ ticker, company }]. One entry means every scenario is on that ticker. */
+  tickers?: Array<{ ticker?: string; company?: string }> | null;
   company?: string | null;
   title?: string;
   product?: string;
@@ -189,8 +191,16 @@ export function scenarioFigures(scenario: CaseStudyScenario): ScenarioFigures {
 
 /** The ticker the case study gives a scenario: its own, else the study's. */
 export function scenarioTicker(study: CaseStudy, scenario: CaseStudyScenario): string | null {
-  const t = (scenario.ticker ?? study.ticker ?? "").trim().toUpperCase();
+  const only = Array.isArray(study.tickers) && study.tickers.length === 1 ? study.tickers[0]?.ticker : null;
+  const t = (scenario.ticker ?? study.ticker ?? only ?? "").trim().toUpperCase();
   return t || null;
+}
+
+/** The company the case study names for a scenario's ticker, for plain titles. */
+export function scenarioCompany(study: CaseStudy, scenario: CaseStudyScenario): string | null {
+  const t = scenarioTicker(study, scenario);
+  const listed = (study.tickers ?? []).find((x) => (x?.ticker ?? "").toUpperCase() === t)?.company;
+  return (listed ?? study.company ?? null) || null;
 }
 
 /** Market Wave is the only algorithm the reader covers (A13). */
