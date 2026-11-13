@@ -8,7 +8,7 @@ import { track } from "@/lib/analytics";
 import { writeVisitor } from "@/lib/visitor";
 import { sendLead } from "./api";
 import { useLeadSettings } from "./Booking";
-import { Button, Check, Input } from "./ui";
+import { Button, Input, Notice } from "./ui";
 import { useVisitor } from "./useVisitor";
 
 export function EmailMeThis({
@@ -31,7 +31,6 @@ export function EmailMeThis({
   const slug = strategy.slug;
   const startingCapital = strategy.starting_capital;
   const [email, setEmail] = useState("");
-  const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState("");
   const [state, setState] = useState<"idle" | "busy" | "done">("idle");
   const [error, setError] = useState("");
@@ -48,7 +47,7 @@ export function EmailMeThis({
         setError("");
         setState("busy");
         const r = await sendLead(
-          { kind: "email_me_this", email, strategyInView: slug, accountSize: amount, figures: figuresText(strategy, amount), consentMarketing: consent, website },
+          { kind: "email_me_this", email, strategyInView: slug, accountSize: amount, figures: figuresText(strategy, amount), website },
           lead,
         );
         if (!r.ok) {
@@ -73,10 +72,10 @@ export function EmailMeThis({
       </div>
       <p className="text-xs text-ink-muted">We'll email this strategy's results at {formatMoney(amount)}.</p>
       <input tabIndex={-1} autoComplete="off" aria-hidden className="hidden" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} />
-      <Check name="consent_marketing" checked={consent} onChange={setConsent}>
+      <Notice>
         {consentText}{" "}
         <a className="underline" href={privacyUrl} target="_blank" rel="noreferrer">Privacy policy</a>
-      </Check>
+      </Notice>
       {error && <p className="text-sm font-semibold text-loss" role="alert">{error}</p>}
     </form>
   );

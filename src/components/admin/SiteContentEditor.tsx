@@ -267,7 +267,7 @@ export function SiteContentEditor({ role, groups }: { role: AdminRole | null; gr
               <Text label="Sales response time, shown after booking (empty: hidden)" obj={booking} path="responseTime" onChange={setBooking} placeholder="e.g. We reply within one business day." />
               <Text label="After booking" obj={booking} path="confirmationNote" onChange={setBooking} placeholder={DEFAULT_CONTENT.booking.confirmationNote} area />
               <Text label="Settings label on strategy pages" obj={booking} path="settingsLabel" onChange={setBooking} placeholder={DEFAULT_CONTENT.booking.settingsLabel} area />
-              <Text label="Marketing email consent line" obj={booking} path="consentMarketing" onChange={setBooking} placeholder={DEFAULT_CONTENT.booking.consentMarketing} area />
+              <Text label="Email notice under every form (everyone who leaves an email gets the campaigns)" obj={booking} path="consentMarketing" onChange={setBooking} placeholder={DEFAULT_CONTENT.booking.consentMarketing} area />
               <Text label="Calls and texts consent line" obj={booking} path="consentCalls" onChange={setBooking} placeholder={DEFAULT_CONTENT.booking.consentCalls} area />
               <Text label="Notice at collection" obj={booking} path="collectionNotice" onChange={setBooking} placeholder={DEFAULT_CONTENT.booking.collectionNotice} area />
               <DialogFooter>

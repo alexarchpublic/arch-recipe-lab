@@ -12,7 +12,7 @@ import type { BookingContent, ActionsContent } from "@/lib/content";
 import { inFrame } from "@/lib/frame";
 import { publicPageUrl } from "@/lib/hubspot";
 import { sendLead, type LeadSettings } from "./api";
-import { Button, Check, Field, Input, Select } from "./ui";
+import { Button, Check, Field, Input, Notice, Select } from "./ui";
 
 export interface BookingSettings {
   booking: BookingContent;
@@ -172,7 +172,6 @@ export function BookingFlow({ strategy, source, inline = false }: { strategy?: s
   const [email, setEmail] = useState("");
   const [range, setRange] = useState("");
   const [exchange, setExchange] = useState("");
-  const [consentMarketing, setConsentMarketing] = useState(false);
   const [consentCalls, setConsentCalls] = useState(false);
   const [website, setWebsite] = useState("");
   const [error, setError] = useState("");
@@ -215,7 +214,6 @@ export function BookingFlow({ strategy, source, inline = false }: { strategy?: s
       accountSizeRange: range,
       exchange,
       strategyInView: strategy,
-      consentMarketing,
       consentCalls,
       website,
     }, lead);
@@ -327,7 +325,7 @@ export function BookingFlow({ strategy, source, inline = false }: { strategy?: s
       </div>
       <input tabIndex={-1} autoComplete="off" aria-hidden className="hidden" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} />
       <div className="space-y-2 pt-1">
-        <Check name="consent_marketing" checked={consentMarketing} onChange={setConsentMarketing}>{booking.consentMarketing}</Check>
+        <Notice>{booking.consentMarketing}</Notice>
         <Check name="consent_calls" checked={consentCalls} onChange={setConsentCalls}>{booking.consentCalls}</Check>
       </div>
       <p className="text-[11px] leading-snug text-muted-foreground">
