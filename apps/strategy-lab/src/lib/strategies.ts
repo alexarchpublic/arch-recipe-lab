@@ -41,6 +41,8 @@ export interface ListRow {
   algorithm: string;
   return_pct: number;
   as_of: string;
+  /** The date that orders "Newest" (newestOn): the latest case study it appears in, else as_of. */
+  newest_on: string;
   /** CAGR as a client may see it (displayCagr): null under a year or without a real test end. */
   cagr: number | null;
 }
@@ -48,7 +50,7 @@ export interface ListRow {
 export function listRow(s: PublicStrategy, cagr: number | null): ListRow {
   return {
     id: s.id, slug: s.slug, display_number: s.display_number, asset: s.asset, asset_class: s.asset_class, focus: s.focus,
-    time_horizon: s.time_horizon, algorithm: s.algorithm, return_pct: s.return_pct, as_of: s.as_of, cagr,
+    time_horizon: s.time_horizon, algorithm: s.algorithm, return_pct: s.return_pct, as_of: s.as_of, newest_on: newestOn(s), cagr,
   };
 }
 
@@ -67,13 +69,23 @@ export function pickBySlug(all: PublicStrategy[], slugs: string[]): PublicStrate
   return slugs.map((slug) => map.get(slug)).filter((s): s is PublicStrategy => !!s);
 }
 
+type Dated = Pick<PublicStrategy, "display_number"> & Partial<Pick<PublicStrategy, "case_studies" | "as_of">> & { newest_on?: string };
+
 /**
- * Newest first. Strategy numbers come from a store sequence at first publish
- * and are never reused, so this order never moves when a title or figure is
- * edited (fixes PRD, fixes 2 and 3).
+ * The date "Newest" orders by (fixes PRD, fixes 2 and 3; Alex chose case study
+ * date over strategy number, 13 Nov): the latest published_on among the case
+ * studies a strategy appears in, else its as_of. A strategy backfilled today
+ * from an older case study therefore sorts with that study, not first.
  */
-export function byNewest(a: Pick<PublicStrategy, "display_number">, b: Pick<PublicStrategy, "display_number">): number {
-  return (b.display_number ?? 0) - (a.display_number ?? 0);
+export function newestOn(s: Dated): string {
+  if (s.newest_on !== undefined) return s.newest_on;
+  const dates = (s.case_studies ?? []).map((r) => r.published_on).filter((d): d is string => !!d);
+  return dates.length ? dates.reduce((a, b) => (a > b ? a : b)) : (s.as_of ?? "");
+}
+
+/** Newest first by newestOn; strategies of the same case study, higher number first. */
+export function byNewest(a: Dated, b: Dated): number {
+  return newestOn(b).localeCompare(newestOn(a)) || (b.display_number ?? 0) - (a.display_number ?? 0);
 }
 
 /** Marketing's pinned list when set (an override); otherwise the newest published. */

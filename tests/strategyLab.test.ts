@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { comparePageToStore, parsePageFigures } from "@core";
 import { DEFAULT_CONTENT, DEFAULT_SECTIONS, fillTokens, formatSignedCurrency, formatSignedPercent, heroCaseLine, mergeSiteContent, publicChartScreenshot } from "@core";
-import { byNewest, heroStrategy, latestStudyBest, rangeFor, relatedStrategies, testLength, topStrategies } from "../apps/strategy-lab/src/lib/strategies";
+import { byNewest, heroStrategy, latestStudyBest, newestOn, rangeFor, relatedStrategies, testLength, topStrategies } from "../apps/strategy-lab/src/lib/strategies";
 
 const html = `
 <div data-results="a1" data-version="v2" data-slug="nvda">
@@ -86,9 +86,21 @@ describe("public helpers", () => {
     expect(topStrategies(all, ["gone", "b"]).map((x: { slug: string }) => x.slug)).toEqual(["b"]);
     expect(topStrategies(all, []).map((x: { slug: string }) => x.slug)).toEqual(["a", "b"]);
   });
-  it("orders newest first by strategy number (fixes PRD, fixes 2 and 3)", () => {
+  it("orders newest first by strategy number when nothing else differs", () => {
     const rows = [{ display_number: 41 }, { display_number: 101 }, { display_number: null }, { display_number: 99 }];
     expect([...rows].sort(byNewest).map((r) => r.display_number)).toEqual([101, 99, 41, null]);
+  });
+  it("orders newest first by the latest case study a strategy appears in (fixes PRD, fixes 2 and 3)", () => {
+    const ref = (published_on: string | null) => ({ slug: "x", title: "x", scenario_key: "k", anchor: "a", scenario_title: null, published_on, role: "origin" as const });
+    const rows = [
+      { display_number: 110, as_of: "2026-11-13", case_studies: [ref("2026-03-02")] }, // backfilled today from an older study
+      { display_number: 99, as_of: "2026-11-11", case_studies: [ref("2026-11-11")] },
+      { display_number: 101, as_of: "2026-11-11", case_studies: [ref("2026-11-11")] },
+      { display_number: 41, as_of: "2026-06-22", case_studies: [ref("2026-06-22"), ref("2026-10-22")] }, // featured again in a newer study
+      { display_number: 30, as_of: "2025-01-01", case_studies: [] }, // no case study: its as_of
+    ];
+    expect([...rows].sort(byNewest).map((r) => r.display_number)).toEqual([101, 99, 41, 110, 30]);
+    expect(newestOn({ display_number: 1, newest_on: "2026-01-01", as_of: "2020-01-01" })).toBe("2026-01-01");
   });
   describe("hero (fixes PRD, fix 1)", () => {
     const study = (slug: string, published_on: string | null) => ({ slug, published_on, title: slug, scenario_key: "k", anchor: "a", scenario_title: null, role: "origin" });
