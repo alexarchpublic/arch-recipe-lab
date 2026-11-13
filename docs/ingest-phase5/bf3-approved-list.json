@@ -1,0 +1,2345 @@
+{
+  "createdAt": "2026-11-13T03:42:07.437Z",
+  "model": "claude-sonnet-4-6",
+  "namingPromptVersion": "2026-11-12.2",
+  "kept": [
+    99,
+    100,
+    101
+  ],
+  "clashes": [],
+  "items": [
+    {
+      "number": 15,
+      "slug": "btc-cycle-swing-arb-15",
+      "listedPublic": false,
+      "asset": "BTC",
+      "algorithm": "Oracle Protocol",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "oracle-protocol",
+        "key": "cycle-swing-arbitrage",
+        "studyTitle": "Dynamics of The Oracle Protocol",
+        "scenarioTitle": "Cycle swing arbitrage"
+      },
+      "before": {
+        "title": "Realize Profits throughout Bitcoin Swings",
+        "short_name": "BTC Cycle Swing Arb",
+        "name": "BTC Cycle Swing Arb",
+        "goal": "Realize Profits throughout Bitcoin Swings",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Bitcoin cycle swing trading",
+        "goal": "A swing strategy that sells Bitcoin at peaks and reinvests proceeds into progressively larger positions.",
+        "how_it_trades": "The strategy buys Bitcoin at entry signals on the daily chart, then sells half of the accumulated position at each peak. Cash from each sale funds the next buy, which draws from a larger pool than the last. No fresh capital is added, so gains compound into progressively larger positions over time."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "ff204ea8-062a-4627-86b9-ee38e9057a47"
+    },
+    {
+      "number": 16,
+      "slug": "btc-short-target-swing-accumulation-16",
+      "listedPublic": false,
+      "asset": "BTC",
+      "algorithm": "Oracle Protocol",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "oracle-protocol",
+        "key": "short-target-swing-accumulation",
+        "studyTitle": "Dynamics of The Oracle Protocol",
+        "scenarioTitle": "Short target swing accumulation"
+      },
+      "before": {
+        "title": "A versatile swing strategy",
+        "short_name": "BTC Short Target Swing Accumulation",
+        "name": "BTC Short Target Swing Accumulation",
+        "goal": "A versatile swing strategy",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Bitcoin accumulation through swings and dips",
+        "goal": "A strategy that buys Bitcoin during consolidation and pullbacks, then takes profit as the price breaks higher.",
+        "how_it_trades": "The strategy buys Bitcoin steadily during flat, sideways periods and continues buying into pullbacks. When price makes a decisive move higher, it takes profit on a portion of the position. It holds remaining Bitcoin and keeps buying on dips, only selling above its average cost as the price rises."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "df0be5ac-91af-473e-9943-d1f627082a96"
+    },
+    {
+      "number": 17,
+      "slug": "btc-short-target-swing-arbitrage-17",
+      "listedPublic": false,
+      "asset": "BTC",
+      "algorithm": "Oracle Protocol",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "oracle-protocol",
+        "key": "short-target-swing-arbitrage",
+        "studyTitle": "Dynamics of The Oracle Protocol",
+        "scenarioTitle": "Short target swing arbitrage"
+      },
+      "before": {
+        "title": "Completely sell off swing positions for max profit",
+        "short_name": "BTC Short Target Swing Arbitrage",
+        "name": "BTC Short Target Swing Arbitrage",
+        "goal": "Completely sell off swing positions for max profit",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Bitcoin swing trading with a profit target",
+        "goal": "A swing trading approach for Bitcoin that waits for a minimum profit target before selling the full position.",
+        "how_it_trades": "The strategy accumulates Bitcoin through buy orders on the daily chart. It only sells when price has risen well above its average cost, then exits the full position at once. After each exit, buy orders increase in size automatically, letting the strategy rebuild quickly as price pulls back."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "aeae055c-cae5-4c86-81bb-9fa74b4bb9c4"
+    },
+    {
+      "number": 18,
+      "slug": "volatility-harvesting-18",
+      "listedPublic": false,
+      "asset": "ETH",
+      "algorithm": "Oracle Protocol",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "oracle-protocol",
+        "key": "ethereum-volatility-harvesting",
+        "studyTitle": "Dynamics of The Oracle Protocol",
+        "scenarioTitle": "Ethereum: volatility harvesting"
+      },
+      "before": {
+        "title": "Take advantage of altcoin volatility",
+        "short_name": "Volatility Harvesting",
+        "name": "Volatility Harvesting",
+        "goal": "Take advantage of altcoin volatility",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Ethereum volatility harvesting",
+        "goal": "A strategy built to profit from Ethereum's repeated price swings when buy-and-hold approaches struggle.",
+        "how_it_trades": "Buys Ethereum during price weakness and sells as prices recover, capturing realized gains across repeated roundtrips. The approach is arbitrage-focused, targeting price dislocations rather than waiting for a sustained trend. When no opportunity is present, the strategy holds cash and waits for the next entry."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "00bae36b-91e2-42dc-8918-670a36bfd010"
+    },
+    {
+      "number": 19,
+      "slug": "solana-volatility-harvesting-19",
+      "listedPublic": false,
+      "asset": "SOL",
+      "algorithm": "Oracle Protocol",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "oracle-protocol",
+        "key": "solana-volatility-harvesting",
+        "studyTitle": "Dynamics of The Oracle Protocol",
+        "scenarioTitle": "Solana: volatility harvesting"
+      },
+      "before": {
+        "title": "Build a position while harvesting volatility",
+        "short_name": "Solana Volatility Harvesting",
+        "name": "Solana Volatility Harvesting",
+        "goal": "Build a position while harvesting volatility",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Solana volatility harvesting",
+        "goal": "A strategy that captures gains from Solana's sharp price swings while stepping aside during downturns.",
+        "how_it_trades": "The strategy buys Solana when momentum signals turn positive and moves to cash when they reverse. By stepping aside during downturns and re-entering on recoveries, it captures the gains from Solana's sharp swings without holding through prolonged declines."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "76aac77e-c071-425c-80e6-780f801d6222"
+    },
+    {
+      "number": 20,
+      "slug": "xrp-volatility-harvesting-20",
+      "listedPublic": false,
+      "asset": "XRP",
+      "algorithm": "Oracle Protocol",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "oracle-protocol",
+        "key": "xrp-volatility-harvesting",
+        "studyTitle": "Dynamics of The Oracle Protocol",
+        "scenarioTitle": "XRP: volatility harvesting"
+      },
+      "before": {
+        "title": "Build a position while minimizing hold risk",
+        "short_name": "XRP Volatility Harvesting",
+        "name": "XRP Volatility Harvesting",
+        "goal": "Build a position while minimizing hold risk",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "XRP volatility harvesting",
+        "goal": "A strategy built to capture XRP's sharp price spikes while staying invested through volatile conditions.",
+        "how_it_trades": "The strategy targets XRP's sharp price spikes, selling portions of its position when price surges above its average cost and redeploying that cash when prices pull back. It keeps a core XRP position throughout, cycling between selling into strength and buying into weakness as conditions allow."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "309cba50-2f32-4941-9626-3b25b1c678fd"
+    },
+    {
+      "number": 21,
+      "slug": "sui-volatility-harvesting-21",
+      "listedPublic": false,
+      "asset": "SUI",
+      "algorithm": "Oracle Protocol",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "oracle-protocol",
+        "key": "sui-volatility-harvesting",
+        "studyTitle": "Dynamics of The Oracle Protocol",
+        "scenarioTitle": "SUI: volatility harvesting"
+      },
+      "before": {
+        "title": "Build a position while minimizing hold risk",
+        "short_name": "SUI Volatility Harvesting",
+        "name": "SUI Volatility Harvesting",
+        "goal": "Build a position while minimizing hold risk",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Sui volatility harvesting",
+        "goal": "Designed to generate returns from Sui in a falling market, buying dips and selling into recoveries.",
+        "how_it_trades": "The strategy buys Sui in stages as the price falls, spreading entries across the decline. It sells in portions as the price recovers, and only sells above its average cost. When the market offers no clear entry, it steps aside and holds cash until the next opportunity arises."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "87869509-f589-4330-882d-14d0190483ac"
+    },
+    {
+      "number": 22,
+      "slug": "aggressive-accumulation-22",
+      "listedPublic": true,
+      "asset": "BTC",
+      "algorithm": "Intelligence Algorithm",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Aggressively Accumulate Bitcoin",
+        "short_name": "Aggressive Accumulation",
+        "name": "Aggressive Accumulation",
+        "goal": "Aggressively Accumulate Bitcoin",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulating Bitcoin aggressively",
+        "goal": "A strategy built to accumulate as much Bitcoin as possible across a full market cycle.",
+        "how_it_trades": "The strategy buys Bitcoin at every opportunity the algorithm identifies, steadily building a large position over time. It only sells above its average cost, locking in gains rather than cutting losses. Any cash not deployed sits ready to fund the next purchase signal."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "78bf32c1-9968-4b28-ba12-6813c8a1b525",
+      "edited": {
+        "title": "Bitcoin aggressive accumulation"
+      },
+      "editNote": "Reads as a phrase, not a label."
+    },
+    {
+      "number": 23,
+      "slug": "moderate-accumulation-23",
+      "listedPublic": true,
+      "asset": "BTC",
+      "algorithm": "Intelligence Algorithm",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Accumulate Bitcoin With Moderate Selectivity",
+        "short_name": "Moderate Accumulation",
+        "name": "Moderate Accumulation",
+        "goal": "Accumulate Bitcoin With Moderate Selectivity",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Selective Bitcoin accumulation",
+        "goal": "A strategy that builds a Bitcoin position gradually through selective, rules-based buying.",
+        "how_it_trades": "It buys Bitcoin when conditions meet a moderate threshold, adds to the position on further qualifying signals, and only sells above its average cost. When no signal is active, it holds cash and waits for the next qualifying entry before putting more capital to work."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "9896188f-cdc7-4609-98d6-7794566ead96"
+    },
+    {
+      "number": 24,
+      "slug": "precise-accumulation-24",
+      "listedPublic": true,
+      "asset": "BTC",
+      "algorithm": "Intelligence Algorithm",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Accumulate Bitcoin During Cycle Lows",
+        "short_name": "Precise Accumulation",
+        "name": "Precise Accumulation",
+        "goal": "Accumulate Bitcoin During Cycle Lows",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulating Bitcoin at the cycle low",
+        "goal": "A strategy for building a Bitcoin position by buying selectively at the low points of market cycles.",
+        "how_it_trades": "The strategy identifies points in the Bitcoin market cycle where prices are depressed and buys in. It holds through volatility and only sells above its average cost. Between buying opportunities, it moves to cash."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "758401b5-9741-4f8f-b5bc-57c522d4045e"
+    },
+    {
+      "number": 25,
+      "slug": "btc-daily-arbitrage-25",
+      "listedPublic": false,
+      "asset": "BTC",
+      "algorithm": "Arbitrage Algorithm",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Accumulate Bitcoin, Profit from price swings",
+        "short_name": "BTC Daily Arbitrage",
+        "name": "BTC Daily Arbitrage",
+        "goal": "Accumulate Bitcoin, Profit from price swings",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulate Bitcoin by trading price swings",
+        "goal": "A strategy for building a large Bitcoin position quickly by capturing gains from recurring price swings.",
+        "how_it_trades": "The strategy watches the daily Bitcoin chart and buys when the price drops, then sells a portion when the price recovers, only selling above its average cost. The profit from each round trip is reinvested to buy more Bitcoin on the next dip, gradually building a larger overall position."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "03dd982d-97d5-425c-96b1-85fa17fc5081"
+    },
+    {
+      "number": 26,
+      "slug": "btc-cycle-arbitrage-26",
+      "listedPublic": false,
+      "asset": "BTC",
+      "algorithm": "Arbitrage Algorithm",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Accumulate Bitcoin through cycles, Sell off small amounts",
+        "short_name": "BTC Cycle Arbitrage",
+        "name": "BTC Cycle Arbitrage",
+        "goal": "Accumulate Bitcoin through cycles, Sell off small amounts",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulate Bitcoin across cycles, trim at highs",
+        "goal": "Grows a Bitcoin position across full market cycles while taking small profits at higher prices.",
+        "how_it_trades": "Buys Bitcoin during price pullbacks to build up a holding, and only sells above its average cost, releasing small portions as prices rise. When no clear opportunity exists, it holds cash and waits for the next entry or exit point."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "e18bd210-1618-49a9-b0db-515dbebf4d49"
+    },
+    {
+      "number": 27,
+      "slug": "sol-daily-arb-27",
+      "listedPublic": false,
+      "asset": "SOL",
+      "algorithm": "Arbitrage Algorithm",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Profit from SOL Volatility",
+        "short_name": "SOL Daily Arb",
+        "name": "SOL Daily Arb",
+        "goal": "Profit from SOL Volatility",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Solana daily volatility trading",
+        "goal": "A strategy that trades Solana's sharp price swings, buying on dips and selling into recoveries.",
+        "how_it_trades": "The strategy watches Solana for short-term price dislocations on the daily chart. It buys when price pulls back and only sells above its average cost. Between trades, it moves to cash rather than holding Solana through uncertain or unfavorable conditions."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "64db6895-915e-4334-9cab-80ff319cf7e9"
+    },
+    {
+      "number": 28,
+      "slug": "xrp-volatility-harvesting-28",
+      "listedPublic": false,
+      "asset": "XRP",
+      "algorithm": "Arbitrage Algorithm",
+      "timeFrame": "6 Hours",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Profit from XRP Volatility",
+        "short_name": "XRP Volatility Harvesting",
+        "name": "XRP Volatility Harvesting",
+        "goal": "Profit from XRP Volatility",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Capturing XRP's price swings",
+        "goal": "A strategy built to capture gains from XRP's frequent and often sharp price swings.",
+        "how_it_trades": "The strategy watches XRP on a six-hour chart for price drops and buys in stages as the price falls. It only sells above its average cost, locking in a gain on each position, then returns to cash and waits for the next entry opportunity."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "6fedc2ec-f3fe-42c6-a65c-ff7ca5efee9d"
+    },
+    {
+      "number": 29,
+      "slug": "lth-eth-daily-arb-29",
+      "listedPublic": false,
+      "asset": "ETH",
+      "algorithm": "Arbitrage Algorithm",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Accumulate ETH, Protect Downside Risk",
+        "short_name": "LTH ETH Daily Arb",
+        "name": "LTH ETH Daily Arb",
+        "goal": "Accumulate ETH, Protect Downside Risk",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Ethereum accumulation with a defensive tilt",
+        "goal": "A strategy for building an Ethereum position gradually while managing exposure to sharp price swings.",
+        "how_it_trades": "Uses daily price signals to build an Ethereum position over time. It buys during price weakness, only sells above its average entry cost to lock in gains and reduce risk, and holds cash when conditions do not favour adding more."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "8e174d12-67c8-400c-ab47-b322f6e701ef",
+      "edited": {
+        "title": "Accumulate Ethereum with downside protection"
+      },
+      "editNote": "\"Downside protection\" reads as a promise."
+    },
+    {
+      "number": 30,
+      "slug": "sui-volatility-harvesting-30",
+      "listedPublic": false,
+      "asset": "SUI",
+      "algorithm": "Arbitrage Algorithm",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Harvest SUI Volatility",
+        "short_name": "SUI Volatility Harvesting",
+        "name": "SUI Volatility Harvesting",
+        "goal": "Harvest SUI Volatility",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Harvesting Sui's price volatility",
+        "goal": "A strategy that buys and sells Sui to capture returns from its volatile price swings.",
+        "how_it_trades": "The strategy buys Sui on price pullbacks and only sells above its average entry cost. It moves back to cash after each exit and waits for the next dip, cycling through Sui's regular price swings on the daily chart."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "5cb3f7e5-a425-47de-a8cf-c572b2b8706e"
+    },
+    {
+      "number": 31,
+      "slug": "btc-bear-market-31",
+      "listedPublic": false,
+      "asset": "BTC",
+      "algorithm": "Oracle Protocol",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Accumulate Bitcoin During a Bear Market",
+        "short_name": "BTC Bear Market",
+        "name": "BTC Bear Market",
+        "goal": "Accumulate Bitcoin During a Bear Market",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulating Bitcoin in a bear market",
+        "goal": "A strategy for building a Bitcoin position steadily through a prolonged market decline.",
+        "how_it_trades": "Buys Bitcoin during price declines to build a position over time. It only sells above its average cost and moves to cash between signals, using the daily chart to time entries through an extended market downturn."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "0d685bea-6e4e-45c1-a5c4-f903319e8448"
+    },
+    {
+      "number": 36,
+      "slug": "xrp-volatility-yield-harvester-36",
+      "listedPublic": true,
+      "asset": "XRP",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Harvesting XRP Volatility for Cash Yield.",
+        "short_name": "XRP Volatility Yield Harvester",
+        "name": "XRP Volatility Yield Harvester",
+        "goal": "Harvesting XRP Volatility for Cash Yield.",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Generating cash yield from XRP volatility",
+        "goal": "A strategy that trades XRP's price swings in layers, exiting fully each time, to build a cash yield.",
+        "how_it_trades": "The strategy buys XRP with a portion of available cash on each signal, only when price is below its average cost. On a sell signal above that cost, it exits the full position. This layers into dips and clears fully on recoveries, targeting cash yield rather than accumulation."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "d9b4d9cc-ca61-444c-beb7-61cc81786e65"
+    },
+    {
+      "number": 37,
+      "slug": "harvesting-btc-volatility-for-cash-yield-37",
+      "listedPublic": true,
+      "asset": "BTC",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Harvesting BTC Volatility For Cash Yield",
+        "short_name": "Harvesting BTC Volatility For Cash Yield",
+        "name": "Harvesting BTC Volatility For Cash Yield",
+        "goal": "Harvesting BTC Volatility For Cash Yield",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Trading Bitcoin volatility for yield",
+        "goal": "A strategy that uses Bitcoin's price swings to build a position and harvest cash when prices rise.",
+        "how_it_trades": "On each buy signal below its average cost, the strategy adds a portion of its cash to its Bitcoin position. On each sell signal above its average cost, it trims a portion of the holding and keeps the proceeds in cash, ready for the next qualifying buy signal."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "245e8cb5-610e-474b-ac78-c152776741ed"
+    },
+    {
+      "number": 38,
+      "slug": "harvesting-sol-volatility-for-cash-yield-38",
+      "listedPublic": true,
+      "asset": "SOL",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Harvesting SOL Volatility For Cash Yield",
+        "short_name": "Harvesting SOL Volatility For Cash Yield",
+        "name": "Harvesting SOL Volatility For Cash Yield",
+        "goal": "Harvesting SOL Volatility For Cash Yield",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Harvesting cash from Solana's swings",
+        "goal": "A strategy that converts Solana's price swings into cash by buying on weakness and selling into strength.",
+        "how_it_trades": "On each buy signal, the strategy adds to its Solana position with a portion of available cash, but only when the price is below its average cost. On each sell signal, it exits the full position, but only above its average cost. Cash sits idle between trades."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "f6ac59a7-2727-4940-8630-0a22227a9d41"
+    },
+    {
+      "number": 39,
+      "slug": "harvesting-eth-volatility-for-cash-yield-39",
+      "listedPublic": true,
+      "asset": "ETH",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Harvesting ETH Volatility For Cash Yield",
+        "short_name": "Harvesting ETH Volatility For Cash Yield",
+        "name": "Harvesting ETH Volatility For Cash Yield",
+        "goal": "Harvesting ETH Volatility For Cash Yield",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Turning Ethereum volatility into cash",
+        "goal": "A strategy that buys Ethereum dips below cost and partially sells into rallies to generate cash.",
+        "how_it_trades": "On each buy signal below its average cost, the strategy puts a small share of available cash into Ethereum. On each sell signal above its average cost, it sells a portion of the position, banking gains. Between signals, it holds the remaining cash and waits for the next opportunity."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "3e13808a-7b50-46c7-a7bc-45b02b6023ea"
+    },
+    {
+      "number": 40,
+      "slug": "harvesting-sui-volatility-for-cash-yield-40",
+      "listedPublic": true,
+      "asset": "SUI",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Harvesting SUI Volatility For Cash Yield",
+        "short_name": "Harvesting SUI Volatility For Cash Yield",
+        "name": "Harvesting SUI Volatility For Cash Yield",
+        "goal": "Harvesting SUI Volatility For Cash Yield",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Trading Sui swings for cash yield",
+        "goal": "Trades Sui's price swings to harvest cash yield, buying only below its average cost and selling only above it.",
+        "how_it_trades": "Buys Sui with a portion of available cash when the price falls below its average cost, adding at a lower entry. Sells the entire position when the price rises above that average cost, taking the gain as cash. Cash sits idle between trades until a qualifying dip appears."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "fd36b206-cf0d-486e-a1e0-bf2a37789c3a"
+    },
+    {
+      "number": 41,
+      "slug": "nvda-accumulation-41",
+      "listedPublic": true,
+      "asset": "NVDA",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "nvda",
+        "key": "catch-it-early-test",
+        "studyTitle": "Rules beat hesitation on NVDA",
+        "scenarioTitle": "The \u2018catch it early\u2019 test"
+      },
+      "before": {
+        "title": "Accumulate NVDA through the bull run, selling at opportune moments",
+        "short_name": "NVDA Accumulation",
+        "name": "NVDA Accumulation ",
+        "goal": "Accumulate NVDA through the bull run, selling at opportune moments",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Catching Nvidia early in the trend",
+        "goal": "A rules-based strategy that accumulates Nvidia on weakness and holds through the trend.",
+        "how_it_trades": "The strategy buys a portion of available cash on each buy signal, but only when the price is below its average cost. On sell signals, it trims a small slice of the position, but only when the price is above its average cost. Any cash not deployed sits idle until the next qualifying signal."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "8093bbe3-4806-4c89-b287-bff5e30cb0f8"
+    },
+    {
+      "number": 42,
+      "slug": "qqq-4h-yield-42",
+      "listedPublic": true,
+      "asset": "QQQ",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "qqq",
+        "key": "cash-yield-strategy",
+        "studyTitle": "Discipline with awareness on QQQ",
+        "scenarioTitle": "The cash yield strategy"
+      },
+      "before": {
+        "title": "Harness QQQ volatility for cash yield",
+        "short_name": "QQQ 4H Yield",
+        "name": "QQQ 4H Yield",
+        "goal": "Harness QQQ volatility for cash yield",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Cash yield from active QQQ trading",
+        "goal": "Trades QQQ's price swings to build a cash return, exiting fully after each profitable move.",
+        "how_it_trades": "On a buy signal, it uses half of available cash to buy QQQ, but only when the price is below its average cost. On a sell signal, it closes the full position, but only when the price is above its average cost. Cash not in the market stays idle between trades."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "9b5eb872-7fd9-4057-ad43-78dbb947b2e7"
+    },
+    {
+      "number": 43,
+      "slug": "qqq-daily-2008-43",
+      "listedPublic": true,
+      "asset": "QQQ",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "qqq",
+        "key": "2008-great-financial-crisis",
+        "studyTitle": "Discipline with awareness on QQQ",
+        "scenarioTitle": "The 2008 Great Financial Crisis"
+      },
+      "before": {
+        "title": "Take advantage of the 2008 crash in QQQ",
+        "short_name": "QQQ Daily 2008",
+        "name": "QQQ Daily 2008",
+        "goal": "Take advantage of the 2008 crash in QQQ",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "QQQ accumulation in the 2008 financial crisis",
+        "goal": "A disciplined way to accumulate QQQ through a bear market, buying on the way down and trimming on recovery.",
+        "how_it_trades": "On a buy signal, the strategy adds to QQQ using a portion of available cash, but only when the price is below its average cost. On a sell signal, it trims a small slice of the position, but only when the price is above its average cost. Cash not deployed stays on the sideline until the next signal."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "0bb3a7d5-0b1a-4813-a9e7-212b79baef87"
+    },
+    {
+      "number": 44,
+      "slug": "qqq-4h-accumulation-44",
+      "listedPublic": true,
+      "asset": "QQQ",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "qqq",
+        "key": "accumulation-strategy",
+        "studyTitle": "Discipline with awareness on QQQ",
+        "scenarioTitle": "The accumulation strategy"
+      },
+      "before": {
+        "title": "Accumulate QQQ over the short term",
+        "short_name": "QQQ 4h accumulation",
+        "name": "QQQ 4h accumulation",
+        "goal": "Accumulate QQQ over the short term",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulating QQQ through market swings",
+        "goal": "Steadily grows a QQQ position by buying on weakness and selling only above cost.",
+        "how_it_trades": "Each buy signal deploys half of available cash into QQQ, provided the price is below the average cost. Each sell signal trims one percent of the position, but only when the price is above the average cost. The strategy aims to stay as fully invested as possible and build the largest disciplined position it can."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "b5394dbd-e7b4-4a01-9cf9-322fbc4c90cd"
+    },
+    {
+      "number": 45,
+      "slug": "qqq-daily-covid-45",
+      "listedPublic": true,
+      "asset": "QQQ",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "qqq",
+        "key": "covid-crash-entry",
+        "studyTitle": "Discipline with awareness on QQQ",
+        "scenarioTitle": "The COVID crash entry"
+      },
+      "before": {
+        "title": "Profit from the COVID Crash on QQQ",
+        "short_name": "QQQ Daily COVID",
+        "name": "QQQ Daily COVID",
+        "goal": "Profit from the COVID Crash on QQQ",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Buying QQQ through the COVID crash",
+        "goal": "For investors who want to accumulate QQQ through a market crash without emotional decision-making.",
+        "how_it_trades": "On a buy signal, the strategy commits a large portion of available cash to QQQ. On a sell signal, it trims a small slice of the position. It only buys when the price is below its average cost and only sells above its average cost, holding the rest in cash for further dips."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "030ac6dc-01c2-4b39-8ce9-82b00dcac3a4"
+    },
+    {
+      "number": 46,
+      "slug": "qqq-daily-10y-46",
+      "listedPublic": true,
+      "asset": "QQQ",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "qqq",
+        "key": "full-decade",
+        "studyTitle": "Discipline with awareness on QQQ",
+        "scenarioTitle": "The full decade"
+      },
+      "before": {
+        "title": "A Decade of automation on QQQ",
+        "short_name": "QQQ Daily 10Y",
+        "name": "QQQ Daily 10Y",
+        "goal": "A Decade of automation on QQQ",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulating QQQ across a full decade",
+        "goal": "A long-term strategy that builds a QQQ position and holds through an extended uptrend.",
+        "how_it_trades": "Buys a portion of available cash on each buy signal, but only below its average cost. Sells a small slice of the holding on each sell signal, but only above its average cost. When neither condition is met, it holds and lets the position compound."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "eefa3d80-471c-4703-935f-6733cf44dfcf"
+    },
+    {
+      "number": 47,
+      "slug": "mstr-daily-3y-47",
+      "listedPublic": true,
+      "asset": "MSTR",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "mstr",
+        "key": "through-the-entire-boom-and-give-back",
+        "studyTitle": "Discipline over conviction on MSTR",
+        "scenarioTitle": "Through the entire boom and give-back"
+      },
+      "before": {
+        "title": "Trade Volatility in MSTR",
+        "short_name": "MSTR Daily 3y",
+        "name": "MSTR Daily 3y",
+        "goal": "Trade Volatility in MSTR",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "MicroStrategy through the boom and give-back",
+        "goal": "A disciplined way to trade MicroStrategy that books realized profits even when the position turns underwater.",
+        "how_it_trades": "On each buy signal, it deploys a fixed share of available cash into the stock, but only when the price is below its average cost. On each sell signal, it trims a fixed share of the holding, but only when the price is above its average cost. Cash from sales waits on the sidelines until the next buy signal."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "578ac3dc-dc85-4eca-8937-7bef9ae5cc71",
+      "edited": {
+        "title": "Strategy through the boom and give-back",
+        "goal": "A disciplined way to trade Strategy that books realized profits even when the position turns underwater."
+      },
+      "editNote": "\"Strategy\" alone is confusing on a strategy card; MicroStrategy, as in #52."
+    },
+    {
+      "number": 48,
+      "slug": "tsla-4h-48",
+      "listedPublic": true,
+      "asset": "TSLA",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "tsla",
+        "key": "whipsaw-test-on-the-4-hour",
+        "studyTitle": "Outperforming buy and hold on Tesla",
+        "scenarioTitle": "The whipsaw test, on the 4-hour"
+      },
+      "before": {
+        "title": "Turn TSLA chop into profit",
+        "short_name": "TSLA 4h",
+        "name": "TSLA 4h",
+        "goal": "Turn TSLA chop into profit",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Tesla through a whipsaw market",
+        "goal": "A systematic approach to trading Tesla through choppy, whipsaw price conditions.",
+        "how_it_trades": "The strategy buys a portion of available cash on each buy signal, but only when the price is below its average cost. On sell signals, it exits half of its position, but only above its average cost. Cash that does not meet either condition stays on the sideline until the rules are satisfied."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "96543fd6-1eb5-4ee9-927b-84096d6a4ffa"
+    },
+    {
+      "number": 49,
+      "slug": "tsla-1d-49",
+      "listedPublic": true,
+      "asset": "TSLA",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "tsla",
+        "key": "three-years-same-logic-run-on-the-daily",
+        "studyTitle": "Outperforming buy and hold on Tesla",
+        "scenarioTitle": "Three years, same logic, run on the daily"
+      },
+      "before": {
+        "title": "Swing Trading TSLA",
+        "short_name": "TSLA 1d",
+        "name": "TSLA 1d",
+        "goal": "Swing Trading TSLA",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Three years of turning Tesla swings into cash",
+        "goal": "A strategy that buys Tesla on weakness and trims on strength, turning daily swings into banked cash.",
+        "how_it_trades": "On a buy signal, the strategy deploys a portion of its cash into Tesla, but only below its average cost. On a sell signal, it trims a portion of the position, but only above its average cost. Cash from each trim is held ready to reinvest on the next dip."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "eb3eb8c6-2057-4fc0-93b1-1bf9ae7fbfb7"
+    },
+    {
+      "number": 50,
+      "slug": "nvda-daily-50",
+      "listedPublic": true,
+      "asset": "NVDA",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "nvda",
+        "key": "it-is-already-too-high-to-buy-test",
+        "studyTitle": "Rules beat hesitation on NVDA",
+        "scenarioTitle": "The \u2018it is already too high to buy\u2019 test"
+      },
+      "before": {
+        "title": "Cash Yield from a rising NVDA",
+        "short_name": "NVDA daily",
+        "name": "NVDA daily",
+        "goal": "Cash Yield from a rising NVDA",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Buying Nvidia when it felt too high to buy",
+        "goal": "A disciplined way to keep buying Nvidia on dips even when the price already feels too high.",
+        "how_it_trades": "On a buy signal, it uses a portion of available cash to buy Nvidia, but only when the price is below its average cost. On a sell signal, it trims a small slice of the holding, but only when the price is above its average cost. Any cash raised stays on hand for the next opportunity."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "2f496716-e94c-438d-9dd5-9e33a4f762b1"
+    },
+    {
+      "number": 51,
+      "slug": "nvda-1h-51",
+      "listedPublic": true,
+      "asset": "NVDA",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Hour",
+      "source": {
+        "kind": "case_study",
+        "slug": "nvda",
+        "key": "cash-yield-on-a-mature-winner-test",
+        "studyTitle": "Rules beat hesitation on NVDA",
+        "scenarioTitle": "The \u2018cash yield on a mature winner\u2019 test"
+      },
+      "before": {
+        "title": "Scalp Price Imbalances on NVDA",
+        "short_name": "NVDA 1h",
+        "name": "NVDA 1h",
+        "goal": "Scalp Price Imbalances on NVDA",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Nvidia cash yield on a mature winner",
+        "goal": "A strategy for generating cash yield from Nvidia's price swings after its period of rapid growth.",
+        "how_it_trades": "Buys Nvidia with all available cash when the price falls below its average cost, then sells the entire position when the price rises above that average cost. It holds cash between trades, waiting for the next entry below cost to put money back to work."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "04e36b88-d7a3-41b1-877d-72005b0d9fd2"
+    },
+    {
+      "number": 52,
+      "slug": "mstr-4h-52",
+      "listedPublic": true,
+      "asset": "MSTR",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "mstr",
+        "key": "a-profit-in-a-falling-market",
+        "studyTitle": "Discipline over conviction on MSTR",
+        "scenarioTitle": "A profit in a falling market"
+      },
+      "before": {
+        "title": "Profit from a declining MSTR",
+        "short_name": "MSTR 4h",
+        "name": "MSTR 4h",
+        "goal": "Profit from a declining MSTR",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "MicroStrategy profit in a falling market",
+        "goal": "A disciplined strategy for trading MicroStrategy, buying only below average cost and selling only above it.",
+        "how_it_trades": "On a buy signal, the strategy buys a small slice of MicroStrategy using available cash, but only if the price is below its average cost. On a sell signal, it trims a portion of the holding, but only above the average cost. Cash not in use stays on the sidelines."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "c54f0fbd-6028-421a-baa0-17b8955027f8"
+    },
+    {
+      "number": 53,
+      "slug": "mstr-1d-53",
+      "listedPublic": true,
+      "asset": "MSTR",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "mstr",
+        "key": "great-stock-that-went-nowhere",
+        "studyTitle": "Discipline over conviction on MSTR",
+        "scenarioTitle": "The great stock that went nowhere"
+      },
+      "before": {
+        "title": "Swing Trading MSTR",
+        "short_name": "MSTR 1d",
+        "name": "MSTR 1d",
+        "goal": "Swing Trading MSTR",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Trading MicroStrategy when it went nowhere",
+        "goal": "For investors who want to hold MicroStrategy stock actively, using rules rather than a view on price.",
+        "how_it_trades": "On a buy signal, it puts half of its available cash into MicroStrategy. On a sell signal, it trims one fifth of its position. It only buys when the price is below its average cost and only sells above it, keeping unused cash on the sideline until conditions are met."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "9dd443be-8b29-4545-b6c1-abd97c5b8028",
+      "edited": {
+        "title": "Trading Strategy stock when it went nowhere",
+        "goal": "For investors who want to hold Strategy stock actively, using rules rather than a view on price.",
+        "how_it_trades": "On a buy signal, it puts half of its available cash into Strategy. On a sell signal, it trims one fifth of its position. It only buys when the price is below its average cost and only sells above it, keeping unused cash on the sideline until conditions are met."
+      },
+      "editNote": "Same as #47."
+    },
+    {
+      "number": 54,
+      "slug": "gld-1w-54",
+      "listedPublic": true,
+      "asset": "GLD",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "gld",
+        "key": "record-bull-run",
+        "studyTitle": "Rules for a Gold Rush",
+        "scenarioTitle": "The record bull run"
+      },
+      "before": {
+        "title": "Swing Trading the Gold Bull Run",
+        "short_name": "GLD 1W",
+        "name": "GLD 1W",
+        "goal": "Swing Trading the Gold Bull Run",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Harvesting SPDR Gold through the record bull run",
+        "goal": "A strategy for accumulating a Gold ETF and banking profits by selling into strength during a bull run.",
+        "how_it_trades": "On a buy signal, it puts a set portion of available cash into the Gold ETF, but only when the price is below its average cost. On a sell signal, it trims a small slice of the position, but only when the price is above its average cost. Cash from sales sits idle until the next qualifying buy."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "06157103-3eea-4dc1-8e2b-83baa3e2bdfc"
+    },
+    {
+      "number": 55,
+      "slug": "gld-1d-55",
+      "listedPublic": true,
+      "asset": "GLD",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "gld",
+        "key": "mid-trend-entry",
+        "studyTitle": "Rules for a Gold Rush",
+        "scenarioTitle": "The mid-trend entry"
+      },
+      "before": {
+        "title": "Profiting from Gold while prices are high",
+        "short_name": "GLD 1D",
+        "name": "GLD 1D",
+        "goal": "Profiting from Gold while prices are high",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Buying Gold after the rally had started",
+        "goal": "A systematic approach to entering Gold mid-trend, trimming into strength and sitting out declines.",
+        "how_it_trades": "Each signal prompts a buy of Gold using a fixed share of available cash, but only below its average cost. On sell signals, it trims a fixed share of the position, but only above its average cost, adding to the holding on dips and trimming into strength. Cash is held when neither condition applies."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "0b64a650-da22-40a5-908a-436ae0b0809b"
+    },
+    {
+      "number": 56,
+      "slug": "gld-1w-2011-56",
+      "listedPublic": true,
+      "asset": "GLD",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "gld",
+        "key": "worst-case",
+        "studyTitle": "Rules for a Gold Rush",
+        "scenarioTitle": "The worst case"
+      },
+      "before": {
+        "title": "Trading Gold in a sideways market",
+        "short_name": "GLD 1W 2011",
+        "name": "GLD 1W 2011",
+        "goal": "Trading Gold in a sideways market",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulating Gold through a long decline",
+        "goal": "A rules-based way to accumulate Gold through a prolonged decline and slow recovery.",
+        "how_it_trades": "On a weekly buy signal, the strategy puts a fixed share of cash into Gold. On a sell signal, it trims a small portion of the position. It only buys when Gold is below its average cost and only sells above it, leaving cash on the sidelines when neither condition is met."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "1d281ae3-b876-4af6-9ab6-4ce17747d64a"
+    },
+    {
+      "number": 57,
+      "slug": "googl-1w-57",
+      "listedPublic": true,
+      "asset": "GOOGL",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "googl",
+        "key": "cash-yield-through-the-bull-run",
+        "studyTitle": "Getting paid in a bull market.",
+        "scenarioTitle": "Cash yield through the bull run"
+      },
+      "before": {
+        "title": "Swing Trade the GOOGL trend",
+        "short_name": "GOOGL 1W",
+        "name": "GOOGL 1W",
+        "goal": "Swing Trade the GOOGL trend",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Cash yield from Alphabet's bull run",
+        "goal": "Trades Alphabet's weekly swings to generate cash yield while keeping most of the portfolio in cash.",
+        "how_it_trades": "On a buy signal, it puts part of its available cash into Alphabet; on a sell signal, it trims part of the position. It only buys when the price is below its average cost and only sells above its average cost, keeping the rest in cash between trades."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "6b816825-b949-462b-b19d-2bddc2d88a0e"
+    },
+    {
+      "number": 58,
+      "slug": "googl-1d-58",
+      "listedPublic": true,
+      "asset": "GOOGL",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "googl",
+        "key": "same-window-the-accumulation-strategy",
+        "studyTitle": "Getting paid in a bull market.",
+        "scenarioTitle": "Same window, the accumulation strategy"
+      },
+      "before": {
+        "title": "A measured approach to accumulating GOOGL",
+        "short_name": "GOOGL 1D",
+        "name": "GOOGL 1D",
+        "goal": "A measured approach to accumulating GOOGL",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulating Alphabet in a bull market",
+        "goal": "Accumulates Alphabet by buying confirmed dips and holding most of the position through the trend.",
+        "how_it_trades": "On a confirmed dip signal, the strategy buys with half its available cash. It only buys when the price is below its average cost. When a sell signal comes and the price is above its average cost, it trims a small part of the position and holds the rest."
+      },
+      "fallback": false,
+      "tries": 2,
+      "problems": [],
+      "versionId": "7f530b27-3309-4be7-a6ee-5d1ef80efd64"
+    },
+    {
+      "number": 59,
+      "slug": "googl-1h-59",
+      "listedPublic": true,
+      "asset": "GOOGL",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Hour",
+      "source": {
+        "kind": "case_study",
+        "slug": "googl",
+        "key": "cash-yield-at-all-time-highs",
+        "studyTitle": "Getting paid in a bull market.",
+        "scenarioTitle": "Cash yield at all-time highs"
+      },
+      "before": {
+        "title": "Scalping short term on GOOGL",
+        "short_name": "GOOGL 1H",
+        "name": "GOOGL 1H",
+        "goal": "Scalping short term on GOOGL",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Alphabet cash yield at all-time highs",
+        "goal": "A strategy for earning cash yield from Alphabet's price swings during a bull run to record highs.",
+        "how_it_trades": "The strategy uses a portion of available cash to buy when price falls below its average cost, and sells a portion of the position only when price rises above it. It stays active at record highs, working each swing to collect cash without chasing the rally or freezing at the top."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "f528c279-e67e-4c49-b7d8-90347441fe71"
+    },
+    {
+      "number": 60,
+      "slug": "btc-6h-60",
+      "listedPublic": true,
+      "asset": "BTC",
+      "algorithm": "Market Wave",
+      "timeFrame": "6 Hours",
+      "source": {
+        "kind": "store"
+      },
+      "before": {
+        "title": "Short Term BTC Cash Yielding Strategy",
+        "short_name": "BTC 6h",
+        "name": "BTC 6h",
+        "goal": "Short Term BTC Cash Yielding Strategy",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Quick Bitcoin swings turned into cash yield",
+        "goal": "Designed to generate cash yield by trading Bitcoin's short-term price swings.",
+        "how_it_trades": "The strategy watches for signals on the six-hour Bitcoin chart. On a buy signal below its average cost, it puts a large portion of available cash to work. On a sell signal above its average cost, it sells half the position, keeping the rest invested and returning cash from each partial exit."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "e3beb40b-e0a3-4e7e-a84b-fb5f31853ca3",
+      "edited": {
+        "title": "Short Bitcoin swings turned into cash yield"
+      },
+      "editNote": "\"Short\" could read as short selling."
+    },
+    {
+      "number": 61,
+      "slug": "iren-1d-61",
+      "listedPublic": true,
+      "asset": "IREN",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "iren",
+        "key": "same-crash-worked-harder",
+        "studyTitle": "Riding the AI wave in a stock that got cut in half",
+        "scenarioTitle": "The same crash, worked harder"
+      },
+      "before": {
+        "title": "Trade Swings on IREN",
+        "short_name": "IREN 1d",
+        "name": "IREN 1d",
+        "goal": "Trade Swings on IREN",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Working harder through the IREN crash",
+        "goal": "A fast-swing strategy that trades every leg of IREN's moves, only buying below cost and only selling above it.",
+        "how_it_trades": "The strategy reads swings inside the larger swings on a daily chart. It buys half the available cash on a buy signal, only when the price is below its average cost, and sells half the position on a sell signal, only when the price is above its average cost. Any remaining cash sits idle until the next qualifying signal."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "4f6aab43-6daf-4735-9c24-a980b82545b4"
+    },
+    {
+      "number": 62,
+      "slug": "iren-sth-1h-scalp-62",
+      "listedPublic": true,
+      "asset": "IREN",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Hour",
+      "source": {
+        "kind": "case_study",
+        "slug": "iren",
+        "key": "full-round-trip",
+        "studyTitle": "Riding the AI wave in a stock that got cut in half",
+        "scenarioTitle": "The full round trip"
+      },
+      "before": {
+        "title": "IREN 1H Market Wave scalp",
+        "short_name": "IREN STH 1H Scalp",
+        "name": "[IREN] STH 1H Scalp",
+        "goal": "IREN 1H Market Wave scalp",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "IREN through the full round trip",
+        "goal": "A strategy that takes profit into IREN's strength and steps aside through its deepest declines.",
+        "how_it_trades": "The strategy puts a fixed share of available cash to work on signals of confirmed price weakness, and only when the price is below its average entry cost. It trims a fixed share of the position on trend-breakout signals, only above its average cost, leaving idle cash ready for the next dip."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "aae4c3f9-5016-49c3-b62e-4cc19e07e6f8"
+    },
+    {
+      "number": 63,
+      "slug": "iren-sth-1h-scalp-63",
+      "listedPublic": true,
+      "asset": "IREN",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Hour",
+      "source": {
+        "kind": "case_study",
+        "slug": "iren",
+        "key": "round-trip-to-nowhere",
+        "studyTitle": "Riding the AI wave in a stock that got cut in half",
+        "scenarioTitle": "The round trip to nowhere"
+      },
+      "before": {
+        "title": "Fast scalping on IREN",
+        "short_name": "IREN STH 1H Scalp",
+        "name": "[IREN] STH 1H Scalp",
+        "goal": "Fast scalping on IREN",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Cash yield from IREN's round trip",
+        "goal": "A strategy for collecting realized profit from IREN's price swings when the stock ended where it started.",
+        "how_it_trades": "On an hourly chart, the strategy buys a large portion of available cash when price dips below its average cost, adding to the position only at a discount. It sells a portion of the holding into strength, banking realized gains on the way up and reloading on the way back down."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "92943ba1-0b68-4d2e-ba26-0ef92e3eff8a"
+    },
+    {
+      "number": 64,
+      "slug": "msft-lth-1w-position-64",
+      "listedPublic": true,
+      "asset": "MSFT",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "msft",
+        "key": "full-cycle",
+        "studyTitle": "MSFT and the price of feeling safe",
+        "scenarioTitle": "The full cycle"
+      },
+      "before": {
+        "title": "MSFT Weekly Swing Trader",
+        "short_name": "MSFT LTH 1W Position",
+        "name": "[MSFT] LTH 1W Position",
+        "goal": "MSFT Weekly Swing Trader",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Microsoft across a full market cycle",
+        "goal": "Buys Microsoft during weakness and sells into strength, locking in realized profit across the cycle.",
+        "how_it_trades": "Runs on a weekly chart and uses trend breaks as signals. It buys when price falls below its average cost, adding to the position through weakness. When price rises above average cost, it sells part of the holding to lock in profit. Cash from sales stays in the account, ready for the next dip."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "b824192a-2381-44fa-8541-017e6b3af3d3"
+    },
+    {
+      "number": 65,
+      "slug": "msft-sth-1d-swing-65",
+      "listedPublic": true,
+      "asset": "MSFT",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "msft",
+        "key": "two-year-grind",
+        "studyTitle": "MSFT and the price of feeling safe",
+        "scenarioTitle": "The two year grind"
+      },
+      "before": {
+        "title": "MSFT 1D Market Wave swing",
+        "short_name": "MSFT STH 1D Swing",
+        "name": "[MSFT] STH 1D Swing",
+        "goal": "MSFT 1D Market Wave swing",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Microsoft through the two year grind",
+        "goal": "Accumulates Microsoft over time by selling into strength and rebuying weakness to reduce its cost basis.",
+        "how_it_trades": "Buys a large slice of available cash when price drops below its average cost, and sells a quarter of the position when price rises above that average. The strategy is sized for wider swings, with deeper entry thresholds and patient exits. Cash stays in reserve between signals."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "81863eed-06ad-4563-81ff-4e1c3851464f"
+    },
+    {
+      "number": 66,
+      "slug": "msft-sth-1d-swing-66",
+      "listedPublic": true,
+      "asset": "MSFT",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "msft",
+        "key": "whipsaw-year",
+        "studyTitle": "MSFT and the price of feeling safe",
+        "scenarioTitle": "The whipsaw year"
+      },
+      "before": {
+        "title": "MSFT 2026 YTD",
+        "short_name": "MSFT STH 1D Swing",
+        "name": "[MSFT] STH 1D Swing",
+        "goal": "MSFT 2026 YTD ",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Microsoft in a whipsaw year",
+        "goal": "A rule-based strategy that buys Microsoft on declines and trims the position into recoveries.",
+        "how_it_trades": "The strategy buys a portion of available cash when Microsoft falls below its average cost, and sells a fixed slice of the position each time price climbs back above that cost. Cash freed by those sales stays on hand, ready to buy the next decline."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "1b514a62-bb84-4801-ad81-a0c130f44c12"
+    },
+    {
+      "number": 67,
+      "slug": "mara-sth-4h-scalp-67",
+      "listedPublic": true,
+      "asset": "MARA",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "bitcoin-market-wave-stack",
+        "key": "leg-3-mara-on-the-4-hour-chart",
+        "studyTitle": "The Bitcoin Accumulation Algorithm",
+        "scenarioTitle": "Leg 3: MARA on the 4-hour chart"
+      },
+      "before": {
+        "title": "MARA 4H Market Wave Stacking",
+        "short_name": "MARA STH 4H Scalp",
+        "name": "[MARA] STH 4H Scalp",
+        "goal": "MARA 4H Market Wave Stacking",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Harvesting cash from MARA without a view",
+        "goal": "A systematic approach to harvesting cash from MARA by trading price swings, ignoring the narrative.",
+        "how_it_trades": "On each buy signal, the strategy deploys a fixed portion of available cash, but only if the price is below its average cost. On each sell signal, it exits a portion of the position, but only if the price is above its average cost. Proceeds are held as cash, ready for the next entry."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "1b281b0d-5a5a-40f6-a1b6-17bbba99109c"
+    },
+    {
+      "number": 68,
+      "slug": "mara-lth-1w-position-68",
+      "listedPublic": true,
+      "asset": "MARA",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "mara",
+        "key": "long-term-believer",
+        "studyTitle": "Trading the chaos",
+        "scenarioTitle": "The long-term believer"
+      },
+      "before": {
+        "title": "MARA Weekly Swing Trader",
+        "short_name": "MARA LTH 1W Position",
+        "name": "[MARA] LTH 1W Position",
+        "goal": "MARA Weekly Swing Trader",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulating MARA through the chaos",
+        "goal": "For the long-term MARA believer who wants to keep building exposure without riding every drawdown.",
+        "how_it_trades": "On each buy signal, it puts a fixed portion of available cash into MARA, but only when the price is below its average cost. On each sell signal, it trims a small slice of the position, but only when the price is above its average cost. Cash from sales stays in reserve for the next opportunity."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "1a425251-6006-4a49-ae69-be9cc24eb87a",
+      "edited": {
+        "title": "Accumulating Marathon through the chaos",
+        "goal": "For the long-term Marathon believer who wants to keep building exposure without riding every drawdown.",
+        "how_it_trades": "On each buy signal, it puts a fixed portion of available cash into Marathon, but only when the price is below its average cost. On each sell signal, it trims a small slice of the position, but only when the price is above its average cost. Cash from sales stays in reserve for the next opportunity."
+      },
+      "editNote": "The case study calls the company MARA; same name on all four."
+    },
+    {
+      "number": 69,
+      "slug": "mara-sth-1h-scalp-69",
+      "listedPublic": true,
+      "asset": "MARA",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Hour",
+      "source": {
+        "kind": "case_study",
+        "slug": "mara",
+        "key": "down-year",
+        "studyTitle": "Trading the chaos",
+        "scenarioTitle": "The down year"
+      },
+      "before": {
+        "title": "MARA 1H Trend Follower",
+        "short_name": "MARA STH 1H Scalp",
+        "name": "[MARA] STH 1H Scalp",
+        "goal": "MARA 1H Trend Follower",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "MARA through a down year",
+        "goal": "A strategy that extracts cash from MARA's price swings even as the stock falls.",
+        "how_it_trades": "On each buy signal, the strategy puts a portion of available cash into MARA, but only when the price is below its average cost. On each sell signal, it trims half the position, only above its average cost. When no signal appears, it holds the remainder in cash."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "51b5a33e-d428-496d-a121-b33f47ca9fd7",
+      "edited": {
+        "title": "Marathon Digital through a down year",
+        "goal": "A strategy that extracts cash from Marathon Digital's price swings even as the stock falls.",
+        "how_it_trades": "On each buy signal, the strategy puts a portion of available cash into Marathon Digital, but only when the price is below its average cost. On each sell signal, it trims half the position, only above its average cost. When no signal appears, it holds the remainder in cash."
+      },
+      "editNote": "Same as #68."
+    },
+    {
+      "number": 70,
+      "slug": "mara-sth-1d-swing-70",
+      "listedPublic": true,
+      "asset": "MARA",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "mara",
+        "key": "long-cycle",
+        "studyTitle": "Trading the chaos",
+        "scenarioTitle": "The long cycle"
+      },
+      "before": {
+        "title": "MARA winning in a decline",
+        "short_name": "MARA STH 1D Swing",
+        "name": "[MARA] STH 1D Swing",
+        "goal": "MARA winning in a decline",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "MARA over a long cycle of declines and rallies",
+        "goal": "A strategy for building a MARA position across years of swings, locking in gains as the rallies arrive.",
+        "how_it_trades": "Buys a slice of available cash when MARA falls below its average cost. Sells part of the position when MARA rises above its average cost. Cash raised from each sale is held ready to buy again at the next decline, keeping the strategy active across a long cycle of lows and rallies."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "3353addb-26eb-441a-b6ba-ada47957df13"
+    },
+    {
+      "number": 71,
+      "slug": "aapl-lth-1w-position-71",
+      "listedPublic": true,
+      "asset": "AAPL",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "aapl",
+        "key": "capture-the-trend",
+        "studyTitle": "The most owned stock in America, finally managed",
+        "scenarioTitle": "Capture the trend"
+      },
+      "before": {
+        "title": "AAPL Swing trading a Climbing Market",
+        "short_name": "AAPL LTH 1W Position",
+        "name": "[AAPL] LTH 1W Position",
+        "goal": "AAPL Swing trading a Climbing Market",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Capturing Apple's trend",
+        "goal": "A systematic way to follow Apple's long uptrend, accumulating on dips and trimming lightly at highs.",
+        "how_it_trades": "Buys a large slice of available cash on each buy signal, but only when Apple is trading below its average cost. Sells a small portion of the position on each sell signal, but only when Apple is trading above its average cost. Cash sits idle when neither condition is met."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "938ad455-f249-480b-9b48-88b3a08f5ae5"
+    },
+    {
+      "number": 72,
+      "slug": "aapl-sth-1d-swing-72",
+      "listedPublic": true,
+      "asset": "AAPL",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "aapl",
+        "key": "pure-accumulation",
+        "studyTitle": "The most owned stock in America, finally managed",
+        "scenarioTitle": "Pure accumulation"
+      },
+      "before": {
+        "title": "AAPL Accumulation Strategy",
+        "short_name": "AAPL STH 1D Swing",
+        "name": "[AAPL] STH 1D Swing",
+        "goal": "AAPL Accumulation Strategy",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Pure Apple accumulation",
+        "goal": "A pure buy-and-build approach to Apple, adding on dips and never taking profits.",
+        "how_it_trades": "On each buy signal below its average cost, the strategy adds to its Apple position using a portion of available cash. It never sells. Cash not yet deployed stays in the account, waiting for the next qualifying signal below cost."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "c01c5021-0dd2-4bb6-a314-9d71bc7744d7"
+    },
+    {
+      "number": 73,
+      "slug": "aapl-sth-1d-swing-73",
+      "listedPublic": true,
+      "asset": "AAPL",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "aapl",
+        "key": "trade-the-chop",
+        "studyTitle": "The most owned stock in America, finally managed",
+        "scenarioTitle": "Trade the chop"
+      },
+      "before": {
+        "title": "AAPL Cash Yield Strategy",
+        "short_name": "AAPL STH 1D Swing",
+        "name": "[AAPL] STH 1D Swing",
+        "goal": "AAPL Cash Yield Strategy",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Apple accumulation through the chop",
+        "goal": "A strategy for building a low-cost Apple position by buying dips and trimming into strength.",
+        "how_it_trades": "On each buy signal, it puts a slice of available cash into Apple, but only when the price sits below its average cost. On each sell signal, it trims a portion of the position, but only when the price is above its average cost. Cash not deployed stays on the sideline."
+      },
+      "fallback": false,
+      "tries": 2,
+      "problems": [],
+      "versionId": "8fa7c164-6626-455b-9d5a-8bb7b54b46f7"
+    },
+    {
+      "number": 74,
+      "slug": "intc-lth-1w-position-74",
+      "listedPublic": true,
+      "asset": "INTC",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "intc",
+        "key": "long-sideways-market",
+        "studyTitle": "INTC: the stock that tested every kind of patience",
+        "scenarioTitle": "The long sideways market"
+      },
+      "before": {
+        "title": "Trading INTC in a sideways market",
+        "short_name": "INTC LTH 1W Position",
+        "name": "[INTC] LTH 1W Position",
+        "goal": "Trading INTC in a sideways market",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Intel accumulation through a sideways market",
+        "goal": "A rules-based approach to accumulating Intel shares during a years-long stretch when the stock went nowhere.",
+        "how_it_trades": "On a buy signal, the strategy deploys a fixed portion of available cash into Intel, but only when price is below its average cost. On a sell signal, it trims a fixed portion of the position, but only when price is above its average cost. Proceeds from sales stay in the account, ready for the next buy."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "3ae08ca3-9450-4770-b5e5-6980aa5d4404"
+    },
+    {
+      "number": 75,
+      "slug": "intc-sth-1d-swing-75",
+      "listedPublic": true,
+      "asset": "INTC",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "intc",
+        "key": "run-up",
+        "studyTitle": "INTC: the stock that tested every kind of patience",
+        "scenarioTitle": "The run up"
+      },
+      "before": {
+        "title": "INTC 2026 YTD",
+        "short_name": "INTC STH 1D Swing",
+        "name": "[INTC] STH 1D Swing",
+        "goal": "INTC 2026 YTD",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Riding Intel's run and locking in cash",
+        "goal": "A strategy for riding Intel's major trend and converting gains to cash on the way up.",
+        "how_it_trades": "Buys with a set portion of available cash on signals below its average cost, and sells a set portion of the position on signals above it. During a rising trend it sells into strength to bank profit as cash. When the trend breaks it sells on the signal, then buys back the decline in steps."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "2033d84e-e21c-40a9-81cd-dfa91f056997"
+    },
+    {
+      "number": 76,
+      "slug": "intc-lth-1h-scalp-76",
+      "listedPublic": true,
+      "asset": "INTC",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Hour",
+      "source": {
+        "kind": "case_study",
+        "slug": "intc",
+        "key": "round-trip",
+        "studyTitle": "INTC: the stock that tested every kind of patience",
+        "scenarioTitle": "The round trip"
+      },
+      "before": {
+        "title": "INTC in a decline and recovery",
+        "short_name": "INTC LTH 1H Scalp",
+        "name": "[INTC] LTH 1H Scalp",
+        "goal": "INTC in a decline and recovery",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Intel accumulation through the round trip",
+        "goal": "A rules-based approach to building an Intel position during a steep decline and capturing the recovery.",
+        "how_it_trades": "Buys Intel in partial steps only when the price is below its average cost, building the position through the decline. On a sell signal, it exits a partial slice of the holding and banks that cash. The rest stays invested through the recovery, and new buys only trigger again if price falls back below average cost."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "121fd4a2-dbb3-4e0f-895f-2b9859546735"
+    },
+    {
+      "number": 77,
+      "slug": "mrna-sth-4h-scalp-77",
+      "listedPublic": true,
+      "asset": "MRNA",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "mrna",
+        "key": "2026-scoreboard",
+        "studyTitle": "MRNA: a pandemic boom, a 90% bust, and this month's spike",
+        "scenarioTitle": "The 2026 scoreboard"
+      },
+      "before": {
+        "title": "Trading the MRNA Pop",
+        "short_name": "MRNA STH 4H Scalp",
+        "name": "[MRNA] STH 4H Scalp",
+        "goal": "Trading the MRNA Pop",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Capturing Moderna across a volatile 2026",
+        "goal": "A strategy for capturing Moderna's sharp price swings and converting them into realized cash.",
+        "how_it_trades": "On each buy signal, it deploys nearly all available cash into Moderna. On each sell signal, it trims half the position, but only sells above its average cost. The strategy stayed active through every major move in Moderna's 2026 price cycle, adding on dips and trimming into rallies."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "c8cc07e3-20ba-42e3-92bf-09f6ee4cfc8b"
+    },
+    {
+      "number": 78,
+      "slug": "mrna-lth-1w-position-78",
+      "listedPublic": true,
+      "asset": "MRNA",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "mrna",
+        "key": "round-trip",
+        "studyTitle": "MRNA: a pandemic boom, a 90% bust, and this month's spike",
+        "scenarioTitle": "The round trip"
+      },
+      "before": {
+        "title": "Trading MRNA Through COVID",
+        "short_name": "MRNA LTH 1W Position",
+        "name": "[MRNA] LTH 1W Position",
+        "goal": "Trading MRNA Through COVID",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Moderna through the round trip",
+        "goal": "A strategy that rides Moderna's boom, sits out the decline, and reloads near the lows.",
+        "how_it_trades": "On a buy signal, the strategy deploys most of its cash into Moderna. On a sell signal, it exits most of the position and holds cash. It only sells above its average cost. It sold near the 2021 peak, held cash through the long decline, and bought heavily at the 2025 lows before the August spike."
+      },
+      "fallback": false,
+      "tries": 2,
+      "problems": [],
+      "versionId": "1fb53a24-04fc-422a-98e9-dfbd9029a375"
+    },
+    {
+      "number": 81,
+      "slug": "mrna-sth-1h-scalp-81",
+      "listedPublic": true,
+      "asset": "MRNA",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Hour",
+      "source": {
+        "kind": "case_study",
+        "slug": "mrna",
+        "key": "fresh-start",
+        "studyTitle": "MRNA: a pandemic boom, a 90% bust, and this month's spike",
+        "scenarioTitle": "The fresh start"
+      },
+      "before": {
+        "title": "MRNA 1H Market Wave scalp",
+        "short_name": "MRNA STH 1H Scalp",
+        "name": "[MRNA] STH 1H Scalp",
+        "goal": "MRNA 1H Market Wave scalp",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Moderna's spike from a fresh start",
+        "goal": "Trades Moderna by buying dips and selling into rallies, converting a dramatic price spike into cash.",
+        "how_it_trades": "On a buy signal, the strategy deploys most of its available cash into Moderna, but only when the price is below its average cost. On a sell signal, it closes just over half the open position and holds the proceeds as cash, waiting for the next signal."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "6955c1d5-ef51-403c-a1cd-6d4ddca902c8"
+    },
+    {
+      "number": 82,
+      "slug": "ibit-sth-1h-scalp-82",
+      "listedPublic": true,
+      "asset": "IBIT",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Hour",
+      "source": {
+        "kind": "case_study",
+        "slug": "ibit",
+        "key": "downtrend-trade",
+        "studyTitle": "IBIT: Bitcoin's $126,000 top, the 50% bust, and three strategies that beat holding it",
+        "scenarioTitle": "The downtrend trade"
+      },
+      "before": {
+        "title": "Trading IBIT 2026 YTD",
+        "short_name": "IBIT STH 1H Scalp",
+        "name": "[IBIT] STH 1H Scalp",
+        "goal": "Trading IBIT 2026 YTD",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Trading the Bitcoin ETF decline",
+        "goal": "A strategy for trading a falling Bitcoin ETF by buying pullbacks and selling into rallies.",
+        "how_it_trades": "Buys with a portion of available cash at each signal and exits the full position at each sell signal. It only sells above its average cost. In this window it bought the February lows, sold everything into the April rally, rebuilt the position in July, and held through August."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "0268a0a7-33bc-42d2-8f09-eeab80221fb5"
+    },
+    {
+      "number": 83,
+      "slug": "ibit-sth-4h-scalp-83",
+      "listedPublic": true,
+      "asset": "IBIT",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "ibit",
+        "key": "accumulator",
+        "studyTitle": "IBIT: Bitcoin's $126,000 top, the 50% bust, and three strategies that beat holding it",
+        "scenarioTitle": "The accumulator"
+      },
+      "before": {
+        "title": "Accumulating IBIT in 2026",
+        "short_name": "IBIT STH 4H Scalp",
+        "name": "[IBIT] STH 4H Scalp",
+        "goal": "Accumulating IBIT in 2026",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulating IBIT through a falling market",
+        "goal": "A strategy for building a low-cost IBIT position by buying only during price declines.",
+        "how_it_trades": "When a buy signal fires, the strategy puts half its available cash into IBIT. When a sell signal fires, it exits nearly all of the position, but only if the price is above its average cost. In the test, signals arrived only during the decline, the strategy bought through every dip, and no sell conditions were met."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "9c5c0f13-216c-486c-9f35-4fff440fbcec"
+    },
+    {
+      "number": 84,
+      "slug": "ibit-lth-1w-position-84",
+      "listedPublic": true,
+      "asset": "IBIT",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "ibit",
+        "key": "full-cycle",
+        "studyTitle": "IBIT: Bitcoin's $126,000 top, the 50% bust, and three strategies that beat holding it",
+        "scenarioTitle": "The full cycle"
+      },
+      "before": {
+        "title": "Trading IBIT on the Weekly Chart",
+        "short_name": "IBIT LTH 1W Position",
+        "name": "[IBIT] LTH 1W Position",
+        "goal": "Trading IBIT on the Weekly Chart",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "IBIT through the full Bitcoin cycle",
+        "goal": "Trades IBIT across a full Bitcoin cycle, trimming into rallies and rebuilding near the lows.",
+        "how_it_trades": "On a buy signal, it deploys most of its available cash into IBIT, but only when the current price is below its average cost. On a sell signal, it exits a large part of the position. Cash raised from each sale waits for the next buy signal below average cost."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "b12dfed9-3cca-4c17-8d18-9b760f43034e"
+    },
+    {
+      "number": 85,
+      "slug": "xle-sth-1d-swing-85",
+      "listedPublic": true,
+      "asset": "XLE",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "xle",
+        "key": "trading-the-war",
+        "studyTitle": "XLE: three flat years, an Iran war spike, and a round trip in four months",
+        "scenarioTitle": "Trading the war"
+      },
+      "before": {
+        "title": "Trading XLE Through The Iran War",
+        "short_name": "Trading XLE Through The Iran War",
+        "name": "Trading XLE Through The Iran War",
+        "goal": "Trading XLE Through The Iran War",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Trading XLE through the Iran war",
+        "goal": "Trading an energy ETF around a geopolitical shock, taking gains rather than riding out the round trip.",
+        "how_it_trades": "Buys a near-full position when a buy signal fires. Sells the entire position when a sell signal arrives, but only if the price is above average cost. Cash sits idle between trades. It bought the March breakout, sold the April war peak, stepped aside through the ceasefire drop, and bought back at the June low."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "9c45c976-42c1-4bdb-aa74-2cc6cc4d800b"
+    },
+    {
+      "number": 86,
+      "slug": "xle-sth-1d-swing-86",
+      "listedPublic": true,
+      "asset": "XLE",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "xle",
+        "key": "trading-the-range",
+        "studyTitle": "XLE: three flat years, an Iran war spike, and a round trip in four months",
+        "scenarioTitle": "Trading the range"
+      },
+      "before": {
+        "title": "Trading a multi-year sideways period in XLE",
+        "short_name": "XLE STH 1D Swing",
+        "name": "[XLE] STH 1D Swing",
+        "goal": "Trading a multi-year sideways period in XLE",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Trading the XLE range",
+        "goal": "A strategy for buying XLE near the bottom of its trading range and locking in gains on each rally.",
+        "how_it_trades": "The strategy commits half its available cash on each buy signal and only enters when price sits below the ribbon, targeting the lower end of the range. On each sell signal, it trims most of the position to realize gains and holds the remaining shares ready for the next buying opportunity."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "3017d96b-5a2f-40ed-9ff4-45ab4064b03d"
+    },
+    {
+      "number": 87,
+      "slug": "xle-lth-1w-position-87",
+      "listedPublic": true,
+      "asset": "XLE",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "xle",
+        "key": "patient-trade",
+        "studyTitle": "XLE: three flat years, an Iran war spike, and a round trip in four months",
+        "scenarioTitle": "The patient trade"
+      },
+      "before": {
+        "title": "Trading XLE through Macro Volatility",
+        "short_name": "XLE LTH 1W Position",
+        "name": "[XLE] LTH 1W Position",
+        "goal": "Trading XLE through Macro Volatility",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Patient trading on XLE through three flat years",
+        "goal": "A patient approach to trading XLE through energy market cycles, aiming to hold cash when prices peak.",
+        "how_it_trades": "On a weekly chart signal, it enters with all available cash. It only sells above its average cost, and when it does, it sells most of the position. Cash stays in the account until the next buy signal. Wide thresholds mean signals are infrequent, so the account may hold cash for long stretches."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "446991ab-13b0-462c-9d74-597994d156dd"
+    },
+    {
+      "number": 88,
+      "slug": "mu-sth-4h-scalp-88",
+      "listedPublic": true,
+      "asset": "MU",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "mu",
+        "key": "patient-buyer",
+        "studyTitle": "MU: a trillion-dollar run, a 41% drop in five weeks, and three strategies that paid in cash",
+        "scenarioTitle": "The patient buyer"
+      },
+      "before": {
+        "title": "Patience Pays on Micron",
+        "short_name": "MU STH 4H Scalp",
+        "name": "[MU] STH 4H Scalp",
+        "goal": "Patience Pays on Micron",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Patient Micron buying through the drop",
+        "goal": "A patient strategy for accumulating Micron during a decline and stepping out with cash at a profit.",
+        "how_it_trades": "On each buy signal, it puts the majority of available cash to work. On each sell signal, it trims a quarter of the position. It only enters when the price is below its average cost and only exits when above, leaving the remaining cash idle between trades."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "fd6ef0bb-cc4f-417c-8544-0a16178e88dc"
+    },
+    {
+      "number": 89,
+      "slug": "mu-sth-1w-position-89",
+      "listedPublic": true,
+      "asset": "MU",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "mu",
+        "key": "weekly-paycheck",
+        "studyTitle": "MU: a trillion-dollar run, a 41% drop in five weeks, and three strategies that paid in cash",
+        "scenarioTitle": "The weekly paycheck"
+      },
+      "before": {
+        "title": "A Weekly Paycheck With Micron",
+        "short_name": "MU STH 1W Position",
+        "name": "[MU] STH 1W Position",
+        "goal": "A Weekly Paycheck With Micron",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Taking cash from Micron each week",
+        "goal": "A weekly-signal strategy for collecting realized cash from Micron through its sharp decline.",
+        "how_it_trades": "On each weekly buy signal, the strategy puts nearly all available cash to work in Micron. When a sell signal arrives, it exits most of the position, but only above its average cost, converting the swing into realized gains. Any unsold shares stay in the trade until the next signal."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "3df1df5d-7efb-4525-9157-870eb941a80f"
+    },
+    {
+      "number": 90,
+      "slug": "mu-sth-4h-scalp-90",
+      "listedPublic": true,
+      "asset": "MU",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "mu",
+        "key": "2026-scoreboard",
+        "studyTitle": "MU: a trillion-dollar run, a 41% drop in five weeks, and three strategies that paid in cash",
+        "scenarioTitle": "The 2026 scoreboard"
+      },
+      "before": {
+        "title": "2026 Cash Yield on Micron",
+        "short_name": "MU STH 4H Scalp",
+        "name": "[MU] STH 4H Scalp",
+        "goal": "2026 Cash Yield on Micron",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Harvesting cash from Micron's 2026 run",
+        "goal": "A swing trading strategy that captures cash from Micron's price moves across a volatile year.",
+        "how_it_trades": "Deploys all available cash into Micron on a buy signal. On a sell signal, it exits ninety percent of the position, but only if the price is above average cost. The remaining ten percent stays in the trade, ready to anchor the next full entry when cash flows back in."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "b6d68373-cfcf-4a40-8cf3-d19ecec87b7e"
+    },
+    {
+      "number": 91,
+      "slug": "pltr-sth-6h-scalp-91",
+      "listedPublic": true,
+      "asset": "PLTR",
+      "algorithm": "Market Wave",
+      "timeFrame": "6 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "pltr",
+        "key": "gap-buyer-finer-wave",
+        "studyTitle": "Volatility Harvesting for Palantir",
+        "scenarioTitle": "The gap buyer, finer wave"
+      },
+      "before": {
+        "title": "PLTR 6H Cash Yield",
+        "short_name": "PLTR STH 6H Scalp",
+        "name": "[PLTR] STH 6H Scalp",
+        "goal": "PLTR 6H Cash Yield",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulating Palantir through finer waves",
+        "goal": "A strategy that trades Palantir's shorter price waves to build a larger share position over time.",
+        "how_it_trades": "When a buy signal appears on the six-hour chart, the strategy commits most of its cash to Palantir. When a sell signal follows, it exits nearly the full position. Sitting in cash between trades, it reads smaller waves than a daily chart would, so it finds more opportunities to buy and add shares."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "3873bc1d-3855-4faf-88bd-b40b2f5ff008"
+    },
+    {
+      "number": 92,
+      "slug": "pltr-sth-1d-swing-92",
+      "listedPublic": true,
+      "asset": "PLTR",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Day",
+      "source": {
+        "kind": "case_study",
+        "slug": "pltr",
+        "key": "gap-buyer",
+        "studyTitle": "Volatility Harvesting for Palantir",
+        "scenarioTitle": "The gap buyer"
+      },
+      "before": {
+        "title": "Daily Volatility Harvesting on Palantir",
+        "short_name": "PLTR STH 1D Swing",
+        "name": "[PLTR] STH 1D Swing",
+        "goal": "Daily Volatility Harvesting on Palantir",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Palantir after the gap up",
+        "goal": "For the investor who bought Palantir on its gap day, trading the subsequent swings to build returns.",
+        "how_it_trades": "Buys with nearly all available cash when the signal fires and sells the full position into strength. The strategy bought through the spring lows, sold into the summer and November highs, and rebuilt through the 2026 decline, booking realized profit by selling into rising prices."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "ef61b4cb-94c7-4578-a36c-eabfb2aad7d4"
+    },
+    {
+      "number": 93,
+      "slug": "pltr-sth-1h-scalp-93",
+      "listedPublic": true,
+      "asset": "PLTR",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Hour",
+      "source": {
+        "kind": "case_study",
+        "slug": "pltr",
+        "key": "2026-harvest",
+        "studyTitle": "Volatility Harvesting for Palantir",
+        "scenarioTitle": "The 2026 harvest"
+      },
+      "before": {
+        "title": "2026 YTD Volatility Harvesting Palantir",
+        "short_name": "PLTR STH 1H Scalp",
+        "name": "[PLTR] STH 1H Scalp",
+        "goal": "2026 YTD Volatility Harvesting Palantir",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Palantir's 2026 harvest",
+        "goal": "Trades Palantir's price swings to build a cash balance while keeping a position in the stock.",
+        "how_it_trades": "The strategy tracks Palantir on an hourly chart. It buys with nearly all available cash when price falls below its average cost, and sells most of the position when price rises above that average. Cash raised from each sale waits on the sideline until the next dip arrives."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "fd19ff26-01eb-49b7-878a-c0aa1148f49e"
+    },
+    {
+      "number": 94,
+      "slug": "meta-lth-1w-position-94",
+      "listedPublic": true,
+      "asset": "META",
+      "algorithm": "Market Wave",
+      "timeFrame": "1 Week",
+      "source": {
+        "kind": "case_study",
+        "slug": "meta",
+        "key": "ai-race-accumulator",
+        "studyTitle": "Volatility Harvesting for Meta",
+        "scenarioTitle": "The AI race accumulator"
+      },
+      "before": {
+        "title": "META Long Term Accumulation",
+        "short_name": "META LTH 1W Position",
+        "name": "[META] LTH 1W Position",
+        "goal": "META Long Term Accumulation",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Accumulating Meta through the AI race",
+        "goal": "Build a larger Meta position at a lower cost by buying into weakness and trimming into strength.",
+        "how_it_trades": "On a buy signal, it deploys a fixed slice of available cash into Meta, but only when the price is below its average cost. On a sell signal, it trims a small fixed slice of the position, but only when the price is above its average cost. Cash from trims sits idle until the next buy signal arrives."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "be08a538-2a09-45d3-b35a-acf8cfa80302"
+    },
+    {
+      "number": 95,
+      "slug": "meta-sth-4h-scalp-95",
+      "listedPublic": true,
+      "asset": "META",
+      "algorithm": "Market Wave",
+      "timeFrame": "4 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "meta",
+        "key": "capex-whipsaw",
+        "studyTitle": "Volatility Harvesting for Meta",
+        "scenarioTitle": "The capex whipsaw"
+      },
+      "before": {
+        "title": "META Cash Yield, 4 Hour",
+        "short_name": "META STH 4H Scalp",
+        "name": "[META] STH 4H Scalp",
+        "goal": "META Cash Yield, 4 Hour",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Meta through the capex whipsaw",
+        "goal": "Harvests Meta's price swings into cash, buying dips and trimming positions into rallies.",
+        "how_it_trades": "The strategy buys Meta with most of its available cash when price falls below its average cost. When a sell signal arrives, it trims most of the position into the rally. Between signals it holds cash, re-entering only when price dips back below its average cost."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "c7225ec4-9a75-4f71-ae83-b8e2da6e0b2a"
+    },
+    {
+      "number": 96,
+      "slug": "meta-sth-6h-scalp-96",
+      "listedPublic": true,
+      "asset": "META",
+      "algorithm": "Market Wave",
+      "timeFrame": "6 Hours",
+      "source": {
+        "kind": "case_study",
+        "slug": "meta",
+        "key": "flat-year-harvest",
+        "studyTitle": "Volatility Harvesting for Meta",
+        "scenarioTitle": "The flat-year harvest"
+      },
+      "before": {
+        "title": "META Cash Yield, 6 Hour",
+        "short_name": "META STH 6H Scalp",
+        "name": "[META] STH 6H Scalp",
+        "goal": "META Cash Yield, 6 Hour",
+        "how_it_trades": null
+      },
+      "after": {
+        "title": "Harvesting Meta through a flat year",
+        "goal": "A strategy that buys Meta on deep dips and sells into rebounds, building cash in a directionless market.",
+        "how_it_trades": "The strategy buys deep dips, committing most of its cash each time, but only when the price is below its average cost. On each rebound, it exits almost the entire position and returns to cash. It then waits for the next dip before buying again."
+      },
+      "fallback": false,
+      "tries": 1,
+      "problems": [],
+      "versionId": "0004b287-625e-40f2-b76b-386473f6f99e"
+    }
+  ],
+  "approved": {
+    "by": "Alex (owner)",
+    "on": "2026-11-13",
+    "how": "\"Approve the list\" in the Phase 5 session, after the one look (Q3)"
+  }
+}
